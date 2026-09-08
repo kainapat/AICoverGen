@@ -26,6 +26,8 @@
 | **Protect** | 0.0–0.5 protecting voiceless consonants from artifacts; 0.5 = disabled. |
 | **Pedalboard** | Spotify's audio effects library; applies HighpassFilter, Compressor, Reverb to converted vocals. |
 | **NoiseReduce** | Optional denoising pass (`noisereduce` library) applied before audio effects. |
+| **Total time all process** | Terminal line printed at pipeline end showing full duration from start to finish (e.g. `[+] Total time all process: 7m 8s (428.1s)`). |
+| **Stage timing** | `[+Xs]` / `[+Xm XXs]` suffix on each progress line showing time spent since the previous pipeline stage. |
 | **Smart Launcher** | `run_aicovergen.bat` — kills orphaned processes, checks port, launches WebUI with logging, verifies startup. |
 
 ## Pipeline Flow

@@ -396,6 +396,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
         clean_old_folders("./rvc_models", 10800)
 
     try:
+        pipeline_start = time.time()
         if not song_input or not voice_model:
             raise_exception('Ensure that the song input field and voice model field is filled.', is_webui)
 
@@ -506,6 +507,15 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
             for file in intermediate_files:
                 if file and os.path.exists(file):
                     os.remove(file)
+
+        pipeline_end = time.time()
+        pipeline_elapsed = pipeline_end - pipeline_start
+        mins, secs = divmod(int(pipeline_elapsed), 60)
+        if mins > 0:
+            total_str = f"{mins}m {secs}s"
+        else:
+            total_str = f"{secs}s"
+        print(f"[+] Total time all process: {total_str} ({pipeline_elapsed:.1f}s)", flush=True)
 
         return ai_cover_path
 

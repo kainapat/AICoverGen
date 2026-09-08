@@ -44,6 +44,55 @@ Built with ❤️ for music enthusiasts and creators, it allows you to transform
 6. **Cover Generation**  
    - Generate AI covers and download the final track.  
 
+## Local Windows Setup (RTX 2050 4GB)
+
+### Quick Start
+
+| Method | Command |
+|---|---|
+| Double-click (recommended) | `run_aicovergen.bat` |
+| PowerShell | `python launch.py` |
+| Simple (classic CMD) | `start_simple.bat` |
+| Manual | `.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860` |
+
+Open `http://127.0.0.1:7860` in your browser.
+
+### Terminal Output
+
+The launcher shows live progress with per-stage timing:
+
+```
+[18:15:02] [~] Starting AI Cover Generation Pipeline...
+[18:15:05] [~] Downloading song... [+3s]
+[18:15:20] [~] Separating Vocals from Instrumental... [+15s]
+[18:17:45] [~] Separating Main Vocals from Backup Vocals... [+2m 25s]
+[18:19:30] [~] Converting voice using RVC... [+1m 20s]
+[+] Total time all process: 7m 8s (428.1s)
+```
+
+Each `[+Xs]` / `[+Xm XXs]` shows time spent since the previous stage.
+`[+] Total time all process` shows the full pipeline duration.
+
+### RTX 2050 4GB Optimization
+
+No code changes needed — the codebase auto-detects VRAM:
+
+- Half precision (FP16) on CUDA — halves VRAM usage
+- MDX uses 1 thread when VRAM < 8GB (`mdx.py`)
+- RVC uses reduced padding when VRAM <= 4GB (`rvc.py`: `x_pad=1, x_query=5, x_center=30, x_max=32`)
+
+### YouTube Support
+
+Standard, Mobile, Short, Embed, Playlist, and **YouTube Music** (`music.youtube.com`) links all work.
+
+### Built-in Audio Player
+
+Add `--builtin-player` to play the result directly in the WebUI instead of only downloading:
+
+```
+.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860 --builtin-player
+```
+
 ## Summary Table  
 
 | Function                  | Description                                                                 |
