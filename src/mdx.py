@@ -263,6 +263,12 @@ def run_mdx(model_params, output_dir, model_path, filename, exclude_main=False, 
 
     model_hash = MDX.get_hash(model_path)
     mp = model_params.get(model_hash)
+    if mp is None:
+        raise RuntimeError(
+            f"Unknown MDX model '{os.path.basename(model_path)}' (hash {model_hash}): "
+            "file may be corrupted or incompletely downloaded. "
+            "Delete it from mdxnet_models/ and re-run src/download_models.py."
+        )
     model = MDXModel(
         device,
         dim_f=mp["mdx_dim_f_set"],

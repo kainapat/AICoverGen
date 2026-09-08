@@ -323,6 +323,8 @@ if __name__ == '__main__':
                     [
                         ['https://huggingface.co/MrDawg/ToothBrushing/resolve/main/ToothBrushing.zip?download=true', 'ToothBrushing'],
                         ['https://huggingface.co/analogspiderweb/analogspiderweb_RVC/resolve/main/villager.zip?download=true', 'Minecraft_Villager'],
+                        ['https://huggingface.co/imam2023/RVC_AI_Model/resolve/main/Ado%20(2022%20-%202026)%20-%20Weights%20Model.zip?download=true', 'Ado'],
+                        ['https://huggingface.co/Eddycrack864/KOBASOLO-AI-Voice/resolve/main/kobasolo.zip', 'KOBASOLO'],
                         ['https://huggingface.co/phant0m4r/LiSA/resolve/main/LiSA.zip', 'Lisa'],
                         ['https://pixeldrain.com/u/3tJmABXA', 'Gura'],
                         ['https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models/resolve/main/AZKi%20(Hybrid).zip', 'Azki']
