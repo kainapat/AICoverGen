@@ -36,11 +36,11 @@ license: mit
 | :--- | :--- | :--- |
 | 🏷️ **Smart Song Naming** | ดึงชื่อเพลงจริงจาก YouTube + คลีนคำขยะ (`[Official MV]`, `4K`, `HD`) ไฟล์ผลลัพธ์เป็น `<ชื่อเพลง> (<โมเดล> Ver).mp3` ทันที | Auto-fetches real song title, strips noise tags (`[MV]`, `4K`), exports as `<Title> (<Model> Ver).mp3` |
 | ⚡ **Fast Mode (2x Speed)** | แยกเสียงร้องเร็วกว่าเดิม 2 เท่า (Default: ON) ลดเวลาลง ~50% เหลือเพียง 2-3 นาทีบน GPU 4GB ด้วยการปรับลำดับ ONNX ให้กระชับ | 2x faster MDX vocal isolation (Default: ON), cuts run time by ~50% down to 2-3 mins on 4GB GPUs |
-| 🎧 **Cyberpunk Audio Player** | เครื่องเล่นเพลงในตัวแบบ In-Memory Data URI เล่นในเว็บได้ทันที 100% ไม่ถูก IDM ดักจับ ป้องกัน Auto-Download และคงสระภาษาไทยครบถ้วน | In-memory Data URI player: 100% IDM-safe in-browser playback, zero unwanted auto-downloads, full Unicode Thai support |
+| 🎧 **Cyberpunk Audio Player** | เครื่องเล่นเพลง In-Memory Data URI ป้องกัน IDM ดักจับ 100%, ไม่มี Auto-Download กวนใจ, แก้ปัญหาเครื่องเล่นค้าง 0:00 และคงสระภาษาไทยครบถ้วน | In-memory Data URI player: 100% IDM-safe in-browser playback, zero unwanted auto-downloads, eliminates 0:00 player freeze, full Unicode Thai support |
 | 🎙️ **59+ Voice Models** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index (Ado, YOASOBI, Nont Tanont, Villager ฯลฯ) | One-click downloads from curated catalog of 59+ public RVC models |
 | 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, single-thread MDX & automatic VRAM cache flushing between stages |
-| 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal มีสีสันสวยงาม แถบความคืบหน้าแบบ Real-time, ตรวจจับการ์ดจอ และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic terminal launcher with live hardware telemetry, port resolver & real-time progress bars |
-| 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Cyberpunk Diagnostic Card พร้อม Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Cyberpunk error diagnostic card with full traceback drainer and crash pause guard |
+| 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal แสดงผลภาษาไทยและหลอด Progress Bar คมชัด ไม่เพี้ยน (Mojibake-free), ตรวจจับการ์ดจอ และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic terminal launcher with clean Unicode progress bars, live hardware telemetry & port resolver |
+| 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Cyberpunk Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Cyberpunk error diagnostic card with WinError 10054 noise filtering, full traceback drainer, and crash pause guard |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English |
 
 ---
@@ -109,10 +109,13 @@ graph LR
    * 🎧 **ปิด Fast Mode:** สำหรับกรณีที่ต้องการคุณภาพแยกเสียงระดับสตูดิโอสูงสุดแบบ Multi-pass Denoising (เช่น เพลงที่มีเสียงคอรัสหรือเสียงเอฟเฟกต์หนาแน่นเป็นพิเศษ)
 5. **กด "สร้างเพลง / Generate":**
    * รอระบบแยกเสียงดนตรี ➔ แปลงเสียงด้วย RVC ➔ ผสมเสียง Reverb
-   * เมื่อเสร็จสิ้น สามารถ **กดฟังเพลงใน WebUI ได้ทันทีผ่านเครื่องเล่นเพลง** หรือ **กดคลิกเพื่อดาวน์โหลดไฟล์ `.mp3`**
+   * เมื่อประมวลผลเสร็จสิ้น การ์ด **Cyberpunk Audio Player** จะแสดงขึ้นมาทันที:
+     * 🎧 **กดฟังเพลงได้ทันทีในเบราว์เซอร์:** มีแถบ Seek bar และปุ่มปรับระดับเสียง/ความเร็วครบถ้วน
+     * 🛡️ **ปลอดภัยจาก IDM:** ป้องกันโปรแกรม IDM เด้งดาวน์โหลดอัตโนมัติ และป้องกันปัญหาเครื่องเล่นค้างที่ 0:00
+     * 💾 **ปุ่มดาวน์โหลดไฟล์ (.mp3) ในตัว:** คลิกเพื่อดาวน์โหลดลงเครื่องได้ทันที โดยชื่อเพลงและสระภาษาไทย (`ั`, `้`, `ุ`) จะคงอยู่ครบถ้วน 100%
 
 > 📛 **รูปแบบชื่อไฟล์ผลลัพธ์:** `<ชื่อเพลงต้นฉบับ> (<ชื่อโมเดล> Ver).mp3`  
-> เช่น: `สุดใจ (NontTanont Ver).mp3` หรือ `Blank Space (Ado Ver).mp3`
+> เช่น: `สุดใจ (NontTanont Ver).mp3` หรือ `ฉบับท้ายสุด (NontTanont Ver).mp3`
 
 ---
 
@@ -186,6 +189,14 @@ AICoverGen/
   ```
 * 🔤 **ชื่อเพลงภาษาไทยหรืออักขระพิเศษ:**  
   ระบบรองรับภาษาไทย, ญี่ปุ่น, จีน และ Unicode เต็มรูปแบบ โดยจะแยกการประมวลผลภายในเป็น ASCII-Safe เพื่อป้องกันไลบรารี C++ แครช และแปลงกลับเป็นชื่อเพลงภาษาไทยในขั้นตอนสุดท้าย
+* 🎧 **ปัญหา IDM ดักดาวน์โหลด / เครื่องเล่นค้าง 0:00 / สระภาษาไทยหาย (IDM Safe & Unicode Preservation):**  
+  * **ปัญหาเดิมของ WebUI:** หากเบราว์เซอร์ติดตั้ง Extension ช่วยดาวน์โหลด เช่น Internet Download Manager (IDM) เมื่อสร้างเพลงเสร็จ ระบบ WebUI ทั่วไปจะส่งไฟล์ผ่าน HTTP GET ทำให้ IDM เข้าดักจับตัดการเชื่อมต่อ ส่งผลให้เครื่องเล่นเสียงค้างที่ `0:00 / 0:00`, มีหน้าต่างดาวน์โหลดเด้งขึ้นมากวนใจทันที และระบบ Sanitizer ของ IDM มักจะตัดสระภาษาไทย (เช่น `ั`, `้`, `ุ`) ออก ทำให้ชื่อเพลงผิดเพี้ยน (เช่น `ฉบับท้ายสุด` กลายเป็น `ฉบบทายสด`)
+  * **การแก้ไขของ AICoverGen:** ใช้ **Cyberpunk In-Memory Audio Player** แปลงข้อมูลไฟล์เสียงเป็น In-Memory Base64 Data URI เล่นใน HTML5 Audio Player บนเบราว์เซอร์ได้ทันที 100% โดยไม่ต้องร้องขอผ่านเครือข่าย:
+    * ✅ **ไม่ถูก IDM ดักจับ 100%** ไม่มีหน้าต่างดาวน์โหลดเด้งขึ้นมาเองกวนใจ
+    * ✅ **เล่นได้ทันที** พร้อมแถบ Seek bar และปรับระดับเสียง ไม่ค้างที่ 0:00
+    * ✅ **คงสระภาษาไทยครบถ้วน** ด้วยปุ่ม `💾 ดาวน์โหลดเพลง (.mp3)` ในตัวที่ส่งต่อชื่อไฟล์ UTF-8 ให้เบราว์เซอร์บันทึกลงเครื่องโดยตรง
+* 🔇 **ข้อความเตือน `ConnectionResetError: [WinError 10054]` เมื่อกดรีเฟรชหน้าเว็บ (Windows Asyncio Filter):**  
+  บน Windows เมื่อผู้ใช้กดรีเฟรชเบราว์เซอร์ (F5) หรือปิดแท็บ ขณะที่เซิร์ฟเวอร์กำลังรอคำขอ ระบบเครือข่ายของ Windows Proactor Loop จะเกิดอีเวนต์ Client Disconnect ซึ่งเป็นพฤติกรรมปกติ ไม่ใช่ข้อผิดพลาดของโมเดล AI หรือโปรแกรมแครช AICoverGen ได้ติดตั้งตัวกรองระดับ Transport Layer และ Launcher เพื่อดักจับและระงับข้อความดังกล่าว ทำให้ Terminal สะอาดและไม่แสดงเป็นการ์ดสีแดงแจ้งเตือนผิดพลาด
 * 🔒 **เจอปัญหาดาวน์โหลดโมเดลจาก Hugging Face ติดสิทธิ์ (Error 401/403):**  
   เข้าเว็บ huggingface.co ไปที่หน้ารายการโมเดลนั้น แล้วกดยอมรับเงื่อนไข จากนั้นสร้าง Access Token ฟรีที่ `huggingface.co/settings/tokens` แล้วนำมาวางในช่อง **🔑 HF Token** ในแท็บ Download Model
 
