@@ -215,79 +215,79 @@ if __name__ == '__main__':
             gr.Markdown("Duplicate the old CPU space for use in private: [![Duplicate this Space](https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm-dark.svg)](https://huggingface.co/spaces/r3gm/AICoverGen_old_stable_cpu?duplicate=true)\n\n") 
 
         # main tab
-        with gr.Tab("Generate"):
+        with gr.Tab("สร้างเพลง / Generate"):
 
-            with gr.Accordion('Main Options'):
+            with gr.Accordion('ตัวเลือกหลัก / Main Options'):
                 with gr.Row():
                     with gr.Column():
-                        rvc_model = gr.Dropdown(voice_models, label='Voice Models', info='Models folder "AICoverGen --> rvc_models". After new models are added into this folder, click the refresh button')
-                        ref_btn = gr.Button('Refresh Models 🔁', variant='primary')
+                        rvc_model = gr.Dropdown(voice_models, label='โมเดลเสียง / Voice Models', info='โฟลเดอร์โมเดล "AICoverGen --> rvc_models" หลังเพิ่มโมเดลใหม่ให้กดปุ่มรีเฟรช / After adding new models, click refresh')
+                        ref_btn = gr.Button('รีเฟรชโมเดล / Refresh 🔁', variant='primary')
 
                     with gr.Column(visible=False) as yt_link_col:
-                        song_input = gr.Text(label='Song input', info='Link to a song on YouTube or full path to a local file. For file upload, click the button below.')
-                        show_file_upload_button = gr.Button('Upload file instead')
+                        song_input = gr.Text(label='เพลงต้นฉบับ / Song input', info='ลิงก์เพลง YouTube หรือ path ไฟล์ในเครื่อง ถ้าจะอัปโหลดไฟล์ให้กดปุ่มด้านล่าง / Link to a YouTube song or full path to a local file.')
+                        show_file_upload_button = gr.Button('อัปโหลดไฟล์แทน / Upload file instead')
 
                     with gr.Column(visible=True) as file_upload_col:
                         audio_extensions = ['.mp3', '.m4a', '.flac', '.wav', '.aac', '.ogg', '.wma', '.alac', '.aiff', '.opus', 'amr']
-                        local_file = gr.File(label='Audio file', interactive=True, type="filepath", file_types=audio_extensions, height=150)
+                        local_file = gr.File(label='ไฟล์เสียง / Audio file', interactive=True, type="filepath", file_types=audio_extensions, height=150)
                         if not IS_ZERO_GPU:
                             with gr.Row():
                                 with gr.Row(scale=2):
-                                    url_media_gui = gr.Textbox(value="", label="Enter URL", placeholder="www.youtube.com/watch?v=g_9rPvbENUw", lines=1)
+                                    url_media_gui = gr.Textbox(value="", label="ใส่ URL / Enter URL", placeholder="www.youtube.com/watch?v=g_9rPvbENUw", lines=1)
                                 with gr.Row(scale=1):
-                                    url_button_gui = gr.Button("Process URL", variant="secondary")
+                                    url_button_gui = gr.Button("โหลด URL / Process URL", variant="secondary")
                             url_button_gui.click(yt_download, [url_media_gui], [local_file])
-                        song_input_file = gr.UploadButton('Upload 📂', file_types=['audio'], variant='primary', visible=False)
-                        show_yt_link_button = gr.Button('Paste YouTube link/Path to local file instead', visible=False)
+                        song_input_file = gr.UploadButton('อัปโหลด / Upload 📂', file_types=['audio'], variant='primary', visible=False)
+                        show_yt_link_button = gr.Button('วางลิงก์ YouTube/path ไฟล์แทน / Paste link instead', visible=False)
                         song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input])
 
                     with gr.Column():
-                        pitch = gr.Slider(-3, 3, value=0, step=1, label='Pitch Change (Vocals ONLY)', info='Generally, use 1 for male to female conversions and -1 for vice-versa. (Octaves)')
-                        pitch_all = gr.Slider(-12, 12, value=0, step=1, label='Overall Pitch Change', info='Changes pitch/key of vocals and instrumentals together. Altering this slightly reduces sound quality. (Semitones)')
+                        pitch = gr.Slider(-3, 3, value=0, step=1, label='เปลี่ยนพิทช์ (เฉพาะเสียงร้อง / Vocals ONLY)', info='ปกติใช้ 1 แปลงชาย→หญิง และ -1 หญิง→ชาย (Octaves) / Use 1 for male-to-female, -1 for vice-versa.')
+                        pitch_all = gr.Slider(-12, 12, value=0, step=1, label='เปลี่ยนพิทช์รวม / Overall Pitch', info='เปลี่ยนพิทช์/คีย์ทั้งเสียงร้องและดนตรีพร้อมกัน อาจลดคุณภาพเสียงเล็กน้อย (Semitones) / Changes pitch/key of vocals and instrumentals together.')
                     show_file_upload_button.click(swap_visibility, outputs=[file_upload_col, yt_link_col, song_input, local_file])
                     show_yt_link_button.click(swap_visibility, outputs=[yt_link_col, file_upload_col, song_input, local_file])
 
-            with gr.Accordion('Voice conversion options', open=False):
+            with gr.Accordion('ตัวเลือกแปลงเสียง / Voice conversion', open=False):
                 with gr.Row():
-                    index_rate = gr.Slider(0, 1, value=0.5, label='Index Rate', info="Controls how much of the AI voice's accent to keep in the vocals")
-                    filter_radius = gr.Slider(0, 7, value=3, step=1, label='Filter radius', info='If >=3: apply median filtering median filtering to the harvested pitch results. Can reduce breathiness')
-                    rms_mix_rate = gr.Slider(0, 1, value=0.25, label='RMS mix rate', info="Control how much to mimic the original vocal's loudness (0) or a fixed loudness (1)")
-                    protect = gr.Slider(0, 0.5, value=0.33, label='Protect rate', info='Protect voiceless consonants and breath sounds. Set to 0.5 to disable.')
+                    index_rate = gr.Slider(0, 1, value=0.5, label='อัตรา Index / Index Rate', info="ควบคุมว่าให้เก็บสำเนียงของเสียง AI ไว้มากแค่ไหน / How much of the AI voice's accent to keep")
+                    filter_radius = gr.Slider(0, 7, value=3, step=1, label='รัศมีฟิลเตอร์ / Filter radius', info='ถ้า >=3: ใช้ median filtering กับผล pitch ช่วยลดเสียงลมหายใจ / If >=3: median filtering on pitch, reduces breathiness')
+                    rms_mix_rate = gr.Slider(0, 1, value=0.25, label='อัตราผสม RMS / RMS mix rate', info="เลียนแบบความดังเสียงต้นฉบับ (0) หรือใช้ความดังคงที่ (1) / Mimic original loudness (0) or fixed loudness (1)")
+                    protect = gr.Slider(0, 0.5, value=0.33, label='อัตราป้องกันเสียง / Protect rate', info='ป้องกันเสียงพยัญชนะไร้เสียงและเสียงลมหายใจ ตั้ง 0.5 เพื่อปิด / Protect voiceless consonants and breath sounds.')
                     with gr.Column():
-                        f0_method = gr.Dropdown(['rmvpe+', 'rmvpe', 'mangio-crepe'], value='rmvpe+', label='Pitch detection algorithm', info='Best option is rmvpe (clarity in vocals), then mangio-crepe (smoother vocals), rmvpe+ use a minimum and maximum allowed pitch values.')
-                        crepe_hop_length = gr.Slider(32, 320, value=128, step=1, visible=False, label='Crepe hop length', info='Lower values leads to longer conversions and higher risk of voice cracks, but better pitch accuracy.')
+                        f0_method = gr.Dropdown(['rmvpe+', 'rmvpe', 'mangio-crepe'], value='rmvpe+', label='อัลกอริทึมจับพิทช์ / Pitch detection', info='แนะนำ rmvpe (เสียงชัด) รองลงมา mangio-crepe (เสียงนุ่ม) / Best is rmvpe (clarity), then mangio-crepe (smoother).')
+                        crepe_hop_length = gr.Slider(32, 320, value=128, step=1, visible=False, label='ความถี่ตรวจจับ Crepe / Crepe hop length', info='ค่ายิ่งต่ำยิ่งแปลงนานและเสี่ยงเสียงแตก แต่จับพิทช์แม่นกว่า / Lower values: longer conversion, better pitch accuracy.')
                         f0_method.change(show_hop_slider, inputs=f0_method, outputs=crepe_hop_length)
                 with gr.Row():
                     with gr.Row():
-                        steps = gr.Slider(minimum=1, maximum=3, label="Steps", value=1, step=1, interactive=True)
+                        steps = gr.Slider(minimum=1, maximum=3, label="รอบการแปลง / Steps", value=1, step=1, interactive=True)
                     with gr.Row():
-                        extra_denoise = gr.Checkbox(True, label='Denoise', info='Apply an additional noise reduction step to clean up the audio further.')
-                        keep_files = gr.Checkbox((False if IS_ZERO_GPU else True), label='Keep intermediate files', info='Keep all audio files generated in the song_output/id directory, e.g. Isolated Vocals/Instrumentals. Leave unchecked to save space', interactive=(False if IS_ZERO_GPU else True))
+                        extra_denoise = gr.Checkbox(True, label='ลดนอยส์ / Denoise', info='ลดนอยส์เพิ่มเติมให้เสียงสะอาดขึ้น / Extra noise reduction for cleaner audio.')
+                        keep_files = gr.Checkbox((False if IS_ZERO_GPU else True), label='เก็บไฟล์ระหว่างทาง / Keep intermediate files', info='เก็บไฟล์เสียงทั้งหมดใน song_output/id เช่น เสียงร้อง/ดนตรีแยก ไม่ติ๊กเพื่อประหยัดพื้นที่ / Keep all intermediate audio files. Uncheck to save space', interactive=(False if IS_ZERO_GPU else True))
 
-            with gr.Accordion('Audio mixing options', open=False):
-                gr.Markdown('### Volume Change (decibels)')
+            with gr.Accordion('ตัวเลือกผสมเสียง / Audio mixing', open=False):
+                gr.Markdown('### เปลี่ยนความดัง (เดซิเบล / decibels)')
                 with gr.Row():
-                    main_gain = gr.Slider(-20, 20, value=0, step=1, label='Main Vocals')
-                    backup_gain = gr.Slider(-20, 20, value=0, step=1, label='Backup Vocals')
-                    inst_gain = gr.Slider(-20, 20, value=0, step=1, label='Music')
+                    main_gain = gr.Slider(-20, 20, value=0, step=1, label='เสียงร้องหลัก / Main Vocals')
+                    backup_gain = gr.Slider(-20, 20, value=0, step=1, label='เสียงร้องเสริม / Backup Vocals')
+                    inst_gain = gr.Slider(-20, 20, value=0, step=1, label='ดนตรี / Music')
 
-                gr.Markdown('### Reverb Control on AI Vocals')
+                gr.Markdown('### ควบคุมเสียงก้อง (Reverb) ของเสียง AI')
                 with gr.Row():
-                    reverb_rm_size = gr.Slider(0, 1, value=0.15, label='Room size', info='The larger the room, the longer the reverb time')
-                    reverb_wet = gr.Slider(0, 1, value=0.2, label='Wetness level', info='Level of AI vocals with reverb')
-                    reverb_dry = gr.Slider(0, 1, value=0.8, label='Dryness level', info='Level of AI vocals without reverb')
-                    reverb_damping = gr.Slider(0, 1, value=0.7, label='Damping level', info='Absorption of high frequencies in the reverb')
+                    reverb_rm_size = gr.Slider(0, 1, value=0.15, label='ขนาดห้อง / Room size', info='ห้องยิ่งใหญ่เสียงก้องยิ่งนาน / Larger room, longer reverb time')
+                    reverb_wet = gr.Slider(0, 1, value=0.2, label='ระดับเสียงก้อง / Wetness', info='ระดับเสียง AI ที่มี reverb / Level of AI vocals with reverb')
+                    reverb_dry = gr.Slider(0, 1, value=0.8, label='ระดับเสียงแห้ง / Dryness', info='ระดับเสียง AI ที่ไม่มี reverb / Level of AI vocals without reverb')
+                    reverb_damping = gr.Slider(0, 1, value=0.7, label='ระดับดูดซับเสียง / Damping', info='การดูดซับความถี่สูงของ reverb / Absorption of high frequencies')
 
-                gr.Markdown('### Audio Output Format')
-                output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='Output file type', info='mp3: small file size, decent quality. wav: Large file size, best quality')
+                gr.Markdown('### รูปแบบไฟล์เสียง / Output Format')
+                output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='ชนิดไฟล์ / Output file type', info='mp3: ไฟล์เล็ก คุณภาพพอใช้ wav: ไฟล์ใหญ่ คุณภาพดีสุด / mp3: small file, decent quality. wav: large file, best quality')
 
             with gr.Row():
-                clear_btn = gr.ClearButton(value='Clear', components=[song_input, rvc_model, keep_files, local_file])
-                generate_btn = gr.Button("Generate", variant='primary')
+                clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file])
+                generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')
                 ai_cover = (
-                    gr.Audio(label='AI Cover', show_share_button=True)
+                    gr.Audio(label='เพลง AI / AI Cover', show_share_button=True)
                     if args.builtin_player else
-                    gr.File(label="AI Cover", interactive=False)
+                    gr.File(label="เพลง AI / AI Cover", interactive=False)
                 )
             gr.Markdown("- You can also try `AICoverGen❤️` in Colab’s free tier, which provides free GPU [link](https://github.com/R3gm/AICoverGen?tab=readme-ov-file#aicovergen).")
 
@@ -305,24 +305,24 @@ if __name__ == '__main__':
                                      reverb_dry, reverb_damping, output_format, ai_cover, extra_denoise, steps])
 
         # Download tab
-        with gr.Tab('Download model'):
+        with gr.Tab('โหลดโมเดล / Download model'):
 
-            with gr.Tab('From HuggingFace/Pixeldrain URL'):
+            with gr.Tab('จากลิงก์ / From URL'):
                 with gr.Row():
-                    model_zip_link = gr.Text(label='Download link to model', info='Should be a zip file containing a .pth model file and an optional .index file.')
-                    model_name = gr.Text(label='Name your model', info='Give your new model a unique name from your other voice models.')
+                    model_zip_link = gr.Text(label='ลิงก์โหลดโมเดล / Download link', info='ต้องเป็น zip ที่มีไฟล์ .pth และไฟล์ .index (ถ้ามี) / Must be a zip with a .pth file and optional .index.')
+                    model_name = gr.Text(label='ตั้งชื่อโมเดล / Name your model', info='ตั้งชื่อไม่ซ้ำกับโมเดลอื่น / Give it a unique name.')
 
                 with gr.Row():
-                    download_btn = gr.Button('Download 🌐', variant='primary', scale=19)
-                    dl_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
+                    download_btn = gr.Button('โหลดเลย / Download 🌐', variant='primary', scale=19)
+                    dl_output_message = gr.Text(label='ผลลัพธ์ / Output Message', interactive=False, scale=20)
 
                 download_btn.click(download_online_model, inputs=[model_zip_link, model_name], outputs=dl_output_message)
 
-                gr.Markdown('## Input Examples')
+                gr.Markdown('## ตัวอย่าง / Input Examples')
                 gr.Examples(
                     [
                         ['https://huggingface.co/MrDawg/ToothBrushing/resolve/main/ToothBrushing.zip?download=true', 'ToothBrushing'],
-                        ['https://huggingface.co/sail-rvc/Aldeano_Minecraft__RVC_V2_-_500_Epochs_/resolve/main/model.pth?download=true, https://huggingface.co/sail-rvc/Aldeano_Minecraft__RVC_V2_-_500_Epochs_/resolve/main/model.index?download=true', 'Minecraft_Villager'],
+                        ['https://huggingface.co/analogspiderweb/analogspiderweb_RVC/resolve/main/villager.zip?download=true', 'Minecraft_Villager'],
                         ['https://huggingface.co/phant0m4r/LiSA/resolve/main/LiSA.zip', 'Lisa'],
                         ['https://pixeldrain.com/u/3tJmABXA', 'Gura'],
                         ['https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models/resolve/main/AZKi%20(Hybrid).zip', 'Azki']
@@ -333,27 +333,27 @@ if __name__ == '__main__':
                     cache_examples=False,
                 )
 
-            with gr.Tab('From Public Index'):
+            with gr.Tab('จากคลังโมเดล / Public Index'):
 
-                gr.Markdown('## How to use')
-                gr.Markdown('- Click Initialize public models table')
-                gr.Markdown('- Filter models using tags or search bar')
-                gr.Markdown('- Select a row to autofill the download link and model name')
-                gr.Markdown('- Click Download')
+                gr.Markdown('## วิธีใช้ / How to use')
+                gr.Markdown('- กดปุ่มโหลดตารางโมเดล / Click Initialize public models table')
+                gr.Markdown('- กรองโมเดลด้วย tags หรือช่องค้นหา / Filter models using tags or search bar')
+                gr.Markdown('- เลือกแถวเพื่อเติมลิงก์และชื่ออัตโนมัติ / Select a row to autofill link and name')
+                gr.Markdown('- กด Download')
 
                 with gr.Row():
-                    pub_zip_link = gr.Text(label='Download link to model')
-                    pub_model_name = gr.Text(label='Model name')
+                    pub_zip_link = gr.Text(label='ลิงก์โหลดโมเดล / Download link')
+                    pub_model_name = gr.Text(label='ชื่อโมเดล / Model name')
 
                 with gr.Row():
                     download_pub_btn = gr.Button('Download 🌐', variant='primary', scale=19)
-                    pub_dl_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
+                    pub_dl_output_message = gr.Text(label='ผลลัพธ์ / Output Message', interactive=False, scale=20)
 
-                filter_tags = gr.CheckboxGroup(value=[], label='Show voice models with tags', choices=[])
-                search_query = gr.Text(label='Search')
-                load_public_models_button = gr.Button(value='Initialize public models table', variant='primary')
+                filter_tags = gr.CheckboxGroup(value=[], label='แสดงโมเดลตาม tags / Show models with tags', choices=[])
+                search_query = gr.Text(label='ค้นหา / Search')
+                load_public_models_button = gr.Button(value='โหลดตารางโมเดล / Initialize table', variant='primary')
 
-                public_models_table = gr.DataFrame(value=[], headers=['Model Name', 'Description', 'Credit', 'URL', 'Tags'], label='Available Public Models', interactive=False)
+                public_models_table = gr.DataFrame(value=[], headers=['Model Name', 'Description', 'Credit', 'URL', 'Tags'], label='โมเดลสาธารณะ / Available Public Models', interactive=False)
                 public_models_table.select(pub_dl_autofill, inputs=[public_models_table], outputs=[pub_zip_link, pub_model_name])
                 load_public_models_button.click(load_public_models, outputs=[public_models_table, filter_tags])
                 search_query.change(filter_models, inputs=[filter_tags, search_query], outputs=public_models_table)
@@ -361,22 +361,22 @@ if __name__ == '__main__':
                 download_pub_btn.click(download_online_model, inputs=[pub_zip_link, pub_model_name], outputs=pub_dl_output_message)
 
         # Upload tab
-        with gr.Tab('Upload model'):
-            gr.Markdown('## Upload locally trained RVC v2 model and index file')
-            gr.Markdown('- Find model file (weights folder) and optional index file (logs/[name] folder)')
-            gr.Markdown('- Compress files into zip file')
-            gr.Markdown('- Upload zip file and give unique name for voice')
-            gr.Markdown('- Click Upload model')
+        with gr.Tab('อัปโหลดโมเดล / Upload model'):
+            gr.Markdown('## อัปโหลดโมเดล RVC v2 ที่เทรนเอง / Upload locally trained RVC v2 model')
+            gr.Markdown('- หาไฟล์โมเดล (โฟลเดอร์ weights) และไฟล์ index (โฟลเดอร์ logs/[name]) / Find model + optional index file')
+            gr.Markdown('- บีบอัดเป็นไฟล์ zip / Compress files into zip')
+            gr.Markdown('- อัปโหลด zip แล้วตั้งชื่อไม่ซ้ำ / Upload zip and give it a unique name')
+            gr.Markdown('- กด Upload model')
 
             with gr.Row():
                 with gr.Column():
-                    zip_file = gr.File(label='Zip file')
+                    zip_file = gr.File(label='ไฟล์ zip / Zip file')
 
-                local_model_name = gr.Text(label='Model name')
+                local_model_name = gr.Text(label='ชื่อโมเดล / Model name')
 
             with gr.Row():
-                model_upload_button = gr.Button('Upload model', variant='primary', scale=19)
-                local_upload_output_message = gr.Text(label='Output Message', interactive=False, scale=20)
+                model_upload_button = gr.Button('อัปโหลดโมเดล / Upload model', variant='primary', scale=19)
+                local_upload_output_message = gr.Text(label='ผลลัพธ์ / Output Message', interactive=False, scale=20)
                 model_upload_button.click(upload_local_model, inputs=[zip_file, local_model_name], outputs=local_upload_output_message)
 
     app.launch(
