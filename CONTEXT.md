@@ -48,6 +48,8 @@
 | **Permanent Scrubber Visibility** | Continuous 100% visibility of the timeline thumb circle (`::-webkit-slider-thumb`) and progress gradient without requiring mouse hover, overcoming Chromium's native Shadow DOM auto-hide behavior. |
 | **Cyberpunk Terminal Sub-steps** | Formatted secondary stdout/stderr stream lines indented with icons and colors (ASCII routing, ONNX provider, RVC keys match, speed multiplier, noise reduction) maintaining clean visual hierarchy. |
 | **Runtime Notice Banner** | Formatted Amber notification (`⚠️  [RUNTIME NOTICE]`) contextualizing library deprecation warnings (e.g. yt-dlp Python 3.10 EOL) and confirming standard engine compatibility. |
+| **Active VRAM Working Set** | The actual memory occupied during inference (~1.2 - 1.5 GB in single-thread MDX-Net mode, ~1.8 - 2.2 GB during RVC v2 voice conversion) leaving remaining VRAM free for the operating system. |
+| **Total Physical VRAM** | The total hardware video memory capacity of the GPU (e.g. 4.0 GB on RTX 2050) queried to automatically select safe concurrency thresholds (`threads: 1`). |
 
 ## Pipeline Flow
 

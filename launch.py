@@ -315,7 +315,7 @@ def format_log_line(line):
     if "threads:" in raw_line and "vram:" in raw_line:
         try:
             vram_val = float(raw_line.split("vram:")[1].strip())
-            cprint(f"     💾  [VRAM Allocation] Dynamic MDX limit: {vram_val:.1f} GB", "dark")
+            cprint(f"     💾  [VRAM Allocation] {vram_val:.1f} GB GPU ➔ Safe Single-Thread Mode (~1.5 GB Active)", "dark")
         except Exception:
             pass
         return

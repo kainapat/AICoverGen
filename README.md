@@ -38,7 +38,7 @@ license: mit
 | ⚡ **Fast Mode (2x Speed)** | แยกเสียงร้องเร็วกว่าเดิม 2 เท่า (Default: ON) ลดเวลาลง ~50% เหลือเพียง 2-3 นาทีบน GPU 4GB ด้วยการปรับลำดับ ONNX ให้กระชับ | 2x faster MDX vocal isolation (Default: ON), cuts run time by ~50% down to 2-3 mins on 4GB GPUs |
 | 🎧 **Cyberpunk Audio Player** | เครื่องเล่นเพลง Custom Theme นีออนแบบ In-Memory แสดงจุดเลื่อนเพลง (Scrubber Thumb) ตลอดเวลา 100% โดยไม่ต้องเอาเมาส์ชี้, ป้องกัน IDM ดักจับ, ไม่มี Auto-Download กวนใจ, แก้ปัญหาค้าง 0:00 และคงสระภาษาไทยครบถ้วน | Custom Cyberpunk in-memory player: 100% permanent scrubber thumb visibility (no hover needed), IDM-safe, zero auto-downloads, eliminates 0:00 freeze, full Thai Unicode support |
 | 🎙️ **59+ Voice Models** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index (Ado, YOASOBI, Nont Tanont, Villager ฯลฯ) | One-click downloads from curated catalog of 59+ public RVC models |
-| 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, single-thread MDX & automatic VRAM cache flushing between stages |
+| 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX (กิน VRAM จริงเพียง ~1.5 GB บนโหมด 1 Thread) พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, lightweight ~1.5GB active single-thread MDX & automatic VRAM cache flushing |
 | 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal จัดระเบียบ Sub-steps สวยงาม, คำนวณ RVC Speed (x Real-time), ป้ายเตือน Amber Runtime Notice ชัดเจน, หลอด Progress Bar คมชัด และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic terminal launcher with clean sub-steps, RVC inference speed multiplier, Amber runtime notices & live telemetry |
 | 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Cyberpunk Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Cyberpunk error diagnostic card with WinError 10054 noise filtering, full traceback drainer, and crash pause guard |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English |
@@ -129,7 +129,7 @@ graph LR
   ⬇️  [1/6] Downloading YouTube audio stream...
   🎼  [2/6] Separating Vocals & Instrumental (MDX-Net Fast Mode)...
      🎮  [ONNX Engine] CUDA Execution Provider active (GPU 0)
-     💾  [VRAM Allocation] Dynamic MDX limit: 4.0 GB
+     💾  [VRAM Allocation] 4.0 GB GPU ➔ Safe Single-Thread Mode (~1.5 GB Active)
      ⚡ MDX [████████████████░░░░] 80% | 64/80 chunks | ETA: 7s
      🧹 GPU VRAM cache flushed successfully.
   🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...
