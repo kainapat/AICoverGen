@@ -87,10 +87,21 @@ def get_youtube_video_id(url, ignore_playlist=True):
     return None
 
 
+def sanitize_filename(name, max_len=150):
+    """Make a string safe for Windows filenames. Keeps Unicode (Thai, JP...),
+    strips only forbidden chars \\/:*?\"<>| and control chars."""
+    import re
+    name = re.sub(r'[\\/:*?"<>|\x00-\x1f]', '', name)
+    name = re.sub(r'\s+', ' ', name).strip().rstrip('.')
+    if len(name) > max_len:
+        name = name[:max_len].rstrip()
+    return name or 'song'
+
+
 def yt_download(link):
     if not link.strip():
         gr.Info("You need to provide a download link.")
-        return None
+        return None, None
     ydl_opts = {
         'format': 'bestaudio',
         'outtmpl': '%(id)s',
@@ -104,8 +115,10 @@ def yt_download(link):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         result = ydl.extract_info(link, download=True)
         download_path = ydl.prepare_filename(result, outtmpl='%(id)s.mp3')
+        raw_title = (result.get('title') or result.get('fulltitle') or result.get('id') or 'song')
+        song_title = sanitize_filename(raw_title)
 
-    return download_path
+    return download_path, song_title
 
 
 def ensure_ascii_audio_path(audio_path, song_id):
@@ -267,16 +280,18 @@ def preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type,
 
 def get_audio_file(song_input, is_webui, input_type, progress):
     keep_orig = False
+    song_title = None
     if input_type == 'yt':
         display_progress('[~] Downloading song...', 0, is_webui, progress)
         song_link = song_input.split('&')[0]
-        orig_song_path = yt_download(song_link)
+        orig_song_path, song_title = yt_download(song_link)
     elif input_type == 'local':
         orig_song_path = song_input
+        song_title = sanitize_filename(os.path.splitext(os.path.basename(song_input))[0])
         keep_orig = True
     else:
         orig_song_path = None
-    return keep_orig, orig_song_path
+    return keep_orig, orig_song_path, song_title
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 compute_half = True if torch.cuda.is_available() else False
@@ -336,7 +351,8 @@ def combine_audio(audio_paths, output_path, main_gain, backup_gain, inst_gain, o
 def process_song(
     song_dir, song_input, mdx_model_params, song_id, is_webui, input_type, progress,
     keep_files, pitch_change, pitch_change_all, voice_model, index_rate, filter_radius,
-    rms_mix_rate, protect, f0_method, crepe_hop_length, output_format, keep_orig, orig_song_path, steps
+    rms_mix_rate, protect, f0_method, crepe_hop_length, output_format, keep_orig, orig_song_path, steps,
+    song_title=None
 ):
 
     if not os.path.exists(song_dir):
@@ -353,8 +369,12 @@ def process_song(
             orig_song_path, instrumentals_path, main_vocals_dereverb_path, backup_vocals_path = paths
 
     pitch_change = pitch_change * 12 + pitch_change_all
-    ai_vocals_path = os.path.join(song_dir, f'{os.path.splitext(os.path.basename(orig_song_path))[0]}_{voice_model}_p{pitch_change}_i{index_rate}_fr{filter_radius}_rms{rms_mix_rate}_pro{protect}_{f0_method}{"" if f0_method != "mangio-crepe" else f"_{crepe_hop_length}"}_s{steps}.wav')
-    ai_cover_path = os.path.join(song_dir, f'{os.path.splitext(os.path.basename(orig_song_path))[0]} ({voice_model} Ver).{output_format}')
+    # intermediate vocals file stays ASCII-safe (libsndfile/RVC can't read non-ASCII on Windows)
+    safe_stem = os.path.splitext(os.path.basename(orig_song_path))[0]
+    # final cover uses the original song title: "<Title> (<VoiceModel> Ver).mp3"
+    cover_stem = song_title or safe_stem
+    ai_vocals_path = os.path.join(song_dir, f'{safe_stem}_{voice_model}_p{pitch_change}_i{index_rate}_fr{filter_radius}_rms{rms_mix_rate}_pro{protect}_{f0_method}{"" if f0_method != "mangio-crepe" else f"_{crepe_hop_length}"}_s{steps}.wav')
+    ai_cover_path = os.path.join(song_dir, f'{cover_stem} ({voice_model} Ver).{output_format}')
 
     if not os.path.exists(ai_vocals_path):
         display_progress('[~] Converting voice using RVC...', 0.5, is_webui, progress)
@@ -444,7 +464,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
 
         song_dir = os.path.join(output_dir, song_id)
 
-        keep_orig, orig_song_path = get_audio_file(song_input, is_webui, input_type, progress)
+        keep_orig, orig_song_path, song_title = get_audio_file(song_input, is_webui, input_type, progress)
         orig_song_path, ascii_temp_copy = ensure_ascii_audio_path(orig_song_path, song_id)
         orig_song_path = convert_to_stereo(orig_song_path)
 
@@ -479,6 +499,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
             keep_orig,
             orig_song_path,
             steps,
+            song_title,
         )
 
         end = time.time()
