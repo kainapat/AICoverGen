@@ -621,6 +621,28 @@
             "tags": [
                 "Other Language"
             ]
+        },
+        {
+            "name": "Ado",
+            "url": "https://huggingface.co/imam2023/RVC_AI_Model/resolve/main/Ado%20(2022%20-%202026)%20-%20Weights%20Model.zip",
+            "description": "Ado - talented JP artist (2022-2026 weights)",
+            "added": "2026-09-08",
+            "credit": "imam2023",
+            "tags": [
+                "Real person",
+                "Japanese"
+            ]
+        },
+        {
+            "name": "KOBASOLO",
+            "url": "https://huggingface.co/Eddycrack864/KOBASOLO-AI-Voice/resolve/main/kobasolo.zip",
+            "description": "KOBASOLO - JP artist AI voice",
+            "added": "2026-09-08",
+            "credit": "Eddycrack864",
+            "tags": [
+                "Real person",
+                "Japanese"
+            ]
         }
-    ]       
+    ]
 }
