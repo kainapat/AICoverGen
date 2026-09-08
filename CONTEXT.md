@@ -44,6 +44,8 @@
 | **RFC 5987 Filename Encoding** | Standardized `filename*=utf-8''` HTTP header encoding preserving Unicode characters (Thai vowels, tone marks, diacritics) across browser file downloads. |
 | **Cyberpunk Audio Player Card** | Unified HTML5 audio player and download card using in-memory Data URIs (`data:audio/mpeg;base64,...`) to completely isolate playback from external download managers (IDM), preventing unwanted auto-downloads and preserving full Thai diacritics. |
 | **Windows Asyncio Disconnect Suppressor** | Patch and log filter catching benign TCP resets (`WinError 10054` in `_ProactorBasePipeTransport`) caused by client page refreshes or tab closures, preventing false-positive error diagnostic cards. |
+| **Custom Cyberpunk Audio Controller** | Fully custom-styled media player bar replacing browser-native audio controls with a dark-glass container, neon cyan controls, monospace time display, volume slider, and real-time seek timeline. |
+| **Permanent Scrubber Visibility** | Continuous 100% visibility of the timeline thumb circle (`::-webkit-slider-thumb`) and progress gradient without requiring mouse hover, overcoming Chromium's native Shadow DOM auto-hide behavior. |
 
 ## Pipeline Flow
 

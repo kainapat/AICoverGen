@@ -248,6 +248,290 @@ def show_hop_slider(pitch_detection_algo):
         return gr.update(visible=False)
 
 
+CYBER_PLAYER_HEAD = """
+<style>
+.cyber-player-card {
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.12), inset 0 0 15px rgba(0, 240, 255, 0.04);
+    border-radius: 12px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, rgba(10, 15, 28, 0.96) 0%, rgba(16, 24, 40, 0.96) 100%);
+    margin-top: 8px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.cyber-controller-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.4);
+}
+.cyber-play-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00f0ff 0%, #00b4d8 100%);
+    color: #050b14;
+    border: none;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+}
+.cyber-play-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 18px rgba(0, 240, 255, 0.7);
+}
+.cyber-play-btn:active {
+    transform: scale(0.95);
+}
+.cyber-time-display {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #cbd5e1;
+    white-space: nowrap;
+    min-width: 86px;
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+    user-select: none;
+}
+.cyber-seek-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    margin: 0 4px;
+}
+.cyber-seek-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    background: linear-gradient(to right, #00f0ff 0%, #00f0ff 0%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 100%);
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+}
+.cyber-seek-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: transparent;
+}
+.cyber-seek-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00f0ff;
+    box-shadow: 0 0 10px #00f0ff, 0 0 20px rgba(0, 240, 255, 0.8);
+    border: 2px solid #ffffff;
+    cursor: pointer;
+    margin-top: -4px;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.cyber-seek-slider:hover::-webkit-slider-thumb {
+    transform: scale(1.25);
+    box-shadow: 0 0 15px #00f0ff, 0 0 25px rgba(0, 240, 255, 1);
+}
+.cyber-seek-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: transparent;
+}
+.cyber-seek-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00f0ff;
+    box-shadow: 0 0 10px #00f0ff;
+    border: 2px solid #ffffff;
+    cursor: pointer;
+}
+.cyber-vol-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.cyber-vol-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.05rem;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.85;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.cyber-vol-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+.cyber-vol-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 60px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.25);
+    outline: none;
+    cursor: pointer;
+}
+.cyber-vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00ffa5;
+    box-shadow: 0 0 6px #00ffa5;
+    cursor: pointer;
+}
+.cyber-vol-slider::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00ffa5;
+    box-shadow: 0 0 6px #00ffa5;
+    cursor: pointer;
+}
+@media (max-width: 640px) {
+    .cyber-controller-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .cyber-seek-container {
+        width: 100%;
+        order: 3;
+        margin: 4px 0;
+    }
+}
+</style>
+<script>
+(function() {
+    function fmtTime(s) {
+        if (isNaN(s) || s < 0) return '0:00';
+        var m = Math.floor(s / 60);
+        var sec = Math.floor(s % 60);
+        return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+    function updateTrackGradient(slider, cur, dur) {
+        var pct = dur > 0 ? (cur / dur) * 100 : 0;
+        slider.style.background = 'linear-gradient(to right, #00f0ff 0%, #00f0ff ' + pct + '%, rgba(255,255,255,0.2) ' + pct + '%, rgba(255,255,255,0.2) 100%)';
+    }
+    window.initCyberAudio = function(cid) {
+        var a = document.getElementById('audio_' + cid);
+        var s = document.getElementById('seek_' + cid);
+        var t = document.getElementById('time_' + cid);
+        if (!a || !s) return;
+        var dur = a.duration || 0;
+        if (dur > 0) {
+            s.max = dur;
+            s.value = a.currentTime || 0;
+            updateTrackGradient(s, a.currentTime || 0, dur);
+            if (t) t.textContent = fmtTime(a.currentTime || 0) + ' / ' + fmtTime(dur);
+        }
+    };
+    window.toggleCyberPlay = function(cid) {
+        var a = document.getElementById('audio_' + cid);
+        if (!a) return;
+        if (a.paused) {
+            a.play().catch(function(e){ console.warn(e); });
+        } else {
+            a.pause();
+        }
+    };
+    window.onCyberPlay = function(cid) {
+        var b = document.getElementById('play_' + cid);
+        if (b) { b.innerHTML = '⏸'; b.title = 'Pause'; }
+    };
+    window.onCyberPause = function(cid) {
+        var b = document.getElementById('play_' + cid);
+        if (b) { b.innerHTML = '▶'; b.title = 'Play'; }
+    };
+    window.onCyberEnded = function(cid) {
+        var b = document.getElementById('play_' + cid);
+        var s = document.getElementById('seek_' + cid);
+        var a = document.getElementById('audio_' + cid);
+        var t = document.getElementById('time_' + cid);
+        if (b) { b.innerHTML = '▶'; b.title = 'Play'; }
+        if (s && a) {
+            s.value = 0;
+            updateTrackGradient(s, 0, a.duration || 0);
+        }
+        if (a && t) {
+            t.textContent = '0:00 / ' + fmtTime(a.duration || 0);
+        }
+    };
+    window.updateCyberTime = function(cid, a) {
+        var s = document.getElementById('seek_' + cid);
+        var t = document.getElementById('time_' + cid);
+        if (!s || !a) return;
+        var cur = a.currentTime || 0;
+        var dur = a.duration || 0;
+        if (!s.dataset.dragging) {
+            s.value = cur;
+            updateTrackGradient(s, cur, dur);
+        }
+        if (t) t.textContent = fmtTime(cur) + ' / ' + fmtTime(dur);
+    };
+    window.seekCyberInput = function(cid, val) {
+        var s = document.getElementById('seek_' + cid);
+        var a = document.getElementById('audio_' + cid);
+        var t = document.getElementById('time_' + cid);
+        if (!s) return;
+        s.dataset.dragging = 'true';
+        var dur = a ? (a.duration || 0) : 100;
+        updateTrackGradient(s, parseFloat(val), dur);
+        if (t) t.textContent = fmtTime(parseFloat(val)) + ' / ' + fmtTime(dur);
+    };
+    window.seekCyberChange = function(cid, val) {
+        var s = document.getElementById('seek_' + cid);
+        var a = document.getElementById('audio_' + cid);
+        if (s) delete s.dataset.dragging;
+        if (a) a.currentTime = parseFloat(val);
+    };
+    window.setCyberVolume = function(cid, val) {
+        var a = document.getElementById('audio_' + cid);
+        var vb = document.getElementById('volbtn_' + cid);
+        if (!a) return;
+        var v = parseFloat(val);
+        a.volume = v;
+        a.muted = (v === 0);
+        if (vb) vb.innerHTML = (v === 0) ? '🔇' : (v < 0.5 ? '🔉' : '🔊');
+    };
+    window.toggleCyberMute = function(cid) {
+        var a = document.getElementById('audio_' + cid);
+        var vb = document.getElementById('volbtn_' + cid);
+        var vs = document.getElementById('vol_' + cid);
+        if (!a) return;
+        a.muted = !a.muted;
+        if (a.muted) {
+            if (vb) vb.innerHTML = '🔇';
+        } else {
+            if (vb) vb.innerHTML = (a.volume < 0.5 ? '🔉' : '🔊');
+            if (vs) vs.value = a.volume || 1;
+        }
+    };
+})();
+</script>
+"""
+
+
 def render_player_card(cover_path=None):
     if not cover_path or not os.path.exists(cover_path):
         return """
@@ -268,6 +552,7 @@ def render_player_card(cover_path=None):
     try:
         import base64
         import html
+        import uuid
         with open(cover_path, "rb") as f:
             audio_bytes = f.read()
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
@@ -277,17 +562,12 @@ def render_player_card(cover_path=None):
         data_uri = f"data:{mime};base64,{b64_audio}"
         escaped_name = html.escape(file_name)
         download_attr = html.escape(file_name, quote=True)
+        cid = f"cp_{uuid.uuid4().hex[:8]}"
 
         return f"""
-        <div style="
-            border: 1px solid rgba(0, 240, 255, 0.35);
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.12), inset 0 0 15px rgba(0, 240, 255, 0.04);
-            border-radius: 12px;
-            padding: 18px 22px;
-            background: linear-gradient(135deg, rgba(10, 15, 28, 0.95) 0%, rgba(16, 24, 40, 0.95) 100%);
-            margin-top: 8px;
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        {CYBER_PLAYER_HEAD}
+        <div class="cyber-player-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                 <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
                     <span style="font-size: 1.5rem;">🎧</span>
                     <div style="overflow: hidden;">
@@ -301,10 +581,35 @@ def render_player_card(cover_path=None):
                 </div>
             </div>
 
-            <div style="margin-bottom: 14px;">
-                <audio controls style="width: 100%; height: 42px; border-radius: 8px; outline: none;" src="{data_uri}">
-                    เบราว์เซอร์ของคุณไม่รองรับการเล่นเสียง
-                </audio>
+            <audio id="audio_{cid}"
+                   preload="auto"
+                   style="display: none;"
+                   src="{data_uri}"
+                   onloadedmetadata="window.initCyberAudio && window.initCyberAudio('{cid}')"
+                   ontimeupdate="window.updateCyberTime && window.updateCyberTime('{cid}', this)"
+                   onplay="window.onCyberPlay && window.onCyberPlay('{cid}')"
+                   onpause="window.onCyberPause && window.onCyberPause('{cid}')"
+                   onended="window.onCyberEnded && window.onCyberEnded('{cid}')">
+                เบราว์เซอร์ของคุณไม่รองรับการเล่นเสียง
+            </audio>
+
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"
+                 onload="window.initCyberAudio && window.initCyberAudio('{cid}')"
+                 style="display: none;" />
+
+            <div class="cyber-controller-bar">
+                <button id="play_{cid}" class="cyber-play-btn" type="button" onclick="window.toggleCyberPlay('{cid}')" title="Play">▶</button>
+                <span id="time_{cid}" class="cyber-time-display">0:00 / --:--</span>
+                <div class="cyber-seek-container">
+                    <input id="seek_{cid}" class="cyber-seek-slider" type="range" min="0" max="100" value="0" step="0.1"
+                           oninput="window.seekCyberInput('{cid}', this.value)"
+                           onchange="window.seekCyberChange('{cid}', this.value)">
+                </div>
+                <div class="cyber-vol-container">
+                    <button id="volbtn_{cid}" class="cyber-vol-btn" type="button" onclick="window.toggleCyberMute('{cid}')" title="Mute/Unmute">🔊</button>
+                    <input id="vol_{cid}" class="cyber-vol-slider" type="range" min="0" max="1" step="0.05" value="1"
+                           oninput="window.setCyberVolume('{cid}', this.value)" title="Volume">
+                </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 12px;">
@@ -345,7 +650,7 @@ if __name__ == '__main__':
     with open(os.path.join(rvc_models_dir, 'public_models.json'), encoding='utf8') as infile:
         public_models = json.load(infile)
 
-    with gr.Blocks(title='AICoverGenWebUI', theme=args.theme, fill_width=True, fill_height=False) as app:
+    with gr.Blocks(title='AICoverGenWebUI', theme=args.theme, fill_width=True, fill_height=False, head=CYBER_PLAYER_HEAD) as app:
 
         gr.Label(f'AICoverGen WebUI {"ZeroGPU mode" if IS_ZERO_GPU else ""} created with ❤️', show_label=False)
         if IS_ZERO_GPU:
