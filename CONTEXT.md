@@ -40,6 +40,8 @@
 | **Traceback Buffer Drainer** | Pipe management pattern in `launch.py` ensuring stdout/stderr buffers are fully drained on process crash so stacktraces are never truncated. |
 | **Atomic Chunk Counter** | Thread-safe in-memory progress counter in `src/mdx.py` replacing disabled `tqdm` to guarantee accurate chunk tracking (`X/Y chunks`) and realistic ETA calculations. |
 | **UTF-8 Pipe & Console Enforcement** | Explicit UTF-8 subprocess environment (`PYTHONUTF8=1`, `PYTHONIOENCODING=utf-8`) and stream reconfig preventing Windows code page Mojibake (`â–‘â–‘`). |
+| **Inline Audio Streaming** | Server-side MIME & header patch ensuring `Content-Disposition: inline` and `audio/mpeg` for `.mp3` files, enabling native in-browser playback without download manager interception. |
+| **RFC 5987 Filename Encoding** | Standardized `filename*=utf-8''` HTTP header encoding preserving Unicode characters (Thai vowels, tone marks, diacritics) across browser file downloads. |
 
 ## Pipeline Flow
 

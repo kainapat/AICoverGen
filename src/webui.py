@@ -6,6 +6,18 @@ if sys.platform == "win32":
     except Exception:
         pass
 
+import mimetypes
+import tempfile
+mimetypes.add_type("audio/mpeg", ".mp3")
+mimetypes.add_type("audio/wav", ".wav")
+
+import gradio as gr
+import gradio.routes
+gradio.routes.XSS_SAFE_MIMETYPES.add("audio/mp3")
+gradio.routes.XSS_SAFE_MIMETYPES.add("audio/mpeg")
+gradio.routes.XSS_SAFE_MIMETYPES.add("audio/wav")
+gradio.routes.XSS_SAFE_MIMETYPES.add("audio/x-wav")
+
 import json
 import os
 import shutil
@@ -14,7 +26,6 @@ import urllib.request
 import zipfile
 from argparse import ArgumentParser
 import spaces
-import gradio as gr
 import logging
 def configure_logging_libs(debug=False):
     modules = [
@@ -436,6 +447,21 @@ if __name__ == '__main__':
                 local_upload_output_message = gr.Text(label='ผลลัพธ์ / Output Message', interactive=False, scale=20)
                 model_upload_button.click(upload_local_model, inputs=[zip_file, local_model_name], outputs=local_upload_output_message)
 
+    @app.app.middleware("http")
+    async def enforce_inline_audio_middleware(request, call_next):
+        response = await call_next(request)
+        path = str(request.url.path).lower()
+        if "/gradio_api/file=" in path or path.endswith((".mp3", ".wav")):
+            ct = response.headers.get("content-type", "")
+            if path.endswith(".mp3") or "audio" in ct:
+                if not ct or "octet-stream" in ct:
+                    response.headers["content-type"] = "audio/mpeg" if path.endswith(".mp3") else "audio/wav"
+                cd = response.headers.get("content-disposition", "")
+                if "attachment" in cd:
+                    response.headers["content-disposition"] = cd.replace("attachment", "inline")
+                response.headers["accept-ranges"] = "bytes"
+        return response
+
     app.launch(
         share=args.share_enabled,
         debug=args.share_enabled,
@@ -444,5 +470,5 @@ if __name__ == '__main__':
         server_name=None if not args.listen else (args.listen_host or '0.0.0.0'),
         server_port=args.listen_port,
         ssr_mode=args.ssr,
-        allowed_paths=[output_dir, BASE_DIR]
+        allowed_paths=[output_dir, BASE_DIR, tempfile.gettempdir()]
     )
