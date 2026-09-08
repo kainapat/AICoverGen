@@ -78,36 +78,41 @@ def error(msg):
 def info(msg):
     cprint(f"    {msg}", "gray")
 
-def log_monitor(logfile, proc):
-    """Monitor log file and print new lines to terminal"""
-    last_pos = 0
-    while proc.poll() is None:
-        try:
-            if os.path.exists(logfile):
-                with open(logfile, "r", encoding="utf-8", errors="ignore") as f:
-                    f.seek(last_pos)
-                    new_lines = f.readlines()
-                    last_pos = f.tell()
-                    for line in new_lines:
-                        line = line.rstrip()
-                        if not line:
-                            continue
-                        # Color progress messages
-                        if "[~]" in line:
-                            cprint(f"    {line}", "cyan")
-                        elif "cuda" in line.lower() or "half" in line.lower():
-                            cprint(f"    {line}", "green")
-                        elif "error" in line.lower():
-                            cprint(f"    {line}", "red")
-                        elif "Running on" in line or "http" in line:
-                            cprint(f"    {line}", "white", bold=True)
-                        elif "Traceback" in line or "Error" in line:
-                            cprint(f"    {line}", "red")
-                        else:
-                            info(line)
-        except Exception:
-            pass
-        time.sleep(0.5)
+def print_log_line(line):
+    """Print one WebUI log line to terminal with colors"""
+    line = line.rstrip()
+    if not line:
+        return
+    if "[~]" in line:
+        cprint(f"    {line}", "cyan")
+    elif "[+]" in line and "Total time" in line:
+        cprint(f"    {line}", "green", bold=True)
+    elif "[+]" in line:
+        cprint(f"    {line}", "green")
+    elif "cuda" in line.lower() or "half" in line.lower():
+        cprint(f"    {line}", "green")
+    elif "error" in line.lower():
+        cprint(f"    {line}", "red")
+    elif "Running on" in line or "http" in line:
+        cprint(f"    {line}", "white", bold=True)
+    elif "Traceback" in line or "Error" in line:
+        cprint(f"    {line}", "red")
+    else:
+        info(line)
+
+
+def stream_output(proc, logfile):
+    """Read WebUI stdout from PIPE, save to log file, print to terminal"""
+    try:
+        with open(logfile, "w", encoding="utf-8", errors="ignore") as f:
+            for raw in iter(proc.stdout.readline, ""):
+                if not raw:
+                    break
+                f.write(raw)
+                f.flush()
+                print_log_line(raw)
+    except Exception:
+        pass
 
 def kill_old_processes(port):
     result = subprocess.run(
@@ -179,10 +184,16 @@ def main():
         [PYTHON, "-u", SCRIPT, "--listen", "--listen-host", HOST, "--listen-port", str(PORT)],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
     )
     success(f"Process started (PID: {proc.pid})")
     print()
+
+    # Stream WebUI output to terminal + log file immediately
+    streamer = threading.Thread(target=stream_output, args=(proc, LOGFILE), daemon=True)
+    streamer.start()
 
     # Step 4
     step(4, 4, "Waiting for WebUI to start...")
@@ -224,11 +235,7 @@ def main():
         cprint("  --- Process Log ---", "cyan")
         print()
 
-        # Monitor log in background thread
-        monitor = threading.Thread(target=log_monitor, args=(LOGFILE, proc), daemon=True)
-        monitor.start()
-
-        # Keep process alive
+        # Keep process alive (output already streaming via streamer thread)
         try:
             proc.wait()
         except KeyboardInterrupt:
