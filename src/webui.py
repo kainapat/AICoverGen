@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import urllib.error
 import urllib.request
 import zipfile
 from argparse import ArgumentParser
@@ -93,7 +94,18 @@ def yt_download_for_ui(url):
     return path, f"🎵 {title}"
 
 
-def download_online_model(url, dir_name, progress=gr.Progress()):
+def download_with_auth(url, dest, hf_token=""):
+    """Download a file. Adds HuggingFace auth header when a token is given (for gated repos)."""
+    token = (hf_token or "").strip()
+    if token and "huggingface.co" in url:
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+        with urllib.request.urlopen(req) as resp, open(dest, "wb") as f:
+            shutil.copyfileobj(resp, f)
+    else:
+        urllib.request.urlretrieve(url, dest)
+
+
+def download_online_model(url, dir_name, hf_token="", progress=gr.Progress()):
     try:
         progress(0, desc=f'[~] Downloading voice model with name {dir_name}...')
         zip_name = url.split('/')[-1].split('?')[0]
@@ -113,14 +125,24 @@ def download_online_model(url, dir_name, progress=gr.Progress()):
                 file_name = u.split('/')[-1]
                 file_path = os.path.join(extraction_folder, file_name)
                 if not os.path.exists(file_path):  # avoid re-downloading
-                    urllib.request.urlretrieve(u, file_path)
+                    download_with_auth(u, file_path, hf_token)
         else:
-            urllib.request.urlretrieve(url, zip_name)
+            download_with_auth(url, zip_name, hf_token)
 
             progress(0.5, desc='[~] Extracting zip...')
             extract_zip(extraction_folder, zip_name)
         return f'[+] {dir_name} Model successfully downloaded!'
 
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            raise gr.Error(
+                '🔒 โมเดลนี้อยู่ใน gated repo ของ HuggingFace (ต้อง login ก่อนโหลด) / '
+                'This model is in a gated HuggingFace repo. '
+                'วิธีแก้ / Fix: 1) เปิดหน้าโมเดลในเบราว์เซอร์แล้วกดยอมรับเงื่อนไข / open the model page and accept its terms, '
+                '2) สร้าง token ฟรีที่ huggingface.co/settings/tokens แล้ววางในช่อง 🔑 HF Token ด้านบน / '
+                'create a free token and paste it in the HF Token box above.'
+            )
+        raise gr.Error(str(e))
     except Exception as e:
         raise gr.Error(str(e))
 
@@ -319,6 +341,10 @@ if __name__ == '__main__':
         # Download tab
         with gr.Tab('โหลดโมเดล / Download model'):
 
+            hf_token = gr.Text(label='🔑 HF Token (เฉพาะโมเดลที่ต้อง login / only if download fails with 401)',
+                               info='สร้างฟรีที่ huggingface.co/settings/tokens — ข้ามได้ถ้าโหลดปกติสำเร็จ / Free token, skip unless you get a 401 error.',
+                               type='password')
+
             with gr.Tab('จากลิงก์ / From URL'):
                 with gr.Row():
                     model_zip_link = gr.Text(label='ลิงก์โหลดโมเดล / Download link', info='ต้องเป็น zip ที่มีไฟล์ .pth และไฟล์ .index (ถ้ามี) / Must be a zip with a .pth file and optional .index.')
@@ -328,7 +354,7 @@ if __name__ == '__main__':
                     download_btn = gr.Button('โหลดเลย / Download 🌐', variant='primary', scale=19)
                     dl_output_message = gr.Text(label='ผลลัพธ์ / Output Message', interactive=False, scale=20)
 
-                download_btn.click(download_online_model, inputs=[model_zip_link, model_name], outputs=dl_output_message)
+                download_btn.click(download_online_model, inputs=[model_zip_link, model_name, hf_token], outputs=dl_output_message)
 
                 gr.Markdown('## ตัวอย่าง / Input Examples')
                 gr.Examples(
@@ -373,7 +399,7 @@ if __name__ == '__main__':
                 load_public_models_button.click(load_public_models, outputs=[public_models_table, filter_tags])
                 search_query.change(filter_models, inputs=[filter_tags, search_query], outputs=public_models_table)
                 filter_tags.change(filter_models, inputs=[filter_tags, search_query], outputs=public_models_table)
-                download_pub_btn.click(download_online_model, inputs=[pub_zip_link, pub_model_name], outputs=pub_dl_output_message)
+                download_pub_btn.click(download_online_model, inputs=[pub_zip_link, pub_model_name, hf_token], outputs=pub_dl_output_message)
 
         # Upload tab
         with gr.Tab('อัปโหลดโมเดล / Upload model'):

@@ -171,7 +171,7 @@ AICoverGen/
 - 🔌 Port 7860 ถูกใช้อยู่ → launcher ฆ่าให้อัตโนมัติ
 - 📦 MDX model hash ไม่ตรง → ลบไฟล์ + รัน `download_models.py` ใหม่
 - 🔤 ชื่อไฟล์ภาษาไทย error → ใช้ชื่อ video ID อัตโนมัติแล้ว
-- ⬇️ HuggingFace gated repo (401/403) → ใช้ public mirror แทน
+- ⬇️ HuggingFace gated repo (401/403) → เปิดหน้าโมเดลกดยอมรับเงื่อนไขก่อน แล้ววาง token ฟรี (huggingface.co/settings/tokens) ในช่อง 🔑 HF Token บนแท็บโหลดโมเดล
 
 ---
 
