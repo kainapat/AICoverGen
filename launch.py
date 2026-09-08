@@ -1,27 +1,24 @@
 """
-AICoverGen Launcher
-- ตรวจจับ terminal type อัตโนมัติ
-- ใช้สีใน Windows Terminal / PowerShell
-- แสดงผลปกติใน CMD คลาสสิก
+AICoverGen Launcher v2
+- Auto-detect terminal ANSI support
+- Show WebUI progress in terminal
+- Clean banner display
 """
 import os
 import sys
 import socket
 import subprocess
 import time
+import threading
 
 # ─── Terminal Detection ───
 def is_ansi_supported():
-    """Check if terminal supports ANSI escape codes"""
-    # Windows Terminal, VS Code, ConEmu, Cmder all set these
     if os.environ.get("WT_SESSION") or os.environ.get("TERM_PROGRAM"):
         return True
-    # Try to enable VT100 on Windows 10+
     if sys.platform == "win32":
         try:
             import ctypes
             kernel32 = ctypes.windll.kernel32
-            # Enable ANSI escape code processing
             kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
             return True
         except Exception:
@@ -30,17 +27,12 @@ def is_ansi_supported():
 
 USE_COLOR = is_ansi_supported()
 
-# ─── Color Codes ───
 if USE_COLOR:
     C = {
-        "reset":   "\033[0m",
-        "bold":    "\033[1m",
-        "cyan":    "\033[96m",
-        "green":   "\033[92m",
-        "yellow":  "\033[93m",
-        "red":     "\033[91m",
-        "gray":    "\033[90m",
-        "white":   "\033[97m",
+        "reset": "\033[0m", "bold": "\033[1m",
+        "cyan": "\033[96m", "green": "\033[92m",
+        "yellow": "\033[93m", "red": "\033[91m",
+        "gray": "\033[90m", "white": "\033[97m",
     }
 else:
     C = {k: "" for k in ["reset","bold","cyan","green","yellow","red","gray","white"]}
@@ -52,22 +44,22 @@ def cprint(text, color="white", bold=False, end="\n"):
 
 def banner():
     print()
-    cprint("  ╔══════════════════════════════════════════════════════╗", "cyan")
-    cprint("  ║                                                      ║", "cyan")
-    cprint("  ║      /\\                                              ║", "cyan")
-    cprint("  ║     /  \\     ", "cyan", end="")
+    cprint("  +--------------------------------------------------+", "cyan")
+    cprint("  |                                                  |", "cyan")
+    cprint("  |      /\\                                          |", "cyan")
+    cprint("  |     /  \\     ", "cyan", end="")
     cprint("AI ", "white", end="")
     cprint("COVER ", "cyan", end="")
     cprint("GEN", "white", end="")
-    cprint("                  ║", "cyan")
-    cprint("  ║    /    \\    ", "cyan", end="")
+    cprint("                          |", "cyan")
+    cprint("  |    /    \\    ", "cyan", end="")
     cprint("WebUI Smart Launcher", "gray", end="")
-    cprint("          ║", "cyan")
-    cprint("  ║   /      \\   ", "cyan", end="")
+    cprint("                  |", "cyan")
+    cprint("  |   /      \\   ", "cyan", end="")
     cprint("RTX 2050 4GB Optimized", "gray", end="")
-    cprint("     ║", "cyan")
-    cprint("  ║                                                      ║", "cyan")
-    cprint("  ╚══════════════════════════════════════════════════════╝", "cyan")
+    cprint("                 |", "cyan")
+    cprint("  |                                                  |", "cyan")
+    cprint("  +--------------------------------------------------+", "cyan")
     print()
 
 def step(num, total, text):
@@ -75,19 +67,49 @@ def step(num, total, text):
     cprint(text, "white", bold=True)
 
 def success(msg):
-    cprint(f"    ✓ {msg}", "green")
+    cprint(f"    + {msg}", "green")
 
 def warn(msg):
-    cprint(f"    ⚠ {msg}", "yellow")
+    cprint(f"    ! {msg}", "yellow")
 
 def error(msg):
-    cprint(f"    ✗ {msg}", "red")
+    cprint(f"    x {msg}", "red")
 
 def info(msg):
     cprint(f"    {msg}", "gray")
 
+def log_monitor(logfile, proc):
+    """Monitor log file and print new lines to terminal"""
+    last_pos = 0
+    while proc.poll() is None:
+        try:
+            if os.path.exists(logfile):
+                with open(logfile, "r", encoding="utf-8", errors="ignore") as f:
+                    f.seek(last_pos)
+                    new_lines = f.readlines()
+                    last_pos = f.tell()
+                    for line in new_lines:
+                        line = line.rstrip()
+                        if not line:
+                            continue
+                        # Color progress messages
+                        if "[~]" in line:
+                            cprint(f"    {line}", "cyan")
+                        elif "cuda" in line.lower() or "half" in line.lower():
+                            cprint(f"    {line}", "green")
+                        elif "error" in line.lower():
+                            cprint(f"    {line}", "red")
+                        elif "Running on" in line or "http" in line:
+                            cprint(f"    {line}", "white", bold=True)
+                        elif "Traceback" in line or "Error" in line:
+                            cprint(f"    {line}", "red")
+                        else:
+                            info(line)
+        except Exception:
+            pass
+        time.sleep(0.5)
+
 def kill_old_processes(port):
-    """Kill processes using the specified port"""
     result = subprocess.run(
         f'netstat -aon | findstr ":{port}" | findstr "LISTENING"',
         capture_output=True, text=True, shell=True
@@ -107,7 +129,6 @@ def kill_old_processes(port):
     return killed
 
 def check_port(port):
-    """Check if port is open"""
     try:
         s = socket.socket()
         s.settimeout(1)
@@ -127,13 +148,13 @@ def main():
     PORT = 7860
     LOGFILE = r"D:\Code\AICoverGen\webui.log"
 
-    # ─── Step 1: Kill old processes ───
+    # Step 1
     step(1, 4, "Checking for old processes...")
     kill_old_processes(PORT)
     time.sleep(1)
     print()
 
-    # ─── Step 2: Check Python ───
+    # Step 2
     step(2, 4, "Checking Python...")
     try:
         result = subprocess.run([PYTHON, "--version"], capture_output=True, text=True)
@@ -146,21 +167,24 @@ def main():
         sys.exit(1)
     print()
 
-    # ─── Step 3: Launch WebUI ───
+    # Step 3
     step(3, 4, "Starting WebUI...")
     info(f"Port: {PORT}")
-    info(f"Log:  {LOGFILE}")
+
+    # Clear old log
+    if os.path.exists(LOGFILE):
+        os.remove(LOGFILE)
 
     proc = subprocess.Popen(
         [PYTHON, "-u", SCRIPT, "--listen", "--listen-host", HOST, "--listen-port", str(PORT)],
-        stdout=open(LOGFILE, "w"),
+        stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
     )
     success(f"Process started (PID: {proc.pid})")
     print()
 
-    # ─── Step 4: Wait and verify ───
+    # Step 4
     step(4, 4, "Waiting for WebUI to start...")
     ready = False
     for i in range(1, 16):
@@ -173,19 +197,19 @@ def main():
     print()
 
     if ready:
-        cprint("  ╔══════════════════════════════════════════════════════╗", "green")
-        cprint("  ║                                                      ║", "green")
-        cprint("  ║   ", "green", end="")
+        cprint("  +--------------------------------------------------+", "green")
+        cprint("  |                                                  |", "green")
+        cprint("  |   ", "green", end="")
         cprint("  WebUI is running!  ", "white", bold=True, end="")
-        cprint("                    ║", "green")
-        cprint("  ║                                                      ║", "green")
-        cprint("  ║   ", "green", end="")
+        cprint("                        |", "green")
+        cprint("  |                                                  |", "green")
+        cprint("  |   ", "green", end="")
         cprint("Local:   ", "gray", end="")
         cprint(f"http://127.0.0.1:{PORT}", "white", end="")
-        pad = 43 - len(f"http://127.0.0.1:{PORT}")
-        cprint(" " * pad + "║", "green")
-        cprint("  ║                                                      ║", "green")
-        cprint("  ╚══════════════════════════════════════════════════════╝", "green")
+        pad = 39 - len(f"http://127.0.0.1:{PORT}")
+        cprint(" " * pad + "|", "green")
+        cprint("  |                                                  |", "green")
+        cprint("  +--------------------------------------------------+", "green")
         print()
         cprint("  Open in browser:", "cyan")
         print(f"    > http://127.0.0.1:{PORT}")
@@ -197,8 +221,12 @@ def main():
         cprint("    4. Enter YouTube URL or local audio file", "gray")
         cprint("    5. Set Pitch and click Generate!", "gray")
         print()
-        cprint("  Press Ctrl+C to stop.", "gray")
+        cprint("  --- Process Log ---", "cyan")
         print()
+
+        # Monitor log in background thread
+        monitor = threading.Thread(target=log_monitor, args=(LOGFILE, proc), daemon=True)
+        monitor.start()
 
         # Keep process alive
         try:
@@ -209,20 +237,19 @@ def main():
             proc.wait(timeout=5)
             success("WebUI stopped.")
     else:
-        cprint("  ╔══════════════════════════════════════════════════════╗", "red")
-        cprint("  ║   ", "red", end="")
+        cprint("  +--------------------------------------------------+", "red")
+        cprint("  |   ", "red", end="")
         cprint("  ERROR: WebUI failed to start!", "white", bold=True, end="")
-        cprint("                    ║", "red")
-        cprint("  ╚══════════════════════════════════════════════════════╝", "red")
+        cprint("                        |", "red")
+        cprint("  +--------------------------------------------------+", "red")
         print()
         cprint("  Check log:", "yellow")
         info(LOGFILE)
         print()
-        # Show last lines of log
         try:
             with open(LOGFILE) as f:
                 lines = f.readlines()
-                for line in lines[-5:]:
+                for line in lines[-10:]:
                     info(line.rstrip())
         except Exception:
             pass

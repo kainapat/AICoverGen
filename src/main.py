@@ -209,10 +209,9 @@ def get_hash(filepath):
 
 
 def display_progress(message, percent, is_webui, progress=None):
-    if is_webui:
+    print(message, flush=True)
+    if is_webui and progress is not None:
         progress(percent, desc=message)
-    else:
-        print(message)
 
 
 def preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type, progress, keep_orig, orig_song_path):
