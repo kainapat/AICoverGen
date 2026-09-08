@@ -208,8 +208,25 @@ def get_hash(filepath):
     return file_hash.hexdigest()[:11]
 
 
+_progress_times = {}
+
+
 def display_progress(message, percent, is_webui, progress=None):
-    print(message, flush=True)
+    import datetime
+    now = time.time()
+    now_str = datetime.datetime.now().strftime("%H:%M:%S")
+    suffix = ""
+    last_key = "_last"
+    if last_key in _progress_times:
+        last_time, last_msg = _progress_times[last_key]
+        elapsed = now - last_time
+        mins, secs = divmod(int(elapsed), 60)
+        if mins > 0:
+            suffix = f" [+{mins}m {secs}s]"
+        else:
+            suffix = f" [+{secs}s]"
+    _progress_times[last_key] = (now, message)
+    print(f"[{now_str}] {message}{suffix}", flush=True)
     if is_webui and progress is not None:
         progress(percent, desc=message)
 
