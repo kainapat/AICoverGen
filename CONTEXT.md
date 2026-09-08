@@ -34,6 +34,7 @@
 | **Song ID / Video ID** | 11-character YouTube video ID or hash used for internal working directories (`song_output/<song_id>`) to guarantee ASCII-safe intermediate file paths on Windows. |
 | **Clean Title Filter** | Regex post-processing on YouTube metadata stripping noise tags such as `[Official MV]`, `(Official Audio)`, `【MV】`, `4K`, `HD`. |
 | **Dual Output Display** | Pairing an in-browser audio player (`gr.Audio`) for instantaneous playback with a dedicated file card (`gr.File`) for direct download in the WebUI. |
+| **Cyberpunk Launcher CLI** | High-aesthetic terminal interface with rounded Unicode boxes, ANSI gradients, live GPU/VRAM hardware telemetry, and formatted pipeline stage streaming. |
 
 ## Pipeline Flow
 
