@@ -39,7 +39,7 @@ license: mit
 | 🎧 **Cyberpunk Audio Player** | เครื่องเล่นเพลง Custom Theme นีออนแบบ In-Memory แสดงจุดเลื่อนเพลง (Scrubber Thumb) ตลอดเวลา 100% โดยไม่ต้องเอาเมาส์ชี้, ป้องกัน IDM ดักจับ, ไม่มี Auto-Download กวนใจ, แก้ปัญหาค้าง 0:00 และคงสระภาษาไทยครบถ้วน | Custom Cyberpunk in-memory player: 100% permanent scrubber thumb visibility (no hover needed), IDM-safe, zero auto-downloads, eliminates 0:00 freeze, full Thai Unicode support |
 | 🎙️ **59+ Voice Models** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index (Ado, YOASOBI, Nont Tanont, Villager ฯลฯ) | One-click downloads from curated catalog of 59+ public RVC models |
 | 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, single-thread MDX & automatic VRAM cache flushing between stages |
-| 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal แสดงผลภาษาไทยและหลอด Progress Bar คมชัด ไม่เพี้ยน (Mojibake-free), ตรวจจับการ์ดจอ และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic terminal launcher with clean Unicode progress bars, live hardware telemetry & port resolver |
+| 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal จัดระเบียบ Sub-steps สวยงาม, คำนวณ RVC Speed (x Real-time), ป้ายเตือน Amber Runtime Notice ชัดเจน, หลอด Progress Bar คมชัด และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic terminal launcher with clean sub-steps, RVC inference speed multiplier, Amber runtime notices & live telemetry |
 | 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Cyberpunk Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Cyberpunk error diagnostic card with WinError 10054 noise filtering, full traceback drainer, and crash pause guard |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English |
 
@@ -125,18 +125,25 @@ graph LR
 ```text
   ─────────────────────────────────────────────────────────────
   ⚡ [PIPELINE STARTED] Processing audio cover workflow...
+     🛡️  [ASCII-Safe Routing] Activated for Thai/Unicode audio track
   ⬇️  [1/6] Downloading YouTube audio stream...
   🎼  [2/6] Separating Vocals & Instrumental (MDX-Net Fast Mode)...
-      MDX Progress: [████████████████░░░░] 80% | 64/80 chunks | ETA: 7s
-      🧹 GPU VRAM cache flushed successfully.
+     🎮  [ONNX Engine] CUDA Execution Provider active (GPU 0)
+     💾  [VRAM Allocation] Dynamic MDX limit: 4.0 GB
+     ⚡ MDX [████████████████░░░░] 80% | 64/80 chunks | ETA: 7s
+     🧹 GPU VRAM cache flushed successfully.
   🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...
   ✨  [4/6] De-reverberating Vocal Stems (FoxJoy HQ)...
   🎙️  [5/6] Converting Vocal Timbre with RVC v2 Model...
+     ✔   [RVC Weights] All model weight keys matched successfully
+     ⚡  [RVC Speed] Inferred in 14.5s (Audio: 4m 14s | 17.5x Real-time)
   🎛️  [6/6] Mastering with Studio Effects & Reverb...
+     ✨  [Audio Mastering] Neural noise reduction applied
   🎵  [FINAL] Merging Vocals & Instrumental Stems...
-  💾  Cover generated at song_output\Shape of You (NontTanont Ver).mp3
+  💾  Cover generated at song_output\ฉบับท้ายสุด (NontTanont Ver).mp3
   🏆  Total time all process: 00:02:18 (⚡ Fast Mode ON)
   ─────────────────────────────────────────────────────────────
+  ⚠️  [RUNTIME NOTICE] Python 3.10 active (standard engine for PyTorch + Fairseq)
 ```
 
 ---

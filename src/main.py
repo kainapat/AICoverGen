@@ -439,7 +439,7 @@ def process_song(
 
 def apply_noisereduce(audio_list, type_output="wav"):
     # https://github.com/sa-if/Audio-Denoiser
-    print("Noice reduce")
+    print("Noise reduce")
 
     result = []
     for audio_path in audio_list:

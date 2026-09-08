@@ -46,6 +46,8 @@
 | **Windows Asyncio Disconnect Suppressor** | Patch and log filter catching benign TCP resets (`WinError 10054` in `_ProactorBasePipeTransport`) caused by client page refreshes or tab closures, preventing false-positive error diagnostic cards. |
 | **Custom Cyberpunk Audio Controller** | Fully custom-styled media player bar replacing browser-native audio controls with a dark-glass container, neon cyan controls, monospace time display, volume slider, and real-time seek timeline. |
 | **Permanent Scrubber Visibility** | Continuous 100% visibility of the timeline thumb circle (`::-webkit-slider-thumb`) and progress gradient without requiring mouse hover, overcoming Chromium's native Shadow DOM auto-hide behavior. |
+| **Cyberpunk Terminal Sub-steps** | Formatted secondary stdout/stderr stream lines indented with icons and colors (ASCII routing, ONNX provider, RVC keys match, speed multiplier, noise reduction) maintaining clean visual hierarchy. |
+| **Runtime Notice Banner** | Formatted Amber notification (`⚠️  [RUNTIME NOTICE]`) contextualizing library deprecation warnings (e.g. yt-dlp Python 3.10 EOL) and confirming standard engine compatibility. |
 
 ## Pipeline Flow
 

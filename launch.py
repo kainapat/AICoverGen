@@ -84,6 +84,7 @@ def render_box(lines, border_col="cyan", width=64):
 
 # ─── Error Diagnostic Card ───
 _tb_buffer = []
+_last_exec_time = None
 
 def render_error_card(tb_lines):
     last_line = tb_lines[-1].strip() if tb_lines else "Unknown Error"
@@ -252,9 +253,71 @@ def format_log_line(line):
         _tb_buffer = [raw_line]
         return
 
+    global _last_exec_time
+
     # Suppress raw yt-dlp download chunks and noise lines
     stripped = raw_line.strip()
+    if not stripped:
+        return
     if stripped.startswith("[download]") or "ETA Unknown" in stripped:
+        return
+
+    # Python 3.10 Deprecation notice -> format as Cyberpunk Amber Notice
+    if "Support for Python version" in raw_line and "deprecated" in raw_line:
+        print()
+        cprint("  ⚠️  [RUNTIME NOTICE] Python 3.10 active (standard engine for PyTorch + Fairseq)", "amber", bold=True)
+        return
+
+    # Sub-step: Non-ASCII filename detection
+    if "Non-ASCII filename detected" in raw_line:
+        cprint("     🛡️  [ASCII-Safe Routing] Activated for Thai/Unicode audio track", "cyan")
+        return
+
+    # Sub-step: RVC Model Weights match
+    if "<All keys matched successfully>" in raw_line:
+        cprint("     ✔   [RVC Weights] All model weight keys matched successfully", "emerald")
+        return
+
+    # Sub-step: Execution time & Audio duration -> Combined RVC Speed indicator
+    if "Execution time:" in raw_line:
+        try:
+            sec = float(raw_line.split("Execution time:")[1].replace("seconds", "").strip())
+            _last_exec_time = sec
+        except Exception:
+            _last_exec_time = None
+        return
+
+    if "Audio duration:" in raw_line:
+        try:
+            dur = float(raw_line.split("Audio duration:")[1].replace("seconds", "").strip())
+            dur_m = int(dur // 60)
+            dur_s = int(dur % 60)
+            dur_str = f"{dur_m}m {dur_s:02d}s" if dur_m > 0 else f"{dur:.1f}s"
+            if _last_exec_time and _last_exec_time > 0:
+                speed = dur / _last_exec_time
+                cprint(f"     ⚡  [RVC Speed] Inferred in {_last_exec_time:.1f}s (Audio: {dur_str} | {speed:.1f}x Real-time)", "cyan")
+            else:
+                cprint(f"     ⚡  [RVC Audio] Processed {dur_str} vocal track", "cyan")
+        except Exception:
+            cprint(f"     ⚡  {raw_line.strip()}", "cyan")
+        _last_exec_time = None
+        return
+
+    # Sub-step: Noise reduction
+    if "noice reduce" in raw_line.lower() or "noise reduce" in raw_line.lower():
+        cprint("     ✨  [Audio Mastering] Neural noise reduction applied", "emerald")
+        return
+
+    # Sub-step: ONNX execution provider & VRAM allocation
+    if "['CUDAExecutionProvider']" in raw_line:
+        cprint("     🎮  [ONNX Engine] CUDA Execution Provider active (GPU 0)", "cyan")
+        return
+    if "threads:" in raw_line and "vram:" in raw_line:
+        try:
+            vram_val = float(raw_line.split("vram:")[1].strip())
+            cprint(f"     💾  [VRAM Allocation] Dynamic MDX limit: {vram_val:.1f} GB", "dark")
+        except Exception:
+            pass
         return
 
     # Live MDX progress updates
