@@ -24,7 +24,7 @@ license: mit
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/Voice_Models-59+-purple?style=for-the-badge)](rvc_models/public_models.json)
 
-[🚀 Online Demo](https://huggingface.co/spaces/r3gm/AICoverGen) · [📙 Colab](https://colab.research.google.com/github/R3gm/AICoverGen/blob/main/colab_notebook.ipynb) · [📖 ADR Decisions](docs/adr/) · [🐛 Troubleshooting](TROUBLESHOOTING.md)
+[🚀 Online Demo](https://huggingface.co/spaces/r3gm/AICoverGen) · [📙 Colab](https://colab.research.google.com/github/R3gm/AICoverGen/blob/main/colab_notebook.ipynb) · [🐛 Troubleshooting](TROUBLESHOOTING.md)
 
 </div>
 
@@ -38,7 +38,7 @@ license: mit
 | 🔊 **Dual Player & Download** | มี **เครื่องเล่นเพลง (gr.Audio)** ฟังเพลงในเว็บได้ทันที พร้อม **กล่องดาวน์โหลดไฟล์ (gr.File)** แยกชัดเจน | Dual UI outputs: instant in-browser audio player with waveform + separate 1-click file download card |
 | 🎙️ **59+ Voice Models** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index (Ado, YOASOBI, Nont Tanont, Villager ฯลฯ) | One-click downloads from curated catalog of 59+ public RVC models |
 | ⚡ **Low-VRAM Optimized** | ออกแบบมาสำหรับ GPU 4GB (เช่น RTX 2050) ด้วยโหมด FP16 Half-Precision + Dynamic MDX | Seamlessly runs on 4GB GPUs (e.g. RTX 2050) using FP16 and single-thread MDX separation |
-| 💾 **D: Drive Permanent Cache** | กำหนดแคช (Pip, HuggingFace, Torch, uv) ไว้ที่ไดรฟ์ `D:\AI_Cache` ถาวร ไม่ทำให้ Drive C เต็ม | Permanently redirects all model and package caches to `D:\AI_Cache` to protect Drive C |
+| 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal สวยงาม บอกขั้นตอนการรัน real-time, ตรวจจับการ์ดจอ และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic terminal launcher with live hardware telemetry, port resolver & pipeline streaming |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English |
 
 ---
@@ -114,14 +114,18 @@ graph LR
 ## ⏱️ Terminal Live Timing | ตัวอย่างเวลาประมวลผล
 
 ```text
-[20:15:02] [~] Starting AI Cover Generation Pipeline...
-[20:15:05] [~] Downloading song... [+3s]
-[20:15:20] [~] Separating Vocals from Instrumental... [+15s]
-[20:17:45] [~] Separating Main Vocals from Backup Vocals... [+2m 25s]
-[20:19:10] [~] Applying DeReverb to Vocals... [+1m 25s]
-[20:20:30] [~] Converting voice using RVC... [+1m 20s]
-[20:21:00] [~] Combining AI Vocals and Instrumentals... [+30s]
-[+] Total time all process: 6m 28s (388.0s)
+  ─────────────────────────────────────────────────────────────
+  ⚡ [PIPELINE STARTED] Processing audio cover workflow...
+  ⬇️  [1/6] Downloading YouTube audio stream...
+  🎼  [2/6] Separating Vocals & Instrumental (MDX-Net)...
+  🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...
+  ✨  [4/6] De-reverberating Vocal Stems (FoxJoy HQ)...
+  🎙️  [5/6] Converting Vocal Timbre with RVC v2 Model...
+  🎛️  [6/6] Mastering with Studio Effects & Reverb...
+  🎵  [FINAL] Merging Vocals & Instrumental Stems...
+  💾  Cover generated at song_output\Shape of You (NontTanont Ver).mp3
+  🏆  Total time all process: 00:01:24
+  ─────────────────────────────────────────────────────────────
 ```
 
 ---
@@ -132,7 +136,7 @@ graph LR
 | :--- | :--- | :--- |
 | 🐍 **Python** | **3.10.x** | ใช้ผ่าน `.venv` ของโปรเจกต์ (PyTorch + Fairseq ต้องใช้ 3.10) |
 | 🎮 **GPU** | **NVIDIA GPU (CUDA 12+)** | ทดสอบและปรับแต่งพิเศษสำหรับ **RTX 2050 (VRAM 4GB)** ✅ |
-| 💾 **Drive Space** | ไดรฟ์ C: ว่างอย่างน้อย 15GB, ไดรฟ์ D: ว่างอย่างน้อย 30GB | แคชทั้งหมดถูกย้ายไปที่ `D:\AI_Cache` เรียบร้อย |
+| 💾 **Drive Space** | แนะนำพื้นที่ว่างอย่างน้อย 20GB | สำหรับจัดเก็บโมเดลเสียง, โมเดลแยกเสียง และผลลัพธ์เพลง Cover |
 | 🎵 **FFmpeg** | ติดตั้งมาพร้อมไลบรารีในตัว | ไม่ต้องลงโปรแกรมแยก |
 
 ---
@@ -141,18 +145,15 @@ graph LR
 
 ```text
 AICoverGen/
-├── 🚀 run_aicovergen.bat            # Smart launcher ดับเบิลคลิกเริ่มใช้งานทันที
-├── 🐍 start_webui.ps1              # PowerShell launcher พร้อมเช็คสถานะและพอร์ต
-├── 📘 CONTEXT.md                    # บันทึกคำศัพท์โดเมนและข้อกำหนดระบบ
-├── 📁 docs/adr/                     # Architecture Decision Records (ADR)
-│   ├── 0001-smart-launcher.md
-│   └── 0002-two-tier-naming.md      # สถาปัตยกรรมแยกชื่อไฟล์ภายใน/ภายนอก
+├── 🚀 run_aicovergen.bat            # ดับเบิลคลิกเริ่มใช้งานทันที (One-click Launcher)
+├── 🐍 launch.py                     # Cyberpunk Terminal Launcher (ANSI & Telemetry)
+├── 🪟 start_webui.ps1              # สคริปต์สำหรับรันบน PowerShell
 ├── 📁 src/
 │   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Dual Outputs)
-│   ├── ⚙️ main.py                  # Core Cover Pipeline + Title Sanitizer
+│   ├── ⚙️ main.py                  # Core Cover Pipeline + Real Song Title Sanitizer
 │   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX)
 │   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion)
-├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง (.pth, .index)
+├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง RVC (.pth, .index)
 ├── 🎼 mdxnet_models/                # โมเดลแยกเสียง ONNX
 └── 🎵 song_output/                  # โฟลเดอร์ผลลัพธ์เพลง AI Cover
 ```
