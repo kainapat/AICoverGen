@@ -88,7 +88,7 @@ def extract_zip(extraction_folder, zip_name):
 def download_online_model(url, dir_name, progress=gr.Progress()):
     try:
         progress(0, desc=f'[~] Downloading voice model with name {dir_name}...')
-        zip_name = url.split('/')[-1]
+        zip_name = url.split('/')[-1].split('?')[0]
         extraction_folder = os.path.join(rvc_models_dir, dir_name)
         if os.path.exists(extraction_folder):
             raise gr.Error(f'Voice model directory {dir_name} already exists! Choose a different name for your voice model.')
