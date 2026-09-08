@@ -643,6 +643,17 @@
                 "Real person",
                 "Japanese"
             ]
+        },
+        {
+            "name": "YOASOBI",
+            "url": "https://huggingface.co/2star/YOASOBI/resolve/main/YOASOBI_VER1_e300_s10800.zip",
+            "description": "YOASOBI - JP singer duo (RVC V2, 300 epochs)",
+            "added": "2026-09-08",
+            "credit": "2star",
+            "tags": [
+                "Real person",
+                "Japanese"
+            ]
         }
     ]
 }
