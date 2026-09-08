@@ -29,8 +29,10 @@
 | **Total time all process** | Terminal line printed at pipeline end showing full duration from start to finish (e.g. `[+] Total time all process: 7m 8s (428.1s)`). |
 | **Stage timing** | `[+Xs]` / `[+Xm XXs]` suffix on each progress line showing time spent since the previous pipeline stage. |
 | **Smart Launcher** | `run_aicovergen.bat` — kills orphaned processes, checks port, launches WebUI with logging, verifies startup. |
-| **Song Title** | Clean, human-readable title of the song (e.g. `สุดใจ`, `Pretender`) with promotional noise removed. Used for UI display and final file naming. |
-| **Cover Filename** | The human-readable output audio file formatted as `<Song Title> (<Voice Model> Ver).<ext>` (e.g. `สุดใจ (NontTanont Ver).mp3`). |
+| **Song Title** | Clean, human-readable title of the song formatted as `<Artist> - <Song Title>` (e.g. `Liz's x NATNON - เพลงรัก`, `Nont Tanont - ฝืนตัวเองไม่เป็น`) with NFKC Unicode normalization and promotional noise removed. Used for UI display and final file naming. |
+| **Artist-Title Formatter** | Extraction pipeline combining metadata tags (`artist` + `track`), `Song by Artist` patterns, and channel fallbacks with smart deduplication into standard `[Artist] - [Song]` layout. |
+| **NFKC Unicode Normalizer** | Compatibility layer converting fancy mathematical bold/italic/script characters (e.g. `𝗯𝘆 𝗟𝗶𝘇'𝘀 x 𝐍𝐀𝐓𝐍𝐎𝐍`) and full-width brackets (`《 》`, `【 】`) into standard alphanumeric text safe for Windows filenames. |
+| **Cover Filename** | The human-readable output audio file formatted as `<Song Title> (<Voice Model> Ver).<ext>` (e.g. `Liz's x NATNON - เพลงรัก (NontTanont Ver).mp3`). |
 | **Song ID / Video ID** | 11-character YouTube video ID or hash used for internal working directories (`song_output/<song_id>`) to guarantee ASCII-safe intermediate file paths on Windows. |
 | **Clean Title Filter** | Regex post-processing on YouTube metadata stripping noise tags such as `[Official MV]`, `(Official Audio)`, `【MV】`, `4K`, `HD`. |
 | **Dual Output Display** | Pairing an in-browser audio player (`gr.Audio`) for instantaneous playback with a dedicated file card (`gr.File`) for direct download in the WebUI. |
@@ -42,9 +44,9 @@
 | **UTF-8 Pipe & Console Enforcement** | Explicit UTF-8 subprocess environment (`PYTHONUTF8=1`, `PYTHONIOENCODING=utf-8`) and stream reconfig preventing Windows code page Mojibake (`â–‘â–‘`). |
 | **Inline Audio Streaming** | Server-side MIME & header patch ensuring `Content-Disposition: inline` and `audio/mpeg` for `.mp3` files, enabling native in-browser playback without download manager interception. |
 | **RFC 5987 Filename Encoding** | Standardized `filename*=utf-8''` HTTP header encoding preserving Unicode characters (Thai vowels, tone marks, diacritics) across browser file downloads. |
-| **Cyberpunk Audio Player Card** | Unified HTML5 audio player and download card using in-memory Data URIs (`data:audio/mpeg;base64,...`) to completely isolate playback from external download managers (IDM), preventing unwanted auto-downloads and preserving full Thai diacritics. |
+| **Carbon-Integrated Audio Player Card** | Unified HTML5 audio player and download card matching the WebUI's IBM Carbon theme via dynamic Gradio CSS variables, using in-memory Data URIs (`data:audio/mpeg;base64,...`) to completely isolate playback from external download managers (IDM), preventing unwanted auto-downloads and preserving full Thai diacritics. |
 | **Windows Asyncio Disconnect Suppressor** | Patch and log filter catching benign TCP resets (`WinError 10054` in `_ProactorBasePipeTransport`) caused by client page refreshes or tab closures, preventing false-positive error diagnostic cards. |
-| **Custom Cyberpunk Audio Controller** | Fully custom-styled media player bar replacing browser-native audio controls with a dark-glass container, neon cyan controls, monospace time display, volume slider, and real-time seek timeline. |
+| **Custom Carbon Audio Controller** | Fully custom-styled media player bar matching IBM Carbon design tokens with a dark slate container, Carbon Blue (`#0f62fe`) controls, monospace time display, volume slider, and 100% permanently visible timeline scrubber. |
 | **Permanent Scrubber Visibility** | Continuous 100% visibility of the timeline thumb circle (`::-webkit-slider-thumb`) and progress gradient without requiring mouse hover, overcoming Chromium's native Shadow DOM auto-hide behavior. |
 | **Cyberpunk Terminal Sub-steps** | Formatted secondary stdout/stderr stream lines indented with icons and colors (ASCII routing, ONNX provider, RVC keys match, speed multiplier, noise reduction) maintaining clean visual hierarchy. |
 | **Runtime Notice Banner** | Formatted Amber notification (`⚠️  [RUNTIME NOTICE]`) contextualizing library deprecation warnings (e.g. yt-dlp Python 3.10 EOL) and confirming standard engine compatibility. |
@@ -54,13 +56,15 @@
 | **Visual Workflow Typography** | Scannable terminal onboarding guide styling that highlights sequential step numbers in Cyan (`1.`, `2.`) and UI click targets in Pure White (`[Generate]`, `[Process URL]`). |
 | **Unicode-Safe FAISS Index Deserializer** | In-memory binary deserialization pattern (`faiss.deserialize_index`) bypassing Windows C-runtime `fopen(const char*)` limitations, allowing voice models in folders with Thai and Unicode characters to load `.index` feature retrieval files without errors. |
 | **Direct File Pitch Transformation** | Native file-to-file SoX processing (`tfm.build_file`) replacing raw stdout pipe array streams, eliminating Windows CRT byte misalignment errors (`ValueError: buffer size must be a multiple of element size`) during overall pitch changes. |
+| **Downloads Directory** | Dedicated staging folder (`downloads/`) storing original downloaded audio files (`.mp3`) and sidecar title files (`.title`) from YouTube/YouTube Music, preventing project root workspace clutter. |
+| **Clear Downloads Action** | Maintenance action on WebUI (`🗑️ ล้างดาวน์โหลด / Clear`) purging cached staging `.mp3` and `.title` files from `downloads/` to reclaim disk space without affecting generated cover songs in `song_output/`. |
 
 ## Pipeline Flow
 
 ```
 YouTube URL / Local Audio
     ↓
-yt_download (yt_dlp) → MP3
+yt_download (yt_dlp) → downloads/<Song Title>.mp3
     ↓
 MDX Vocals+Instrumental separation (UVR-MDX-NET-Voc_FT.onnx)
     ↓

@@ -34,9 +34,10 @@ license: mit
 
 | หมวดหมู่ | รายละเอียด (TH) | Description (EN) |
 | :--- | :--- | :--- |
-| 🏷️ **Smart Song Naming** | ดึงชื่อเพลงจริงจาก YouTube + คลีนคำขยะ (`[Official MV]`, `4K`, `HD`) ไฟล์ผลลัพธ์เป็น `<ชื่อเพลง> (<โมเดล> Ver).mp3` ทันที | Auto-fetches real song title, strips noise tags (`[MV]`, `4K`), exports as `<Title> (<Model> Ver).mp3` |
+| 🏷️ **Smart Artist & Song Naming** | ดึงชื่อศิลปินและชื่อเพลงจริงจาก YouTube / YouTube Music ในฟอร์แมตสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Unicode Normalization (เช่น `《 เพลงรัก 》by Liz's` ➔ `Liz's x NATNON - เพลงรัก`) ป้องกันชื่อซ้ำซ้อน และตั้งชื่อไฟล์ผลลัพธ์เป็น `<ศิลปิน> - <ชื่อเพลง> (<โมเดล> Ver).mp3` ทันที | Auto-extracts `[Artist] - [Song]` with NFKC Unicode normalization, smart deduplication, and exports as `<Artist> - <Title> (<Model> Ver).mp3` |
+| 📁 **Dedicated Downloads & 1-Click Purge** | แยกโฟลเดอร์เก็บไฟล์ดาวน์โหลดต้นฉบับไว้ที่ `downloads/` โดยเฉพาะ ไม่ปะปนกับโฟลเดอร์โค้ด พร้อมปุ่ม `[ 🗑️ ล้างดาวน์โหลด / Clear ]` บน WebUI ให้ล้างแคชได้ในคลิกเดียว | Dedicated `downloads/` directory isolating source audio from project root, with a 1-click `[Clear Downloads]` button on WebUI to reclaim disk space |
 | ⚡ **Fast Mode (2x Speed)** | แยกเสียงร้องเร็วกว่าเดิม 2 เท่า (Default: ON) ลดเวลาลง ~50% เหลือเพียง 2-3 นาทีบน GPU 4GB ด้วยการปรับลำดับ ONNX ให้กระชับ | 2x faster MDX vocal isolation (Default: ON), cuts run time by ~50% down to 2-3 mins on 4GB GPUs |
-| 🎧 **Cyberpunk Audio Player** | เครื่องเล่นเพลง Custom Theme นีออนแบบ In-Memory แสดงจุดเลื่อนเพลง (Scrubber Thumb) ตลอดเวลา 100% โดยไม่ต้องเอาเมาส์ชี้, ป้องกัน IDM ดักจับ, ไม่มี Auto-Download กวนใจ, แก้ปัญหาค้าง 0:00 และคงสระภาษาไทยครบถ้วน | Custom Cyberpunk in-memory player: 100% permanent scrubber thumb visibility (no hover needed), IDM-safe, zero auto-downloads, eliminates 0:00 freeze, full Thai Unicode support |
+| 🎧 **Carbon Theme Audio Player** | เครื่องเล่นเพลง Custom HTML5 ดีไซน์หรูสอดรับกับธีม IBM Carbon (Carbon Blue `#0f62fe` + พื้นผิว Slate) แสดงจุดเลื่อนเพลง (Scrubber Thumb) ถาวร 100% โดยไม่ต้องเอาเมาส์ชี้, ป้องกัน IDM ดักจับ, ไม่มี Auto-Download กวนใจ, แก้ปัญหาค้าง 0:00 และคงสระภาษาไทยครบถ้วน | Theme-adaptive HTML5 player harmonized with IBM Carbon theme (Carbon Blue `#0f62fe` accents, 100% permanent scrubber thumb visibility, IDM-safe, full Thai Unicode support) |
 | 🎙️ **59+ Voice Models & Thai Unicode** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index รองรับโฟลเดอร์โมเดลภาษาไทย 100% (เช่น โต ซิลลี่ฟูลส์, จ๋าย ไททศมิตร) พร้อมระบบ In-Memory FAISS Index Deserializer โหลดไฟล์ .index สมบูรณ์ไม่แครช | One-click downloads from 59+ public catalog, 100% Thai Unicode model directory support via in-memory FAISS deserializer |
 | 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX (กิน VRAM จริงเพียง ~1.5 GB บนโหมด 1 Thread) พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, lightweight ~1.5GB active single-thread MDX & automatic VRAM cache flushing |
 | 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal คอนทราสต์สูงสบายตา (High-Contrast Light Silver), มี Workflow Guide เน้นปุ่มคลิกชัดเจน, คำนวณ RVC Speed (x Real-time), ป้ายเตือน Amber Runtime Notice ชัดเจน, หลอด Progress Bar คมชัด และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic, high-contrast terminal launcher with scannable workflow guide, RVC speed multiplier, Amber runtime notices & live telemetry |
@@ -87,18 +88,20 @@ run_aicovergen.bat
 ```mermaid
 graph LR
     A[1. วางลิงก์ YouTube] --> B[2. กด โหลด URL / Process URL]
-    B --> C[3. ระบบดึงชื่อเพลงจริง + คลีนคำขยะ]
+    B --> C[3. ระบบดึง ศิลปิน - ชื่อเพลง + คลีนคำขยะ]
     C --> D[4. เลือกโมเดลเสียง + ติ๊ก Fast Mode 2x]
     D --> E[5. กด สร้างเพลง / Generate]
-    E --> F[6. กดฟังเพลงในเว็บทันที หรือคลิกดาวน์โหลด]
+    E --> F[6. ฟังเพลงด้วย Carbon Player หรือดาวน์โหลด]
 ```
 
 1. **เลือกโมเดลเสียง (Voice Model):**
    * ไปที่แท็บ **โหลดโมเดล / Download model** เพื่อเลือกโหลดเสียงที่ต้องการ (เช่น `NontTanont`, `Ado`, `Minecraft_Villager`)
    * หรือหากมีโมเดลของตัวเอง ให้นำไฟล์ `.pth` และ `.index` ไปวางในโฟลเดอร์ `rvc_models/<ชื่อโมเดล>/` แล้วกดปุ่ม **รีเฟรชโมเดล / Refresh 🔁**
 2. **ใส่เพลงต้นฉบับ:**
-   * วางลิงก์ YouTube ในช่อง แล้วกดปุ่ม **"โหลด URL / Process URL"**
-   * ไฟล์จะถูกบันทึกเป็นชื่อเพลงต้นฉบับจริง (เช่น `สุดใจ.mp3`) และชื่อเพลงจะถูกนำไปกรอกในช่อง **"ชื่อเพลงสำหรับตั้งชื่อไฟล์ผลลัพธ์"** โดยอัตโนมัติ (สามารถพิมพ์แก้ไขชื่อได้ตามต้องการ)
+   * วางลิงก์ YouTube / YouTube Music ในช่อง แล้วกดปุ่ม **"โหลด URL / Process URL"**
+   * ไฟล์จะถูกดาวน์โหลดแยกเก็บในโฟลเดอร์เฉพาะ `downloads/<ศิลปิน> - <ชื่อเพลง>.mp3` อย่างเป็นระเบียบ (ไม่ปะปนกับโฟลเดอร์โค้ด)
+   * ระบบจะตรวจจับชื่อศิลปินและชื่อเพลงในฟอร์แมตสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Unicode Normalization โดยอัตโนมัติ (สามารถพิมพ์แก้ไขชื่อได้ตามต้องการ)
+   * 🧹 **ปุ่มล้างแคช:** สามารถกดปุ่ม **"🗑️ ล้างดาวน์โหลด / Clear"** เพื่อลบไฟล์ที่ดาวน์โหลดค้างไว้ใน `downloads/` ได้ทุกเมื่อ
    * *(หรือกดอัปโหลดไฟล์เพลงจากเครื่องโดยตรง)*
 3. **ปรับระดับเสียง (Pitch):**
    * **แปลงเสียง ชาย ➔ หญิง:** ปรับ `+1` (หรือ 12 Semitones)
@@ -109,14 +112,15 @@ graph LR
    * 🎧 **ปิด Fast Mode:** สำหรับกรณีที่ต้องการคุณภาพแยกเสียงระดับสตูดิโอสูงสุดแบบ Multi-pass Denoising (เช่น เพลงที่มีเสียงคอรัสหรือเสียงเอฟเฟกต์หนาแน่นเป็นพิเศษ)
 5. **กด "สร้างเพลง / Generate":**
    * รอระบบแยกเสียงดนตรี ➔ แปลงเสียงด้วย RVC ➔ ผสมเสียง Reverb
-   * เมื่อประมวลผลเสร็จสิ้น การ์ด **Cyberpunk Audio Player** แบบ Custom Controller จะแสดงขึ้นมาทันที:
-     * 🎧 **กดฟังเพลงได้ทันทีในเบราว์เซอร์:** มีปุ่ม Play/Pause สไตล์นีออน และปุ่มปรับระดับเสียง/Mute
-     * 📍 **เห็นตำแหน่งเพลงตลอดเวลา (Permanent Scrubber):** จุดเลื่อนเพลง (Thumb) เรืองแสงและแถบสีสถานะแสดงผลตลอดเวลา 100% ไม่หายไปแม้นำเมาส์ออกจากเครื่องเล่น
+   * เมื่อประมวลผลเสร็จสิ้น การ์ด **Carbon Theme Audio Player** แบบ Custom Controller จะแสดงขึ้นมาทันที:
+     * 🎧 **กดฟังเพลงได้ทันทีในเบราว์เซอร์:** ดีไซน์หรูหรากลมกลืนกับ IBM Carbon Theme พร้อมปุ่ม Play/Pause สไตล์ Carbon Blue (`#0f62fe`) และปุ่มปรับระดับเสียง/Mute
+     * 🏷️ **ป้าย Carbon Pill Badge:** แสดงสถานะ `⚡ AI Cover Ready` พร้อมระบุขนาดไฟล์อย่างชัดเจน
+     * 📍 **เห็นตำแหน่งเพลงตลอดเวลา (Permanent Scrubber):** จุดเลื่อนเพลง (Thumb) สีน้ำเงินและแถบความคืบหน้าแสดงผลตลอดเวลา 100% ไม่หายไปแม้นำเมาส์ออกจากเครื่องเล่น
      * 🛡️ **ปลอดภัยจาก IDM:** ป้องกันโปรแกรม IDM เด้งดาวน์โหลดอัตโนมัติ และป้องกันปัญหาเครื่องเล่นค้างที่ 0:00
      * 💾 **ปุ่มดาวน์โหลดไฟล์ (.mp3) ในตัว:** คลิกเพื่อดาวน์โหลดลงเครื่องได้ทันที โดยชื่อเพลงและสระภาษาไทย (`ั`, `้`, `ุ`) จะคงอยู่ครบถ้วน 100%
 
-> 📛 **รูปแบบชื่อไฟล์ผลลัพธ์:** `<ชื่อเพลงต้นฉบับ> (<ชื่อโมเดล> Ver).mp3`  
-> เช่น: `สุดใจ (NontTanont Ver).mp3` หรือ `ฉบับท้ายสุด (NontTanont Ver).mp3`
+> 📛 **รูปแบบชื่อไฟล์ผลลัพธ์:** `<ชื่อศิลปิน> - <ชื่อเพลง> (<ชื่อโมเดล> Ver).mp3`  
+> เช่น: `Liz's x NATNON - เพลงรัก (Ado Ver).mp3` หรือ `Nont Tanont - โต๊ะริม (Ado Ver).mp3`
 
 ---
 

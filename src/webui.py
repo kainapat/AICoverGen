@@ -65,6 +65,7 @@ IS_ZERO_GPU = os.getenv("SPACES_ZERO_GPU")
 mdxnet_models_dir = os.path.join(BASE_DIR, 'mdxnet_models')
 rvc_models_dir = os.path.join(BASE_DIR, 'rvc_models')
 output_dir = os.path.join(BASE_DIR, 'song_output')
+downloads_dir = os.path.join(BASE_DIR, 'downloads')
 
 
 def get_current_models(models_dir):
@@ -124,6 +125,29 @@ def yt_download_for_ui(url):
     if not path:
         return None, ""
     return path, title
+
+
+def clear_downloads_action():
+    """Removes all downloaded files in downloads directory and resets inputs."""
+    if not os.path.exists(downloads_dir):
+        gr.Info("โฟลเดอร์ดาวน์โหลดว่างเปล่า / Downloads folder is empty")
+        return None, ""
+
+    count = 0
+    for fname in os.listdir(downloads_dir):
+        fpath = os.path.join(downloads_dir, fname)
+        try:
+            if os.path.isfile(fpath) or os.path.islink(fpath):
+                os.remove(fpath)
+                count += 1
+            elif os.path.isdir(fpath):
+                shutil.rmtree(fpath)
+                count += 1
+        except Exception as e:
+            print(f"Error removing {fpath}: {e}", flush=True)
+
+    gr.Info(f"ล้างไฟล์ดาวน์โหลดเรียบร้อยแล้ว ({count} ไฟล์) / Cleared {count} downloaded files")
+    return None, ""
 
 
 def download_with_auth(url, dest, hf_token=""):
@@ -251,32 +275,32 @@ def show_hop_slider(pitch_detection_algo):
 CYBER_PLAYER_HEAD = """
 <style>
 .cyber-player-card {
-    border: 1px solid rgba(0, 240, 255, 0.35);
-    box-shadow: 0 0 25px rgba(0, 240, 255, 0.12), inset 0 0 15px rgba(0, 240, 255, 0.04);
-    border-radius: 12px;
+    border: 1px solid var(--border-color-primary, #393939);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    border-radius: var(--block-radius, 8px);
     padding: 18px 22px;
-    background: linear-gradient(135deg, rgba(10, 15, 28, 0.96) 0%, rgba(16, 24, 40, 0.96) 100%);
+    background: var(--block-background-fill, #161616);
     margin-top: 8px;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font, system-ui, -apple-system, "IBM Plex Sans", BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
 .cyber-controller-bar {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(0, 240, 255, 0.2);
-    border-radius: 10px;
+    background: var(--background-fill-secondary, #262626);
+    border: 1px solid var(--border-color-primary, #393939);
+    border-radius: var(--block-radius, 8px);
     padding: 10px 16px;
     margin-bottom: 14px;
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 .cyber-play-btn {
     width: 38px;
     height: 38px;
     min-width: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #00f0ff 0%, #00b4d8 100%);
-    color: #050b14;
+    background: var(--primary-600, #0f62fe);
+    color: var(--button-primary-text-color, #ffffff);
     border: none;
     font-size: 1rem;
     font-weight: bold;
@@ -284,25 +308,26 @@ CYBER_PLAYER_HEAD = """
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(15, 98, 254, 0.35);
+    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
     user-select: none;
 }
 .cyber-play-btn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 0 18px rgba(0, 240, 255, 0.7);
+    transform: scale(1.06);
+    background: var(--primary-500, #0353e9);
+    box-shadow: 0 4px 12px rgba(15, 98, 254, 0.5);
 }
 .cyber-play-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
+    background: var(--primary-700, #002d9c);
 }
 .cyber-time-display {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
     font-size: 0.85rem;
     font-weight: 500;
-    color: #cbd5e1;
+    color: var(--body-text-color-subdued, #c6c6c6);
     white-space: nowrap;
     min-width: 86px;
-    text-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
     user-select: none;
 }
 .cyber-seek-container {
@@ -318,7 +343,7 @@ CYBER_PLAYER_HEAD = """
     height: 6px;
     border-radius: 3px;
     outline: none;
-    background: linear-gradient(to right, #00f0ff 0%, #00f0ff 0%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 100%);
+    background: linear-gradient(to right, #0f62fe 0%, #0f62fe 0%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.15) 100%);
     cursor: pointer;
     margin: 0;
     padding: 0;
@@ -334,16 +359,16 @@ CYBER_PLAYER_HEAD = """
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #00f0ff;
-    box-shadow: 0 0 10px #00f0ff, 0 0 20px rgba(0, 240, 255, 0.8);
+    background: var(--primary-600, #0f62fe);
+    box-shadow: 0 0 6px rgba(15, 98, 254, 0.6);
     border: 2px solid #ffffff;
     cursor: pointer;
     margin-top: -4px;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    transition: transform 0.12s ease, background-color 0.12s ease;
 }
 .cyber-seek-slider:hover::-webkit-slider-thumb {
-    transform: scale(1.25);
-    box-shadow: 0 0 15px #00f0ff, 0 0 25px rgba(0, 240, 255, 1);
+    transform: scale(1.2);
+    background: var(--primary-500, #4589ff);
 }
 .cyber-seek-slider::-moz-range-track {
     height: 6px;
@@ -354,8 +379,8 @@ CYBER_PLAYER_HEAD = """
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #00f0ff;
-    box-shadow: 0 0 10px #00f0ff;
+    background: var(--primary-600, #0f62fe);
+    box-shadow: 0 0 6px rgba(15, 98, 254, 0.6);
     border: 2px solid #ffffff;
     cursor: pointer;
 }
@@ -387,7 +412,7 @@ CYBER_PLAYER_HEAD = """
     width: 60px;
     height: 4px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.2);
     outline: none;
     cursor: pointer;
 }
@@ -397,16 +422,16 @@ CYBER_PLAYER_HEAD = """
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #00ffa5;
-    box-shadow: 0 0 6px #00ffa5;
+    background: var(--primary-500, #4589ff);
+    box-shadow: 0 0 4px rgba(15, 98, 254, 0.5);
     cursor: pointer;
 }
 .cyber-vol-slider::-moz-range-thumb {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #00ffa5;
-    box-shadow: 0 0 6px #00ffa5;
+    background: var(--primary-500, #4589ff);
+    box-shadow: 0 0 4px rgba(15, 98, 254, 0.5);
     cursor: pointer;
 }
 @media (max-width: 640px) {
@@ -431,7 +456,7 @@ CYBER_PLAYER_HEAD = """
     }
     function updateTrackGradient(slider, cur, dur) {
         var pct = dur > 0 ? (cur / dur) * 100 : 0;
-        slider.style.background = 'linear-gradient(to right, #00f0ff 0%, #00f0ff ' + pct + '%, rgba(255,255,255,0.2) ' + pct + '%, rgba(255,255,255,0.2) 100%)';
+        slider.style.background = 'linear-gradient(to right, #0f62fe 0%, #0f62fe ' + pct + '%, rgba(255,255,255,0.15) ' + pct + '%, rgba(255,255,255,0.15) 100%)';
     }
     window.initCyberAudio = function(cid) {
         var a = document.getElementById('audio_' + cid);
@@ -536,17 +561,17 @@ def render_player_card(cover_path=None):
     if not cover_path or not os.path.exists(cover_path):
         return """
         <div style="
-            border: 1px dashed rgba(0, 240, 255, 0.25);
-            border-radius: 12px;
+            border: 1px dashed var(--border-color-primary, #393939);
+            border-radius: var(--block-radius, 8px);
             padding: 24px 20px;
             text-align: center;
-            background: rgba(10, 15, 25, 0.5);
-            color: #64748b;
+            background: var(--block-background-fill, #161616);
+            color: var(--body-text-color-subdued, #8d8d8d);
             margin-top: 8px;
         ">
             <div style="font-size: 1.6rem; margin-bottom: 6px;">🎧</div>
-            <div style="font-size: 0.95rem; font-weight: 500; color: #94a3b8;">เครื่องเล่นเพลง AI / AI Cover Player (เล่นในเว็บได้ทันที 🔊)</div>
-            <div style="font-size: 0.8rem; color: #475569; margin-top: 4px;">เมื่อสร้างเพลงเสร็จ เครื่องเล่นเพลงพร้อมปุ่มดาวน์โหลดไฟล์จะปรากฏที่นี่ทันที</div>
+            <div style="font-size: 0.95rem; font-weight: 500; color: var(--body-text-color, #f4f4f4);">เครื่องเล่นเพลง AI / AI Cover Player (เล่นในเว็บได้ทันที 🔊)</div>
+            <div style="font-size: 0.8rem; color: var(--body-text-color-subdued, #8d8d8d); margin-top: 4px;">เมื่อสร้างเพลงเสร็จ เครื่องเล่นเพลงพร้อมปุ่มดาวน์โหลดไฟล์จะปรากฏที่นี่ทันที</div>
         </div>
         """
     try:
@@ -568,13 +593,13 @@ def render_player_card(cover_path=None):
         {CYBER_PLAYER_HEAD}
         <div class="cyber-player-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
-                    <span style="font-size: 1.5rem;">🎧</span>
+                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+                    <span style="font-size: 1.6rem;">🎧</span>
                     <div style="overflow: hidden;">
-                        <div style="font-weight: 600; font-size: 1.05rem; color: #00f0ff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        <div style="font-weight: 600; font-size: 1.05rem; color: var(--body-text-color, #f4f4f4); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                             {escaped_name}
                         </div>
-                        <div style="font-size: 0.78rem; color: #00ffa5; font-weight: 500; margin-top: 2px;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 2px 8px; border-radius: 4px; background: rgba(15, 98, 254, 0.12); border: 1px solid rgba(15, 98, 254, 0.25); font-size: 0.75rem; color: var(--primary-400, #4589ff); font-weight: 500;">
                             ⚡ AI Cover Ready · {file_size_mb:.2f} MB
                         </div>
                     </div>
@@ -612,19 +637,20 @@ def render_player_card(cover_path=None):
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 12px;">
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; border-top: 1px solid var(--border-color-primary, rgba(255, 255, 255, 0.08)); padding-top: 12px;">
                 <a href="{data_uri}" download="{download_attr}" style="
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
-                    background: linear-gradient(135deg, #00f0ff 0%, #00b4d8 100%);
-                    color: #050b14;
-                    font-weight: 600;
+                    background: var(--button-primary-background-fill, #0f62fe);
+                    color: var(--button-primary-text-color, #ffffff);
+                    font-weight: 500;
                     font-size: 0.9rem;
-                    padding: 9px 18px;
-                    border-radius: 8px;
+                    padding: 8px 16px;
+                    border-radius: var(--button-large-radius, 6px);
                     text-decoration: none;
-                    box-shadow: 0 2px 10px rgba(0, 240, 255, 0.3);
+                    box-shadow: 0 2px 8px rgba(15, 98, 254, 0.3);
+                    transition: background-color 0.15s ease, transform 0.15s ease;
                 ">
                     <span>💾</span> ดาวน์โหลดเพลง (.mp3)
                 </a>
@@ -685,11 +711,13 @@ if __name__ == '__main__':
                         song_title_input = gr.Textbox(label="ชื่อเพลงสำหรับตั้งชื่อไฟล์ผลลัพธ์ / Song Title (for output filename)", value="", placeholder="ระบบจะดึงชื่อเพลงให้อัตโนมัติ หรือพิมพ์แก้ไขได้ที่นี่...", lines=1)
                         if not IS_ZERO_GPU:
                             with gr.Row():
-                                with gr.Row(scale=2):
+                                with gr.Row(scale=3):
                                     url_media_gui = gr.Textbox(value="", label="ใส่ URL / Enter URL", placeholder="www.youtube.com/watch?v=g_9rPvbENUw", lines=1)
-                                with gr.Row(scale=1):
+                                with gr.Row(scale=2):
                                     url_button_gui = gr.Button("โหลด URL / Process URL", variant="secondary")
+                                    clear_downloads_btn = gr.Button("🗑️ ล้างดาวน์โหลด / Clear", variant="stop")
                             url_button_gui.click(yt_download_for_ui, [url_media_gui], [local_file, song_title_input])
+                            clear_downloads_btn.click(clear_downloads_action, outputs=[local_file, song_title_input])
                         song_input_file = gr.UploadButton('อัปโหลด / Upload 📂', file_types=['audio'], variant='primary', visible=False)
                         show_yt_link_button = gr.Button('วางลิงก์ YouTube/path ไฟล์แทน / Paste link instead', visible=False)
                         song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input, song_title_input])

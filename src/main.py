@@ -35,6 +35,7 @@ IS_ZERO_GPU = os.getenv("SPACES_ZERO_GPU")
 mdxnet_models_dir = os.path.join(BASE_DIR, 'mdxnet_models')
 rvc_models_dir = os.path.join(BASE_DIR, 'rvc_models')
 output_dir = os.path.join(BASE_DIR, 'song_output')
+downloads_dir = os.path.join(BASE_DIR, 'downloads')
 
 
 def clean_old_folders(base_path: str, max_age_seconds: int = 10800):
@@ -98,13 +99,30 @@ def sanitize_filename(name, max_len=150):
     return name or 'song'
 
 
+def clean_channel_name(channel):
+    """Clean promotional suffixes, topic tags, and agency separators from channel/artist names."""
+    if not channel:
+        return ''
+    import re
+    import unicodedata
+    ch = unicodedata.normalize('NFKC', str(channel))
+    # Strip pipe suffix like | WISLIVE, | Warner Music
+    ch = re.sub(r'\s*\|\s*.*$', '', ch)
+    # Strip topic suffix
+    ch = re.sub(r'\s*-\s*Topic$', '', ch, flags=re.IGNORECASE)
+    # Strip official, records, channel, vevo
+    ch = re.sub(r'\b(?:official(?:\s*(?:channel|music|video|audio))?|vevo|topic|records)\b', '', ch, flags=re.IGNORECASE)
+    return re.sub(r'\s+', ' ', ch).strip(' \t\n\r-_|/')
+
+
 def clean_song_title(raw_title):
     """Clean common promotional tags and suffixes from video titles
-    (e.g., [Official MV], (Official Audio), 【MV】, 4K, HD) and sanitize for Windows."""
+    (e.g., [Official MV], (Official Audio), 【MV】, 4K, HD), normalize Unicode, and sanitize for Windows."""
     import re
+    import unicodedata
     if not raw_title:
         return 'song'
-    cleaned = raw_title
+    cleaned = unicodedata.normalize('NFKC', str(raw_title))
     noise_patterns = [
         r'\[\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*\]',
         r'\(\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*\)',
@@ -116,18 +134,69 @@ def clean_song_title(raw_title):
     for pat in noise_patterns:
         cleaned = re.sub(pat, '', cleaned, flags=re.IGNORECASE)
 
+    # Strip decorative opening/closing quote or book brackets around title
+    cleaned = re.sub(r'^[《【\[(]\s*', '', cleaned)
+    cleaned = re.sub(r'\s*[》】\])]$', '', cleaned)
+
     cleaned = re.sub(r'[\s\-_|/]+$', '', cleaned)
     cleaned = re.sub(r'^[\s\-_|/]+', '', cleaned)
     return sanitize_filename(cleaned)
+
+
+def extract_song_and_artist(info):
+    """Extract and format '[Artist] - [Song]' from yt-dlp metadata info dict with smart deduplication."""
+    if not isinstance(info, dict):
+        return clean_song_title(str(info))
+
+    import re
+    import unicodedata
+
+    raw_title = info.get('title') or info.get('fulltitle') or info.get('id') or 'song'
+    raw_track = info.get('track')
+    raw_artist = info.get('artist')
+    raw_channel = info.get('channel') or info.get('uploader')
+
+    # 1. Official YouTube Music track (has dedicated track and artist fields)
+    if raw_track and raw_artist:
+        artist = clean_channel_name(raw_artist)
+        song = clean_song_title(raw_track)
+        if artist:
+            return sanitize_filename(f"{artist} - {song}")
+        return song
+
+    title_norm = unicodedata.normalize('NFKC', str(raw_title))
+
+    # 2. Check for 'Song by Artist' pattern (e.g. 《 เพลงรัก 》 by Liz's x NATNON)
+    by_match = re.match(r'^[《【\[(]?\s*(.*?)\s*[》】\])]?\s*(?:by|โดย)\s+(.+)$', title_norm, re.IGNORECASE)
+    if by_match:
+        song = clean_song_title(by_match.group(1))
+        artist = clean_channel_name(by_match.group(2))
+        if artist:
+            return sanitize_filename(f"{artist} - {song}")
+        return song
+
+    clean_title = clean_song_title(title_norm)
+
+    # 3. If title already has ' - ' (Artist - Song or Song - Artist)
+    if ' - ' in clean_title:
+        return clean_title
+
+    # 4. Fallback to channel/artist if not already in title
+    artist_candidate = clean_channel_name(raw_artist or raw_channel)
+    if artist_candidate and artist_candidate.lower() not in clean_title.lower():
+        return sanitize_filename(f"{artist_candidate} - {clean_title}")
+
+    return clean_title
 
 
 def yt_download(link):
     if not link.strip():
         gr.Info("You need to provide a download link.")
         return None, None
+    os.makedirs(downloads_dir, exist_ok=True)
     ydl_opts = {
         'format': 'bestaudio',
-        'outtmpl': '%(id)s',
+        'outtmpl': os.path.join(downloads_dir, '%(id)s'),
         'nocheckcertificate': True,
         'ignoreerrors': True,
         'no_warnings': True,
@@ -138,12 +207,11 @@ def yt_download(link):
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         result = ydl.extract_info(link, download=True)
-        raw_path = ydl.prepare_filename(result, outtmpl='%(id)s.mp3')
-        raw_title = (result.get('title') or result.get('fulltitle') or result.get('id') or 'song')
-        song_title = clean_song_title(raw_title)
+        raw_path = ydl.prepare_filename(result, outtmpl=os.path.join(downloads_dir, '%(id)s.mp3'))
+        song_title = extract_song_and_artist(result)
 
     # Rename downloaded file directly to the clean song title so UI and file box show the real song title
-    target_dir = os.path.dirname(os.path.abspath(raw_path))
+    target_dir = downloads_dir
     target_path = os.path.join(target_dir, f"{song_title}.mp3")
     try:
         if os.path.abspath(raw_path) != os.path.abspath(target_path):
