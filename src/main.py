@@ -306,18 +306,19 @@ def display_progress(message, percent, is_webui, progress=None):
         progress(percent, desc=message)
 
 
-def preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type, progress, keep_orig, orig_song_path):
+def preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type, progress, keep_orig, orig_song_path, fast_mode=True):
 
     song_output_dir = os.path.join(output_dir, song_id)
+    do_denoise = not fast_mode
 
     display_progress('[~] Separating Vocals from Instrumental...', 0.1, is_webui, progress)
-    vocals_path, instrumentals_path = run_mdx(mdx_model_params, song_output_dir, os.path.join(mdxnet_models_dir, 'UVR-MDX-NET-Voc_FT.onnx'), orig_song_path, denoise=True, keep_orig=keep_orig)
+    vocals_path, instrumentals_path = run_mdx(mdx_model_params, song_output_dir, os.path.join(mdxnet_models_dir, 'UVR-MDX-NET-Voc_FT.onnx'), orig_song_path, denoise=do_denoise, keep_orig=keep_orig)
 
     display_progress('[~] Separating Main Vocals from Backup Vocals...', 0.2, is_webui, progress)
-    backup_vocals_path, main_vocals_path = run_mdx(mdx_model_params, song_output_dir, os.path.join(mdxnet_models_dir, 'UVR_MDXNET_KARA_2.onnx'), vocals_path, suffix='Backup', invert_suffix='Main', denoise=True)
+    backup_vocals_path, main_vocals_path = run_mdx(mdx_model_params, song_output_dir, os.path.join(mdxnet_models_dir, 'UVR_MDXNET_KARA_2.onnx'), vocals_path, suffix='Backup', invert_suffix='Main', denoise=do_denoise)
 
     display_progress('[~] Applying DeReverb to Vocals...', 0.3, is_webui, progress)
-    _, main_vocals_dereverb_path = run_mdx(mdx_model_params, song_output_dir, os.path.join(mdxnet_models_dir, 'Reverb_HQ_By_FoxJoy.onnx'), main_vocals_path, invert_suffix='DeReverb', exclude_main=True, denoise=True)
+    _, main_vocals_dereverb_path = run_mdx(mdx_model_params, song_output_dir, os.path.join(mdxnet_models_dir, 'Reverb_HQ_By_FoxJoy.onnx'), main_vocals_path, invert_suffix='DeReverb', exclude_main=True, denoise=do_denoise)
 
     return orig_song_path, vocals_path, instrumentals_path, main_vocals_path, backup_vocals_path, main_vocals_dereverb_path
 
@@ -404,19 +405,19 @@ def process_song(
     song_dir, song_input, mdx_model_params, song_id, is_webui, input_type, progress,
     keep_files, pitch_change, pitch_change_all, voice_model, index_rate, filter_radius,
     rms_mix_rate, protect, f0_method, crepe_hop_length, output_format, keep_orig, orig_song_path, steps,
-    song_title=None
+    song_title=None, fast_mode=True
 ):
 
     if not os.path.exists(song_dir):
         os.makedirs(song_dir)
-        orig_song_path, vocals_path, instrumentals_path, main_vocals_path, backup_vocals_path, main_vocals_dereverb_path = preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type, progress, keep_orig, orig_song_path)
+        orig_song_path, vocals_path, instrumentals_path, main_vocals_path, backup_vocals_path, main_vocals_dereverb_path = preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type, progress, keep_orig, orig_song_path, fast_mode=fast_mode)
     else:
         vocals_path, main_vocals_path = None, None
         paths = get_audio_paths(song_dir)
 
         # if any of the audio files aren't available or keep intermediate files, rerun preprocess
         if any(path is None for path in paths):
-            orig_song_path, vocals_path, instrumentals_path, main_vocals_path, backup_vocals_path, main_vocals_dereverb_path = preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type, progress, keep_orig, orig_song_path)
+            orig_song_path, vocals_path, instrumentals_path, main_vocals_path, backup_vocals_path, main_vocals_dereverb_path = preprocess_song(song_input, mdx_model_params, song_id, is_webui, input_type, progress, keep_orig, orig_song_path, fast_mode=fast_mode)
         else:
             orig_song_path, instrumentals_path, main_vocals_dereverb_path, backup_vocals_path = paths
 
@@ -477,7 +478,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
                         is_webui=0, main_gain=0, backup_gain=0, inst_gain=0, index_rate=0.5, filter_radius=3,
                         rms_mix_rate=0.25, f0_method='rmvpe', crepe_hop_length=128, protect=0.33, pitch_change_all=0,
                         reverb_rm_size=0.15, reverb_wet=0.2, reverb_dry=0.8, reverb_damping=0.7, output_format='mp3',
-                        extra_denoise=False, steps=1, song_title=None,
+                        extra_denoise=False, steps=1, song_title=None, fast_mode=True,
                         progress=gr.Progress()):
     if not keep_files or IS_ZERO_GPU:
         clean_old_folders("./song_output", 14400)
@@ -557,6 +558,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
             orig_song_path,
             steps,
             effective_song_title,
+            fast_mode=fast_mode,
         )
 
         end = time.time()

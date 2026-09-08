@@ -278,6 +278,7 @@ if __name__ == '__main__':
                     with gr.Column():
                         pitch = gr.Slider(-3, 3, value=0, step=1, label='เปลี่ยนพิทช์ (เฉพาะเสียงร้อง / Vocals ONLY)', info='ปกติใช้ 1 แปลงชาย→หญิง และ -1 หญิง→ชาย (Octaves) / Use 1 for male-to-female, -1 for vice-versa.')
                         pitch_all = gr.Slider(-12, 12, value=0, step=1, label='เปลี่ยนพิทช์รวม / Overall Pitch', info='เปลี่ยนพิทช์/คีย์ทั้งเสียงร้องและดนตรีพร้อมกัน อาจลดคุณภาพเสียงเล็กน้อย (Semitones) / Changes pitch/key of vocals and instrumentals together.')
+                        fast_mode = gr.Checkbox(True, label='⚡ โหมดความเร็วสูง / Fast Mode (2x เร็วกว่า)', info='ลดรอบคำนวณแยกเสียงลง 50% (ใช้เวลา ~2-3 นาที) / Halves separation passes for 2x faster conversion')
                     show_file_upload_button.click(swap_visibility, outputs=[file_upload_col, yt_link_col, song_input, local_file])
                     show_yt_link_button.click(swap_visibility, outputs=[yt_link_col, file_upload_col, song_input, local_file])
 
@@ -316,7 +317,7 @@ if __name__ == '__main__':
                 output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='ชนิดไฟล์ / Output file type', info='mp3: ไฟล์เล็ก คุณภาพพอใช้ wav: ไฟล์ใหญ่ คุณภาพดีสุด / mp3: small file, decent quality. wav: large file, best quality')
 
             with gr.Row():
-                clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input])
+                clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input, fast_mode])
                 generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')
 
             with gr.Row():
@@ -338,12 +339,12 @@ if __name__ == '__main__':
                                inputs=[local_file, rvc_model, pitch, keep_files, is_webui, main_gain, backup_gain,
                                        inst_gain, index_rate, filter_radius, rms_mix_rate, f0_method, crepe_hop_length,
                                        protect, pitch_all, reverb_rm_size, reverb_wet, reverb_dry, reverb_damping,
-                                       output_format, extra_denoise, steps, song_title_input],
+                                       output_format, extra_denoise, steps, song_title_input, fast_mode],
                                outputs=[ai_cover_audio, ai_cover_file])
-            clear_btn.click(lambda: [0, 0, 0, 0, 0.5, 3, 0.25, 0.33, 'rmvpe+', 128, 0, 0.15, 0.2, 0.8, 0.7, 'mp3', None, None, True, 1, ""],
+            clear_btn.click(lambda: [0, 0, 0, 0, 0.5, 3, 0.25, 0.33, 'rmvpe+', 128, 0, 0.15, 0.2, 0.8, 0.7, 'mp3', None, None, True, 1, "", True],
                             outputs=[pitch, main_gain, backup_gain, inst_gain, index_rate, filter_radius, rms_mix_rate,
                                      protect, f0_method, crepe_hop_length, pitch_all, reverb_rm_size, reverb_wet,
-                                     reverb_dry, reverb_damping, output_format, ai_cover_audio, ai_cover_file, extra_denoise, steps, song_title_input])
+                                     reverb_dry, reverb_damping, output_format, ai_cover_audio, ai_cover_file, extra_denoise, steps, song_title_input, fast_mode])
 
         # Download tab
         with gr.Tab('โหลดโมเดล / Download model'):

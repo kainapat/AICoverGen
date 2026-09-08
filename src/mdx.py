@@ -3,6 +3,7 @@ import hashlib
 import os
 import queue
 import threading
+import time
 import warnings
 from multiprocessing import cpu_count
 import librosa
@@ -199,6 +200,17 @@ class MDX:
             pw = []
             for mix_wave in mix_waves:
                 self.prog.update()
+                current = self.prog.n
+                total = max(1, self.prog.total)
+                pct = int(current / total * 100)
+                elapsed = time.time() - getattr(self, "_start_time", time.time())
+                rate = current / max(0.001, elapsed)
+                eta = int((total - current) / max(0.001, rate))
+                bar_len = 16
+                filled = int(bar_len * current / total)
+                bar = "█" * filled + "░" * (bar_len - filled)
+                print(f"MDX Progress: [{bar}] {pct}% | {current}/{total} chunks | ETA: {eta}s", flush=True)
+
                 spec = self.model.stft(mix_wave)
                 processed_spec = torch.tensor(self.process(spec))
                 processed_wav = self.model.istft(processed_spec.to(self.device))
@@ -219,7 +231,8 @@ class MDX:
         Returns:
             numpy array: Processed wave array
         """
-        self.prog = tqdm(total=0)
+        self.prog = tqdm(total=0, disable=True)
+        self._start_time = time.time()
         chunk = wave.shape[-1] // mt_threads
         waves = self.segment(wave, False, chunk)
 
@@ -235,6 +248,7 @@ class MDX:
         for thread in threads:
             thread.join()
         self.prog.close()
+        print("MDX Progress: Complete", flush=True)
 
         processed_batches = []
         while not q.empty():
@@ -313,5 +327,7 @@ def run_mdx(model_params, output_dir, model_path, filename, exclude_main=False, 
         os.remove(filename)
 
     del mdx_sess, wave_processed, wave
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     gc.collect()
     return main_filepath, invert_filepath

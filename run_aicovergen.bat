@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title AICoverGen — Neural Voice Engine
+title AICoverGen - Neural Voice Engine
 set PYTHONIOENCODING=utf-8
 chcp 65001 >nul 2>&1
 set HF_HOME=D:\AI_Cache\huggingface

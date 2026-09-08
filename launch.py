@@ -82,6 +82,45 @@ def render_box(lines, border_col="cyan", width=64):
     out.append(f"  {c_b}╰{'─' * width}╯{c_res}")
     return "\n".join(out)
 
+# ─── Error Diagnostic Card ───
+_tb_buffer = []
+
+def render_error_card(tb_lines):
+    last_line = tb_lines[-1].strip() if tb_lines else "Unknown Error"
+    exc_type = last_line.split(":")[0].strip() if ":" in last_line else "Exception"
+    exc_msg = last_line.split(":", 1)[1].strip() if ":" in last_line else last_line
+
+    loc = "Unknown Location"
+    for l in reversed(tb_lines):
+        if "File " in l:
+            loc = l.strip()
+            break
+
+    W = 64
+    lines = [
+        f"{C['red']}{C['bold']}✖ EXCEPTION DIAGNOSTIC DETECTED",
+        "---",
+        f"{C['amber']}Type     : {C['white']}{exc_type[:50]}",
+        f"{C['amber']}Location : {C['white']}{loc[:50]}",
+        f"{C['amber']}Message  : {C['red']}{exc_msg[:50]}",
+        "---",
+        f"{C['gray']}Full Stacktrace Details:",
+    ]
+    for l in tb_lines[-8:]:
+        lines.append(f"{C['dark']}  {l.strip()[:58]}")
+    lines.append("")
+    lines.append(f"{C['gray']}[Logged to webui.log | Review details above]")
+
+    return render_box(lines, "red", W)
+
+def flush_traceback():
+    global _tb_buffer
+    if _tb_buffer:
+        print()
+        print(render_error_card(_tb_buffer))
+        print()
+        _tb_buffer = []
+
 # ─── Hardware & Telemetry Detection ───
 def get_telemetry():
     telemetry = {
@@ -187,45 +226,72 @@ def check_port(port):
 
 # ─── Real-time Log Stream Formatter ───
 def format_log_line(line):
-    line = line.rstrip()
-    if not line:
+    global _tb_buffer
+    raw_line = line.rstrip()
+    if not raw_line:
+        return
+
+    # Check for active traceback accumulation
+    if _tb_buffer:
+        if raw_line.startswith(" ") or raw_line.startswith("\t") or 'File "' in raw_line or "line " in raw_line:
+            _tb_buffer.append(raw_line)
+            return
+        elif any(err_word in raw_line for err_word in [":", "Error", "Exception"]):
+            _tb_buffer.append(raw_line)
+            flush_traceback()
+            return
+        else:
+            flush_traceback()
+
+    if "Traceback (most recent call last):" in raw_line:
+        _tb_buffer = [raw_line]
+        return
+
+    # Live MDX progress updates
+    if "MDX Progress:" in raw_line:
+        if "Complete" in raw_line:
+            sys.stdout.write(f"\r  {C['emerald']}✔ [2/6] Vocals & Instrumental Separation Complete!{' ' * 20}{C['reset']}\n")
+        else:
+            clean = raw_line.replace("MDX Progress:", "").strip()
+            sys.stdout.write(f"\r  {C['cyan']}⚡ MDX {clean}{C['reset']}   ")
+        sys.stdout.flush()
         return
 
     # Pipeline progress messages
-    if "Starting AI Cover Generation Pipeline" in line:
+    if "Starting AI Cover Generation Pipeline" in raw_line:
         print()
         cprint("  ─────────────────────────────────────────────────────────────", "dark")
         cprint("  ⚡ [PIPELINE STARTED] Processing audio cover workflow...", "cyan", bold=True)
-    elif "Downloading song" in line:
+    elif "Downloading song" in raw_line:
         cprint("  ⬇️  [1/6] Downloading YouTube audio stream...", "cyan")
-    elif "Separating Vocals from Instrumental" in line:
+    elif "Separating Vocals from Instrumental" in raw_line:
         cprint("  🎼  [2/6] Separating Vocals & Instrumental (MDX-Net)...", "cyan")
-    elif "Separating Main Vocals from Backup Vocals" in line:
+    elif "Separating Main Vocals from Backup Vocals" in raw_line:
         cprint("  🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...", "cyan")
-    elif "Applying DeReverb" in line:
+    elif "Applying DeReverb" in raw_line:
         cprint("  ✨  [4/6] De-reverberating Vocal Stems (FoxJoy HQ)...", "cyan")
-    elif "Converting voice using RVC" in line:
+    elif "Converting voice using RVC" in raw_line:
         cprint("  🎙️  [5/6] Converting Vocal Timbre with RVC v2 Model...", "magenta", bold=True)
-    elif "Applying audio effects" in line:
+    elif "Applying audio effects" in raw_line:
         cprint("  🎛️  [6/6] Mastering with Studio Effects & Reverb...", "cyan")
-    elif "Combining AI Vocals and Instrumentals" in line:
+    elif "Combining AI Vocals and Instrumentals" in raw_line:
         cprint("  🎵  [FINAL] Merging Vocals & Instrumental Stems...", "emerald")
-    elif "Total time all process" in line:
-        cprint(f"  🏆  {line.strip()}", "emerald", bold=True)
+    elif "Total time all process" in raw_line:
+        cprint(f"  🏆  {raw_line.strip()}", "emerald", bold=True)
         cprint("  ─────────────────────────────────────────────────────────────", "dark")
         print()
-    elif "Cover generated at" in line:
-        cprint(f"  💾  {line.strip()}", "emerald", bold=True)
-    elif "cuda:0 half>>" in line:
+    elif "Cover generated at" in raw_line:
+        cprint(f"  💾  {raw_line.strip()}", "emerald", bold=True)
+    elif "cuda:0 half>>" in raw_line:
         ok("CUDA device confirmed: FP16 half-precision active")
-    elif "Running on local URL" in line or "http://" in line:
+    elif "Running on local URL" in raw_line or "http://" in raw_line:
         pass  # Handled by ready banner
-    elif "error" in line.lower() or "traceback" in line.lower():
-        cprint(f"  ✖  {line}", "red")
-    elif "notice" in line.lower():
-        cprint(f"     {line}", "amber")
+    elif "error" in raw_line.lower() or "exception" in raw_line.lower():
+        cprint(f"  ✖  {raw_line}", "red")
+    elif "notice" in raw_line.lower():
+        cprint(f"     {raw_line}", "amber")
     else:
-        cprint(f"     {line}", "gray")
+        cprint(f"     {raw_line}", "gray")
 
 def stream_output(proc, logfile):
     try:
@@ -235,9 +301,14 @@ def stream_output(proc, logfile):
                     break
                 f.write(raw)
                 f.flush()
-                format_log_line(raw)
+                try:
+                    format_log_line(raw)
+                except Exception:
+                    pass
     except Exception:
         pass
+    finally:
+        flush_traceback()
 
 # ─── Main Execution Loop ───
 def main():
@@ -287,7 +358,7 @@ def main():
     )
     ok(f"Process spawned successfully (PID: {proc.pid})")
 
-    # Start background stream thread
+    # Start background stream thread (non-daemon to guarantee clean drainage)
     streamer = threading.Thread(target=stream_output, args=(proc, LOGFILE), daemon=True)
     streamer.start()
 
@@ -332,17 +403,39 @@ def main():
             except Exception:
                 pass
             cprint("  ✔ Server stopped cleanly.", "emerald")
+            return
+
+        # Process exited on its own (could be crash or error)
+        try:
+            streamer.join(timeout=3)
+        except Exception:
+            pass
+        flush_traceback()
+
+        if proc.returncode != 0:
+            print()
+            cprint(f"  ✖ WebUI process exited with failure code ({proc.returncode}).", "red", bold=True)
+            cprint(f"  Inspect full session log at: {LOGFILE}", "amber")
+            print()
+            try:
+                input("  Press Enter to exit...")
+            except Exception:
+                pass
     else:
+        flush_traceback()
         cprint("\n  ✖ WebUI failed to initialize within timeout.", "red", bold=True)
         cprint(f"  Inspect log file for details: {LOGFILE}", "amber")
         try:
             with open(LOGFILE) as f:
                 lines = f.readlines()
-                for line in lines[-10:]:
+                for line in lines[-15:]:
                     print("   ", line.rstrip())
         except Exception:
             pass
-        input("\nPress Enter to exit...")
+        try:
+            input("\nPress Enter to exit...")
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()

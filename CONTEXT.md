@@ -35,6 +35,9 @@
 | **Clean Title Filter** | Regex post-processing on YouTube metadata stripping noise tags such as `[Official MV]`, `(Official Audio)`, `【MV】`, `4K`, `HD`. |
 | **Dual Output Display** | Pairing an in-browser audio player (`gr.Audio`) for instantaneous playback with a dedicated file card (`gr.File`) for direct download in the WebUI. |
 | **Cyberpunk Launcher CLI** | High-aesthetic terminal interface with rounded Unicode boxes, ANSI gradients, live GPU/VRAM hardware telemetry, and formatted pipeline stage streaming. |
+| **Fast Mode** | Pipeline optimization flag (`fast_mode=True`) bypassing redundant multi-pass ONNX denoising, reducing separation duration by ~50% (~2-3 mins on 4GB VRAM) while preserving vocal clarity. |
+| **Error Diagnostic Card** | Cyberpunk-styled terminal alert box rendering exception classes, source locations, and human-readable remedies when errors occur. |
+| **Traceback Buffer Drainer** | Pipe management pattern in `launch.py` ensuring stdout/stderr buffers are fully drained on process crash so stacktraces are never truncated. |
 
 ## Pipeline Flow
 
