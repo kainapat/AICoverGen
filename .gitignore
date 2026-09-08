@@ -1,3 +1,10 @@
+# Temp files
+*.log
+webui_*.txt
+.freebuff/
+test_pipeline.py
+webui_captured.txt
+
 # MDX Models
 mdxnet_models/*.onnx
 
