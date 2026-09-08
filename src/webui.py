@@ -85,6 +85,12 @@ def extract_zip(extraction_folder, zip_name):
             shutil.rmtree(os.path.join(extraction_folder, filepath))
 
 
+def yt_download_for_ui(url):
+    """Wrapper: yt_download returns (path, title), but the UI file box needs just the path."""
+    path, _title = yt_download(url)
+    return path
+
+
 def download_online_model(url, dir_name, progress=gr.Progress()):
     try:
         progress(0, desc=f'[~] Downloading voice model with name {dir_name}...')
@@ -236,7 +242,7 @@ if __name__ == '__main__':
                                     url_media_gui = gr.Textbox(value="", label="ใส่ URL / Enter URL", placeholder="www.youtube.com/watch?v=g_9rPvbENUw", lines=1)
                                 with gr.Row(scale=1):
                                     url_button_gui = gr.Button("โหลด URL / Process URL", variant="secondary")
-                            url_button_gui.click(yt_download, [url_media_gui], [local_file])
+                            url_button_gui.click(yt_download_for_ui, [url_media_gui], [local_file])
                         song_input_file = gr.UploadButton('อัปโหลด / Upload 📂', file_types=['audio'], variant='primary', visible=False)
                         show_yt_link_button = gr.Button('วางลิงก์ YouTube/path ไฟล์แทน / Paste link instead', visible=False)
                         song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input])
