@@ -25,7 +25,7 @@ def configure_logging_libs(debug=False):
         pass
 configure_logging_libs()
 
-from main import song_cover_pipeline, yt_download, sanitize_filename
+from main import song_cover_pipeline, yt_download, sanitize_filename, clean_song_title
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IS_ZERO_GPU = os.getenv("SPACES_ZERO_GPU")
@@ -87,11 +87,11 @@ def extract_zip(extraction_folder, zip_name):
 
 
 def yt_download_for_ui(url):
-    """Wrapper: yt_download returns (path, title). File box gets the path, title shown below URL."""
+    """Wrapper: yt_download returns (path, title). Updates local_file and song_title_input."""
     path, title = yt_download(url)
     if not path:
         return None, ""
-    return path, f"🎵 {title}"
+    return path, title
 
 
 def download_with_auth(url, dest, hf_token=""):
@@ -205,8 +205,8 @@ def swap_visibility():
 def process_file_upload(file):
     if file is None:
         return None, gr.update(value=''), ""
-    title = sanitize_filename(os.path.splitext(os.path.basename(file.name))[0])
-    return file.name, gr.update(value=file.name), f"🎵 {title}"
+    title = clean_song_title(os.path.splitext(os.path.basename(file.name))[0])
+    return file.name, gr.update(value=file.name), title
 
 
 def show_hop_slider(pitch_detection_algo):
@@ -262,18 +262,18 @@ if __name__ == '__main__':
 
                     with gr.Column(visible=True) as file_upload_col:
                         audio_extensions = ['.mp3', '.m4a', '.flac', '.wav', '.aac', '.ogg', '.wma', '.alac', '.aiff', '.opus', 'amr']
-                        local_file = gr.File(label='ไฟล์เสียง / Audio file', interactive=True, type="filepath", file_types=audio_extensions, height=150)
-                        song_title_md = gr.Markdown("", elem_classes=["song-title"])
+                        local_file = gr.File(label='ไฟล์เสียง / Audio file', interactive=True, type="filepath", file_types=audio_extensions, height=130)
+                        song_title_input = gr.Textbox(label="ชื่อเพลงสำหรับตั้งชื่อไฟล์ผลลัพธ์ / Song Title (for output filename)", value="", placeholder="ระบบจะดึงชื่อเพลงให้อัตโนมัติ หรือพิมพ์แก้ไขได้ที่นี่...", lines=1)
                         if not IS_ZERO_GPU:
                             with gr.Row():
                                 with gr.Row(scale=2):
                                     url_media_gui = gr.Textbox(value="", label="ใส่ URL / Enter URL", placeholder="www.youtube.com/watch?v=g_9rPvbENUw", lines=1)
                                 with gr.Row(scale=1):
                                     url_button_gui = gr.Button("โหลด URL / Process URL", variant="secondary")
-                            url_button_gui.click(yt_download_for_ui, [url_media_gui], [local_file, song_title_md])
+                            url_button_gui.click(yt_download_for_ui, [url_media_gui], [local_file, song_title_input])
                         song_input_file = gr.UploadButton('อัปโหลด / Upload 📂', file_types=['audio'], variant='primary', visible=False)
                         show_yt_link_button = gr.Button('วางลิงก์ YouTube/path ไฟล์แทน / Paste link instead', visible=False)
-                        song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input, song_title_md])
+                        song_input_file.upload(process_file_upload, inputs=[song_input_file], outputs=[local_file, song_input, song_title_input])
 
                     with gr.Column():
                         pitch = gr.Slider(-3, 3, value=0, step=1, label='เปลี่ยนพิทช์ (เฉพาะเสียงร้อง / Vocals ONLY)', info='ปกติใช้ 1 แปลงชาย→หญิง และ -1 หญิง→ชาย (Octaves) / Use 1 for male-to-female, -1 for vice-versa.')
@@ -316,27 +316,34 @@ if __name__ == '__main__':
                 output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='ชนิดไฟล์ / Output file type', info='mp3: ไฟล์เล็ก คุณภาพพอใช้ wav: ไฟล์ใหญ่ คุณภาพดีสุด / mp3: small file, decent quality. wav: large file, best quality')
 
             with gr.Row():
-                clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_md])
+                clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input])
                 generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')
-                ai_cover = (
-                    gr.Audio(label='เพลง AI / AI Cover', show_share_button=True)
-                    if args.builtin_player else
-                    gr.File(label="เพลง AI / AI Cover", interactive=False)
-                )
+
+            with gr.Row():
+                with gr.Column(scale=3):
+                    ai_cover_audio = gr.Audio(label='เครื่องเล่นเพลง AI / AI Cover Player (กดฟังได้ทันที 🔊)', type='filepath', interactive=False)
+                with gr.Column(scale=2):
+                    ai_cover_file = gr.File(label="ดาวน์โหลดไฟล์เพลง / Download Audio File 💾", interactive=False)
+            clear_btn.add([ai_cover_audio, ai_cover_file])
             gr.Markdown("- You can also try `AICoverGen❤️` in Colab’s free tier, which provides free GPU [link](https://github.com/R3gm/AICoverGen?tab=readme-ov-file#aicovergen).")
 
             ref_btn.click(update_models_list, None, outputs=rvc_model)
             is_webui = gr.Number(value=1, visible=False)
-            generate_btn.click(song_cover_pipeline,
+
+            def run_cover_webui(*args):
+                cover_path = song_cover_pipeline(*args)
+                return cover_path, cover_path
+
+            generate_btn.click(run_cover_webui,
                                inputs=[local_file, rvc_model, pitch, keep_files, is_webui, main_gain, backup_gain,
                                        inst_gain, index_rate, filter_radius, rms_mix_rate, f0_method, crepe_hop_length,
                                        protect, pitch_all, reverb_rm_size, reverb_wet, reverb_dry, reverb_damping,
-                                       output_format, extra_denoise, steps],
-                               outputs=[ai_cover])
-            clear_btn.click(lambda: [0, 0, 0, 0, 0.5, 3, 0.25, 0.33, 'rmvpe+', 128, 0, 0.15, 0.2, 0.8, 0.7, 'mp3', None, True, 1],
+                                       output_format, extra_denoise, steps, song_title_input],
+                               outputs=[ai_cover_audio, ai_cover_file])
+            clear_btn.click(lambda: [0, 0, 0, 0, 0.5, 3, 0.25, 0.33, 'rmvpe+', 128, 0, 0.15, 0.2, 0.8, 0.7, 'mp3', None, None, True, 1, ""],
                             outputs=[pitch, main_gain, backup_gain, inst_gain, index_rate, filter_radius, rms_mix_rate,
                                      protect, f0_method, crepe_hop_length, pitch_all, reverb_rm_size, reverb_wet,
-                                     reverb_dry, reverb_damping, output_format, ai_cover, extra_denoise, steps])
+                                     reverb_dry, reverb_damping, output_format, ai_cover_audio, ai_cover_file, extra_denoise, steps, song_title_input])
 
         # Download tab
         with gr.Tab('โหลดโมเดล / Download model'):
@@ -427,5 +434,6 @@ if __name__ == '__main__':
         # enable_queue=True,
         server_name=None if not args.listen else (args.listen_host or '0.0.0.0'),
         server_port=args.listen_port,
-        ssr_mode=args.ssr
+        ssr_mode=args.ssr,
+        allowed_paths=[output_dir, BASE_DIR]
     )

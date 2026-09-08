@@ -10,11 +10,16 @@ Write-Host ""
 # Kill old processes
 $old = netstat -aon | Select-String ":7860" | Select-String "LISTENING"
 if ($old) {
-    $pid = ($old -split '\s+')[-1]
-    Write-Host "  [x] Killing old process PID: $pid" -ForegroundColor Yellow
-    taskkill /F /PID $pid 2>$null | Out-Null
+    $oldPid = ($old -split '\s+')[-1]
+    Write-Host "  [x] Killing old process PID: $oldPid" -ForegroundColor Yellow
+    taskkill /F /PID $oldPid 2>$null | Out-Null
     Start-Sleep -Seconds 2
 }
+
+# Cache directories redirection to D:
+$env:HF_HOME = "D:\AI_Cache\huggingface"
+$env:TORCH_HOME = "D:\AI_Cache\torch"
+$env:PIP_CACHE_DIR = "D:\AI_Cache\pip"
 
 # Start WebUI
 Write-Host "  [>] Starting WebUI..." -ForegroundColor Cyan

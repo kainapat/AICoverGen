@@ -98,6 +98,29 @@ def sanitize_filename(name, max_len=150):
     return name or 'song'
 
 
+def clean_song_title(raw_title):
+    """Clean common promotional tags and suffixes from video titles
+    (e.g., [Official MV], (Official Audio), 【MV】, 4K, HD) and sanitize for Windows."""
+    import re
+    if not raw_title:
+        return 'song'
+    cleaned = raw_title
+    noise_patterns = [
+        r'\[\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*\]',
+        r'\(\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*\)',
+        r'【\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*】',
+        r'\|\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq).*$',
+        r'//\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq).*$',
+        r'\b(?:4K|HD|HQ|1080p|720p)\b',
+    ]
+    for pat in noise_patterns:
+        cleaned = re.sub(pat, '', cleaned, flags=re.IGNORECASE)
+
+    cleaned = re.sub(r'[\s\-_|/]+$', '', cleaned)
+    cleaned = re.sub(r'^[\s\-_|/]+', '', cleaned)
+    return sanitize_filename(cleaned)
+
+
 def yt_download(link):
     if not link.strip():
         gr.Info("You need to provide a download link.")
@@ -114,9 +137,30 @@ def yt_download(link):
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         result = ydl.extract_info(link, download=True)
-        download_path = ydl.prepare_filename(result, outtmpl='%(id)s.mp3')
+        raw_path = ydl.prepare_filename(result, outtmpl='%(id)s.mp3')
         raw_title = (result.get('title') or result.get('fulltitle') or result.get('id') or 'song')
-        song_title = sanitize_filename(raw_title)
+        song_title = clean_song_title(raw_title)
+
+    # Rename downloaded file directly to the clean song title so UI and file box show the real song title
+    target_dir = os.path.dirname(os.path.abspath(raw_path))
+    target_path = os.path.join(target_dir, f"{song_title}.mp3")
+    try:
+        if os.path.abspath(raw_path) != os.path.abspath(target_path):
+            if os.path.exists(target_path):
+                os.remove(target_path)
+            os.rename(raw_path, target_path)
+        download_path = target_path
+    except Exception as e:
+        print(f"[*] Notice: Could not rename {raw_path} to {target_path}: {e}", flush=True)
+        download_path = raw_path
+
+    # Save sidecar metadata so local reading of this file can also recover the clean song title
+    try:
+        sidecar_path = os.path.splitext(download_path)[0] + '.title'
+        with open(sidecar_path, 'w', encoding='utf-8') as f:
+            f.write(song_title)
+    except Exception:
+        pass
 
     return download_path, song_title
 
@@ -287,7 +331,15 @@ def get_audio_file(song_input, is_webui, input_type, progress):
         orig_song_path, song_title = yt_download(song_link)
     elif input_type == 'local':
         orig_song_path = song_input
-        song_title = sanitize_filename(os.path.splitext(os.path.basename(song_input))[0])
+        sidecar_path = os.path.splitext(song_input)[0] + '.title'
+        if os.path.exists(sidecar_path):
+            try:
+                with open(sidecar_path, 'r', encoding='utf-8') as f:
+                    song_title = f.read().strip()
+            except Exception:
+                pass
+        if not song_title:
+            song_title = clean_song_title(os.path.splitext(os.path.basename(song_input))[0])
         keep_orig = True
     else:
         orig_song_path = None
@@ -425,7 +477,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
                         is_webui=0, main_gain=0, backup_gain=0, inst_gain=0, index_rate=0.5, filter_radius=3,
                         rms_mix_rate=0.25, f0_method='rmvpe', crepe_hop_length=128, protect=0.33, pitch_change_all=0,
                         reverb_rm_size=0.15, reverb_wet=0.2, reverb_dry=0.8, reverb_damping=0.7, output_format='mp3',
-                        extra_denoise=False, steps=1,
+                        extra_denoise=False, steps=1, song_title=None,
                         progress=gr.Progress()):
     if not keep_files or IS_ZERO_GPU:
         clean_old_folders("./song_output", 14400)
@@ -464,7 +516,12 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
 
         song_dir = os.path.join(output_dir, song_id)
 
-        keep_orig, orig_song_path, song_title = get_audio_file(song_input, is_webui, input_type, progress)
+        keep_orig, orig_song_path, detected_song_title = get_audio_file(song_input, is_webui, input_type, progress)
+        if song_title and isinstance(song_title, str) and song_title.strip():
+            effective_song_title = clean_song_title(song_title.strip())
+        else:
+            effective_song_title = detected_song_title
+
         orig_song_path, ascii_temp_copy = ensure_ascii_audio_path(orig_song_path, song_id)
         orig_song_path = convert_to_stereo(orig_song_path)
 
@@ -499,7 +556,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
             keep_orig,
             orig_song_path,
             steps,
-            song_title,
+            effective_song_title,
         )
 
         end = time.time()
@@ -584,6 +641,7 @@ if __name__ == '__main__':
     parser.add_argument('-rdry', '--reverb-dryness', type=float, default=0.8, help='Reverb dry level between 0 and 1')
     parser.add_argument('-rdamp', '--reverb-damping', type=float, default=0.7, help='Reverb damping between 0 and 1')
     parser.add_argument('-oformat', '--output-format', type=str, default='mp3', help='Output format of audio file. mp3 for smaller file size, wav for best quality')
+    parser.add_argument('-st', '--song-title', type=str, default=None, help='Custom title of the song for naming output cover file')
     args = parser.parse_args()
 
     rvc_dirname = args.rvc_dirname
@@ -598,5 +656,6 @@ if __name__ == '__main__':
                                      pitch_change_all=args.pitch_change_all,
                                      reverb_rm_size=args.reverb_size, reverb_wet=args.reverb_wetness,
                                      reverb_dry=args.reverb_dryness, reverb_damping=args.reverb_damping,
-                                     output_format=args.output_format)
+                                     output_format=args.output_format,
+                                     song_title=args.song_title)
     print(f'[+] Cover generated at {cover_path}')

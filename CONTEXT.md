@@ -29,6 +29,11 @@
 | **Total time all process** | Terminal line printed at pipeline end showing full duration from start to finish (e.g. `[+] Total time all process: 7m 8s (428.1s)`). |
 | **Stage timing** | `[+Xs]` / `[+Xm XXs]` suffix on each progress line showing time spent since the previous pipeline stage. |
 | **Smart Launcher** | `run_aicovergen.bat` — kills orphaned processes, checks port, launches WebUI with logging, verifies startup. |
+| **Song Title** | Clean, human-readable title of the song (e.g. `สุดใจ`, `Pretender`) with promotional noise removed. Used for UI display and final file naming. |
+| **Cover Filename** | The human-readable output audio file formatted as `<Song Title> (<Voice Model> Ver).<ext>` (e.g. `สุดใจ (NontTanont Ver).mp3`). |
+| **Song ID / Video ID** | 11-character YouTube video ID or hash used for internal working directories (`song_output/<song_id>`) to guarantee ASCII-safe intermediate file paths on Windows. |
+| **Clean Title Filter** | Regex post-processing on YouTube metadata stripping noise tags such as `[Official MV]`, `(Official Audio)`, `【MV】`, `4K`, `HD`. |
+| **Dual Output Display** | Pairing an in-browser audio player (`gr.Audio`) for instantaneous playback with a dedicated file card (`gr.File`) for direct download in the WebUI. |
 
 ## Pipeline Flow
 
