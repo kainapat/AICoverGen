@@ -116,6 +116,11 @@ def render_error_card(tb_lines):
 def flush_traceback():
     global _tb_buffer
     if _tb_buffer:
+        full_tb = "".join(_tb_buffer)
+        # Suppress benign client disconnects (WinError 10054 / page refresh / tab close)
+        if "10054" in full_tb or "ConnectionResetError" in full_tb or "_call_connection_lost" in full_tb:
+            _tb_buffer = []
+            return
         print()
         print(render_error_card(_tb_buffer))
         print()
@@ -292,6 +297,8 @@ def format_log_line(line):
     elif "Running on local URL" in raw_line or "http://" in raw_line:
         pass  # Handled by ready banner
     elif "error" in raw_line.lower() or "exception" in raw_line.lower():
+        if "10054" in raw_line or "_call_connection_lost" in raw_line or "connectionreset" in raw_line.lower():
+            return
         cprint(f"  ✖  {raw_line}", "red")
     elif "notice" in raw_line.lower():
         cprint(f"     {raw_line}", "amber")

@@ -5,6 +5,19 @@ if sys.platform == "win32":
         sys.stderr.reconfigure(encoding="utf-8")
     except Exception:
         pass
+    # Silence benign Windows asyncio WinError 10054 on page refresh / tab close
+    try:
+        from asyncio.proactor_events import _ProactorBasePipeTransport
+        if not hasattr(_ProactorBasePipeTransport, "_orig_call_connection_lost"):
+            _ProactorBasePipeTransport._orig_call_connection_lost = _ProactorBasePipeTransport._call_connection_lost
+            def _safe_call_connection_lost(self, exc):
+                try:
+                    self._orig_call_connection_lost(exc)
+                except (ConnectionResetError, OSError):
+                    pass
+            _ProactorBasePipeTransport._call_connection_lost = _safe_call_connection_lost
+    except Exception:
+        pass
 
 import mimetypes
 import tempfile
