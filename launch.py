@@ -247,6 +247,11 @@ def format_log_line(line):
         _tb_buffer = [raw_line]
         return
 
+    # Suppress raw yt-dlp download chunks and noise lines
+    stripped = raw_line.strip()
+    if stripped.startswith("[download]") or "ETA Unknown" in stripped:
+        return
+
     # Live MDX progress updates
     if "MDX Progress:" in raw_line:
         if "Complete" in raw_line:
@@ -347,13 +352,21 @@ def main():
         except Exception:
             pass
 
+    child_env = os.environ.copy()
+    child_env["PYTHONUTF8"] = "1"
+    child_env["PYTHONIOENCODING"] = "utf-8"
+    child_env["PYTHONLEGACYWINDOWSSTDIO"] = "0"
+
     proc = subprocess.Popen(
         [PYTHON, "-u", SCRIPT, "--listen", "--listen-port", str(PORT)],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         bufsize=1,
         cwd=BASE_DIR,
+        env=child_env,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
     )
     ok(f"Process spawned successfully (PID: {proc.pid})")

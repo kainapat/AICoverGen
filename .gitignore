@@ -16,9 +16,12 @@ rvc_models/*/*.json
 rvc_models/hubert_base.pt
 rvc_models/rmvpe.pt
 
-# Output
+# Output & audio files
 song_output/*/*.wav
 song_output/*/*.mp3
+*.mp3
+*.wav
+*.title
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

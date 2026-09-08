@@ -132,6 +132,7 @@ def yt_download(link):
         'ignoreerrors': True,
         'no_warnings': True,
         'quiet': True,
+        'noprogress': True,
         'extractaudio': True,
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
     }

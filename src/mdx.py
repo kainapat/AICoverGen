@@ -199,17 +199,22 @@ class MDX:
         with torch.no_grad():
             pw = []
             for mix_wave in mix_waves:
-                self.prog.update()
-                current = self.prog.n
-                total = max(1, self.prog.total)
-                pct = int(current / total * 100)
-                elapsed = time.time() - getattr(self, "_start_time", time.time())
-                rate = current / max(0.001, elapsed)
-                eta = int((total - current) / max(0.001, rate))
-                bar_len = 16
-                filled = int(bar_len * current / total)
-                bar = "█" * filled + "░" * (bar_len - filled)
-                print(f"MDX Progress: [{bar}] {pct}% | {current}/{total} chunks | ETA: {eta}s", flush=True)
+                with getattr(self, "_counter_lock", threading.Lock()):
+                    self._current_chunk = getattr(self, "_current_chunk", 0) + 1
+                    current = self._current_chunk
+                    total = max(1, getattr(self, "_total_chunks", 1))
+                    pct = int(current / total * 100)
+                    elapsed = time.time() - getattr(self, "_start_time", time.time())
+                    rate = current / max(0.001, elapsed)
+                    if current <= 1 or elapsed < 0.5:
+                        eta_str = "--s"
+                    else:
+                        eta = max(0, int((total - current) / max(0.001, rate)))
+                        eta_str = f"{eta}s"
+                    bar_len = 16
+                    filled = int(bar_len * current / total)
+                    bar = "█" * filled + "░" * (bar_len - filled)
+                    print(f"MDX Progress: [{bar}] {pct}% | {current}/{total} chunks | ETA: {eta_str}", flush=True)
 
                 spec = self.model.stft(mix_wave)
                 processed_spec = torch.tensor(self.process(spec))
@@ -231,23 +236,30 @@ class MDX:
         Returns:
             numpy array: Processed wave array
         """
-        self.prog = tqdm(total=0, disable=True)
         self._start_time = time.time()
+        self._current_chunk = 0
+        self._counter_lock = threading.Lock()
         chunk = wave.shape[-1] // mt_threads
         waves = self.segment(wave, False, chunk)
+
+        # Pre-pad batches and compute exact total chunks across all batches
+        batches = []
+        total_chunks = 0
+        for c, batch in enumerate(waves):
+            mix_waves, pad, trim = self.pad_wave(batch)
+            total_chunks += len(mix_waves)
+            batches.append((mix_waves, pad, trim, c))
+        self._total_chunks = max(1, total_chunks)
 
         # Create a queue to hold the processed wave segments
         q = queue.Queue()
         threads = []
-        for c, batch in enumerate(waves):
-            mix_waves, pad, trim = self.pad_wave(batch)
-            self.prog.total = len(mix_waves) * mt_threads
+        for mix_waves, pad, trim, c in batches:
             thread = threading.Thread(target=self._process_wave, args=(mix_waves, trim, pad, q, c))
             thread.start()
             threads.append(thread)
         for thread in threads:
             thread.join()
-        self.prog.close()
         print("MDX Progress: Complete", flush=True)
 
         processed_batches = []

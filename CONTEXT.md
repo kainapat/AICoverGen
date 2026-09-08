@@ -38,6 +38,8 @@
 | **Fast Mode** | Pipeline optimization flag (`fast_mode=True`) bypassing redundant multi-pass ONNX denoising, reducing separation duration by ~50% (~2-3 mins on 4GB VRAM) while preserving vocal clarity. |
 | **Error Diagnostic Card** | Cyberpunk-styled terminal alert box rendering exception classes, source locations, and human-readable remedies when errors occur. |
 | **Traceback Buffer Drainer** | Pipe management pattern in `launch.py` ensuring stdout/stderr buffers are fully drained on process crash so stacktraces are never truncated. |
+| **Atomic Chunk Counter** | Thread-safe in-memory progress counter in `src/mdx.py` replacing disabled `tqdm` to guarantee accurate chunk tracking (`X/Y chunks`) and realistic ETA calculations. |
+| **UTF-8 Pipe & Console Enforcement** | Explicit UTF-8 subprocess environment (`PYTHONUTF8=1`, `PYTHONIOENCODING=utf-8`) and stream reconfig preventing Windows code page Mojibake (`â–‘â–‘`). |
 
 ## Pipeline Flow
 
