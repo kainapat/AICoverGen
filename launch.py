@@ -240,8 +240,11 @@ def main():
             proc.wait()
         except KeyboardInterrupt:
             cprint("\n  Stopping WebUI...", "yellow")
-            proc.terminate()
-            proc.wait(timeout=5)
+            subprocess.run(f"taskkill /T /F /PID {proc.pid}", capture_output=True, shell=True)
+            try:
+                proc.wait(timeout=5)
+            except Exception:
+                pass
             success("WebUI stopped.")
     else:
         cprint("  +--------------------------------------------------+", "red")
