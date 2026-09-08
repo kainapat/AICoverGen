@@ -52,6 +52,7 @@
 | **Total Physical VRAM** | The total hardware video memory capacity of the GPU (e.g. 4.0 GB on RTX 2050) queried to automatically select safe concurrency thresholds (`threads: 1`). |
 | **High-Contrast Terminal Palette** | Elevated secondary terminal color scheme using Light Silver (`RGB 200, 205, 215`) and Medium Slate (`RGB 145, 155, 175`) to guarantee sharp readability and WCAG-compliant contrast on dark backgrounds. |
 | **Visual Workflow Typography** | Scannable terminal onboarding guide styling that highlights sequential step numbers in Cyan (`1.`, `2.`) and UI click targets in Pure White (`[Generate]`, `[Process URL]`). |
+| **Unicode-Safe FAISS Index Deserializer** | In-memory binary deserialization pattern (`faiss.deserialize_index`) bypassing Windows C-runtime `fopen(const char*)` limitations, allowing voice models in folders with Thai and Unicode characters to load `.index` feature retrieval files without errors. |
 
 ## Pipeline Flow
 

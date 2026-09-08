@@ -504,7 +504,14 @@ class VC(object):
             and index_rate != 0
         ):
             try:
-                index = faiss.read_index(file_index)
+                try:
+                    index = faiss.read_index(file_index)
+                except Exception:
+                    # Windows CRT fopen in faiss::FileIOReader does not support non-ASCII/Unicode paths (e.g. Thai, CJK).
+                    # Read binary data via Python file descriptor and deserialize into memory.
+                    with open(file_index, "rb") as f:
+                        data = f.read()
+                    index = faiss.deserialize_index(np.frombuffer(data, dtype=np.uint8))
                 # big_npy = np.load(file_big_npy)
                 big_npy = index.reconstruct_n(0, index.ntotal)
             except:
