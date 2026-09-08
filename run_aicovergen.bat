@@ -2,51 +2,88 @@
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
-echo ============================================
-echo   AICoverGen - Smart Launcher
-echo   RTX 2050 4GB Optimized
-============================================
+:: ─── Enable ANSI colors (Windows 10+) ───
+for /f "tokens=4-5 delims=. " %%i in ('ver') do set VERSION=%%i.%%j
+if "%VERSION%"=="10.0" (
+    reg add HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1 /f >nul 2>&1
+)
+
+:: ─── Colors ───
+set "C_RESET=[0m"
+set "C_CYAN=[96m"
+set "C_GREEN=[92m"
+set "C_YELLOW=[93m"
+set "C_RED=[91m"
+set "C_GRAY=[90m"
+set "C_BOLD=[1m"
+
+:: ─── Banner ───
+echo.
+echo %C_CYAN%╔══════════════════════════════════════════════════════════════╗%C_RESET%
+echo %C_CYAN%║%C_RESET%                                                              %C_CYAN%║%C_RESET%
+echo %C_CYAN%║%C_RESET%     %C_BOLD%%C_CYAN%  /\
+echo %C_CYAN%║%C_RESET%    %C_BOLD%%C_CYAN% /  \     %C_RESET%AI %C_CYAN%COVER %C_RESET%GEN%R
+echo %C_CYAN%║%C_RESET%   %C_BOLD%%C_CYAN% /    \    %C_RESET%WebUI %C_CYAN%Smart Launcher%C_RESET%
+echo %C_CYAN%║%C_RESET%  %C_BOLD%%C_CYAN% /      \   %C_RESET%RTX 2050 4GB Optimized%C_CYAN%║%C_RESET%
+echo %C_CYAN%║%C_RESET%                                                              %C_CYAN%║%C_RESET%
+echo %C_CYAN%╚══════════════════════════════════════════════════════════════╝%C_RESET%
 echo.
 
-:: Configuration
+:: ─── Config ───
 set "PYTHON=D:\Code\AICoverGen\.venv\Scripts\python.exe"
 set "SCRIPT=src\webui.py"
 set "HOST=0.0.0.0"
 set "PORT=7860"
 set "LOGFILE=D:\Code\AICoverGen\webui.log"
 
-:: Step 1: Kill old processes on port
-echo [1/4] Checking for old processes on port %PORT%...
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
-    echo   Killing PID %%a...
-    taskkill /F /PID %%a >nul 2>&1
+:: ══════════════════════════════════════════
+::  STEP 1: Kill old processes
+:: ══════════════════════════════════════════
+echo  %C_CYAN%[1/4]%C_RESET% %C_BOLD%Checking for old processes...%C_RESET%
+set "FOUND="
+for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    if not defined FOUND (
+        set "FOUND=1"
+        echo    %C_YELLOW%Found process on port %PORT%: PID %%a%C_RESET%
+        taskkill /F /PID %%a >nul 2>&1
+        echo    %C_GREEN%Terminated%C_RESET%
+    )
 )
-timeout /t 2 /nobreak >nul
+if not defined FOUND echo    %C_GRAY%No old processes found%C_RESET%
+timeout /t 1 /nobreak >nul
+echo.
 
-:: Step 2: Check Python
-echo [2/4] Checking Python...
+:: ══════════════════════════════════════════
+::  STEP 2: Check Python
+:: ══════════════════════════════════════════
+echo  %C_CYAN%[2/4]%C_RESET% %C_BOLD%Checking Python...%C_RESET%
 "%PYTHON%" --version >nul 2>&1
 if errorlevel 1 (
-    echo   ERROR: Python not found at %PYTHON%
+    echo    %C_RED%Python not found at %PYTHON%%C_RESET%
+    echo    %C_GRAY%Please reinstall Python 3.10.11%C_RESET%
     pause
     exit /b 1
 )
-echo   Python OK
-
-:: Step 3: Launch WebUI
-echo [3/4] Starting WebUI on port %PORT%...
-echo   Log: %LOGFILE%
-echo.
-echo   URL: http://127.0.0.1:%PORT%
-echo   URL: http://%COMPUTERNAME%:%PORT%
+for /f "delims=" %%v in ('"%PYTHON%" --version 2^>^&1') do set "PYVER=%%v"
+echo    %C_GREEN%%PYVER% %C_GRAY%(%PYTHON%)%C_RESET%
 echo.
 
-:: Run with logging
+:: ══════════════════════════════════════════
+::  STEP 3: Launch WebUI
+:: ══════════════════════════════════════════
+echo  %C_CYAN%[3/4]%C_RESET% %C_BOLD%Starting WebUI...%C_RESET%
+echo    %C_GRAY%Port: %PORT%%C_RESET%
+echo    %C_GRAY%Log:  %LOGFILE%%C_RESET%
+
 "%PYTHON%" -u "%SCRIPT%" --listen --listen-host %HOST% --listen-port %PORT% > "%LOGFILE%" 2>&1 &
 set "WEBUI_PID=%!"
+echo    %C_GREEN%Process started (PID: %WEBUI_PID%)%C_RESET%
+echo.
 
-:: Step 4: Wait and verify
-echo [4/4] Waiting for WebUI to start...
+:: ══════════════════════════════════════════
+::  STEP 4: Wait and verify
+:: ══════════════════════════════════════════
+echo  %C_CYAN%[4/4]%C_RESET% %C_BOLD%Waiting for WebUI to start...%C_RESET%
 set "READY=0"
 for /l %%i in (1,1,15) do (
     timeout /t 1 /nobreak >nul
@@ -55,32 +92,47 @@ for /l %%i in (1,1,15) do (
         set "READY=1"
         goto :ready
     )
-    echo   Waiting... %%i/15
+    <nul set /p "=    %C_GRAY%Connecting... %%i/15%C_RESET%"
+    echo.
 )
 
 :ready
+echo.
 if "%READY%"=="1" (
+    echo %C_GREEN%╔══════════════════════════════════════════════════════════════╗%C_RESET%
+    echo %C_GREEN%║%C_RESET%                                                              %C_GREEN%║%C_RESET%
+    echo %C_GREEN%║%C_RESET%   %C_BOLD%%C_GREEN%  WebUI is running!%C_RESET%                                     %C_GREEN%║%C_RESET%
+    echo %C_GREEN%║%C_RESET%                                                              %C_GREEN%║%C_RESET%
+    echo %C_GREEN%║%C_RESET%   %C_CYAN%Local:   %C_RESET%http://127.0.0.1:%PORT%                            %C_GREEN%║%C_RESET%
+    echo %C_GREEN%║%C_RESET%   %C_CYAN%Network: %C_RESET%http://%COMPUTERNAME%:%PORT%                     %C_GREEN%║%C_RESET%
+    echo %C_GREEN%║%C_RESET%                                                              %C_GREEN%║%C_RESET%
+    echo %C_GREEN%║%C_RESET%   %C_GRAY%Press Ctrl+C to stop, or close this window.%C_RESET%              %C_GREEN%║%C_RESET%
+    echo %C_GREEN%║%C_RESET%                                                              %C_GREEN%║%C_RESET%
+    echo %C_GREEN%╚══════════════════════════════════════════════════════════════╝%C_RESET%
     echo.
-    echo ============================================
-    echo   WebUI is running!
-    echo   Local:   http://127.0.0.1:%PORT%
-    echo   Network: http://%COMPUTERNAME%:%PORT%
+    echo %C_CYAN%  Open in browser:%C_RESET%
+    echo    ^> http://127.0.0.1:%PORT%
     echo.
-    echo   Press Ctrl+C to stop, or close this window.
-    echo ============================================
+    echo %C_CYAN%  First time?%C_RESET%
+    echo    1. Go to %C_BOLD%"Download model"%C_RESET% tab
+    echo    2. Choose a voice model from Public Models
+    echo    3. Go to %C_BOLD%"Generate"%C_RESET% tab
+    echo    4. Enter YouTube URL or local audio file
+    echo    5. Set Pitch and click Generate!
     echo.
-    :: Keep window open and follow log
-    echo Following log (Ctrl+C to stop):
-    echo ----------------------------------------
-    type "%LOGFILE%"
+    echo %C_GRAY%  ──────────────────────────────────────────────────────────%C_RESET%
+    echo.
 ) else (
+    echo %C_RED%╔══════════════════════════════════════════════════════════════╗%C_RESET%
+    echo %C_RED%║%C_RESET%   %C_BOLD%%C_RED%  ERROR: WebUI failed to start!%C_RESET%                            %C_RED%║%C_RESET%
+    echo %C_RED%║%C_RESET%                                                              %C_RED%║%C_RESET%
+    echo %C_RED%║%C_RESET%   %C_GRAY%Check log: %LOGFILE%%C_RESET%                     %C_RED%║%C_RESET%
+    echo %C_RED%╚══════════════════════════════════════════════════════════════╝%C_RESET%
     echo.
-    echo ============================================
-    echo   ERROR: WebUI failed to start!
-    echo   Check log: %LOGFILE%
-    echo ============================================
+    echo %C_YELLOW%  Last 5 lines of log:%C_RESET%
+    echo %C_GRAY%  ──────────────────────────────────────────────────────────%C_RESET%
+    powershell -command "Get-Content '%LOGFILE%' -Tail 5 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host '  ' $_ }"
     echo.
-    type "%LOGFILE%"
     pause
 )
 
