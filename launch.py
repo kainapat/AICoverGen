@@ -181,7 +181,7 @@ def main():
         os.remove(LOGFILE)
 
     proc = subprocess.Popen(
-        [PYTHON, "-u", SCRIPT, "--listen", "--listen-host", HOST, "--listen-port", str(PORT)],
+        [PYTHON, "-u", SCRIPT, "--listen", "--listen-host", HOST, "--listen-port", str(PORT), "--builtin-player"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,

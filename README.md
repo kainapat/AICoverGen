@@ -76,8 +76,10 @@ Smart launcher: ฆ่า process เก่า → เช็ค Python → ร�
 |--------|---------|
 | 🪟 PowerShell | `python launch.py` |
 | ⌨️ Classic CMD | `start_simple.bat` |
-| 🔧 Manual | `.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860` |
-| ▶️ Built-in player | เพิ่ม `--builtin-player` เพื่อฟังผลลัพธ์ใน WebUI โดยตรง |
+| 🔧 Manual | `.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860 --builtin-player` |
+
+> 🔊 **Built-in player เปิดเป็นค่าเริ่มต้น** — ทุก launcher ส่ง `--builtin-player` ให้แล้ว
+> กด Generate เสร็จฟังเพลงในเว็บได้ทันที (ไม่ต้องโหลดไฟล์ก่อน)
 
 > 🛑 **หยุดโปรแกรม:** กด `Ctrl+C` ในหน้าต่าง terminal (ฆ่าทั้ง process tree อัตโนมัติ)
 
