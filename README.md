@@ -87,10 +87,15 @@ Smart launcher: ฆ่า process เก่า → เช็ค Python → ร�
 
 ```
 1. 📥 Download model tab  →  เลือกเสียงจาก Public Models (เช่น Ado, YOASOBI, KOBASOLO)
-2. 🎼 Generate tab         →  วาง YouTube URL หรืออัปโหลดไฟล์เสียง
+2. 🎼 Generate tab         →  วาง YouTube URL แล้วกด "โหลด URL / Process URL"
+                             →  ชื่อเพลงต้นฉบับจะโชว์ใต้ช่อง URL (เช่น 🎵 สุดใจ ...)
+                             →  หรืออัปโหลดไฟล์เสียงโดยตรง
 3. 🎚️ ตั้ง Pitch            →  +1/-1 สำหรับแปลงเพศเสียง
 4. ▶️ กด Generate!          →  รอ + ดาวน์โหลดเพลงที่ได้
 ```
+
+> 📛 **ชื่อไฟล์ผลลัพธ์:** `<ชื่อเพลงต้นฉบับ> (<ชื่อโมเดล> Ver).mp3`
+> เช่น `สุดใจ ... (NontTanont Ver).mp3` — ไม่ใช่ video ID แล้ว
 
 ### ⏱️ Terminal Output | ตัวอย่างผลลัพธ์
 
