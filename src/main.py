@@ -266,11 +266,16 @@ def convert_to_stereo(audio_path):
 def pitch_shift(audio_path, pitch_change):
     output_path = f'{os.path.splitext(audio_path)[0]}_p{pitch_change}.wav'
     if not os.path.exists(output_path):
-        y, sr = sf.read(audio_path)
         tfm = sox.Transformer()
         tfm.pitch(pitch_change)
-        y_shifted = tfm.build_array(input_array=y, sample_rate_in=sr)
-        sf.write(output_path, y_shifted, sr)
+        try:
+            # Direct file transformation: avoids Windows CRT stdout pipe byte alignment errors
+            tfm.build_file(input_filepath=audio_path, output_filepath=output_path)
+        except Exception:
+            # Fallback to in-memory array processing
+            y, sr = sf.read(audio_path)
+            y_shifted = tfm.build_array(input_array=y, sample_rate_in=sr)
+            sf.write(output_path, y_shifted, sr)
 
     return output_path
 
