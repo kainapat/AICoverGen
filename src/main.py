@@ -93,7 +93,7 @@ def yt_download(link):
         return None
     ydl_opts = {
         'format': 'bestaudio',
-        'outtmpl': '%(title)s',
+        'outtmpl': '%(id)s',
         'nocheckcertificate': True,
         'ignoreerrors': True,
         'no_warnings': True,
@@ -103,9 +103,27 @@ def yt_download(link):
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         result = ydl.extract_info(link, download=True)
-        download_path = ydl.prepare_filename(result, outtmpl='%(title)s.mp3')
+        download_path = ydl.prepare_filename(result, outtmpl='%(id)s.mp3')
 
     return download_path
+
+
+def ensure_ascii_audio_path(audio_path, song_id):
+    """libsndfile on Windows cannot open non-ASCII filenames (Thai, CJK, emoji...).
+    Copy to an ASCII-safe name inside song_output if needed. Returns (path, temp_copy_or_None)."""
+    basename = os.path.basename(audio_path)
+    try:
+        basename.encode('ascii')
+        return audio_path, None
+    except UnicodeEncodeError:
+        pass
+    ext = os.path.splitext(basename)[1] or '.wav'
+    safe_dir = os.path.join(output_dir, song_id)
+    os.makedirs(safe_dir, exist_ok=True)
+    safe_path = os.path.join(safe_dir, f"song_{song_id}{ext}")
+    shutil.copy2(audio_path, safe_path)
+    print(f"[*] Non-ASCII filename detected, using safe copy: {safe_path}", flush=True)
+    return safe_path, safe_path
 
 
 def raise_exception(error_msg, is_webui):
@@ -427,6 +445,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
         song_dir = os.path.join(output_dir, song_id)
 
         keep_orig, orig_song_path = get_audio_file(song_input, is_webui, input_type, progress)
+        orig_song_path, ascii_temp_copy = ensure_ascii_audio_path(orig_song_path, song_id)
         orig_song_path = convert_to_stereo(orig_song_path)
 
         start = time.time()
@@ -501,7 +520,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
 
         if not keep_files:
             display_progress('[~] Removing intermediate audio files...', 0.95, is_webui, progress)
-            intermediate_files = [vocals_path, main_vocals_path, ai_vocals_mixed_path, ins_path, nr_path]
+            intermediate_files = [vocals_path, main_vocals_path, ai_vocals_mixed_path, ins_path, nr_path, ascii_temp_copy]
             if pitch_change_all != 0:
                 intermediate_files += [instrumentals_path, backup_vocals_path]
             for file in intermediate_files:

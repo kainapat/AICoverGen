@@ -1,5 +1,18 @@
 # AICoverGen — Troubleshooting Guide
 
+## LibsndfileError กับชื่อไฟล์ภาษาไทย
+
+### อาการ
+- `soundfile.LibsndfileError: Error opening '...song_output\<id>\สุดใจ...._Vocals.wav': System error.`
+- เกิดตอนแยกเสียง (MDX) กับเพลงที่ชื่อมีภาษาไทย/จีน/ญี่ปุ่น/อิโมจิ
+
+### สาเหตุ
+`libsndfile` บน Windows เปิดไฟล์ชื่อ non-ASCII ไม่ได้ ส่วนชื่อไฟล์มาจาก title ของ YouTube
+
+### แก้ไข (แก้ในโค้ดแล้ว)
+- `yt_download` ใช้ video ID (`%(id)s`) เป็นชื่อไฟล์แทน title — ปลอดภัยเสมอ
+- ไฟล์ local ที่ชื่อมีภาษาไทยจะถูก copy ไปใช้ชื่อ `song_<hash>` ใน `song_output/` อัตโนมัติ (`ensure_ascii_audio_path` ใน `src/main.py`) แล้วลบ copy ทิ้งตอน cleanup
+
 ## WebUI ไม่เปิด (Port 7860 not listening)
 
 ### อาการ
