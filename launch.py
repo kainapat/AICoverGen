@@ -39,8 +39,8 @@ C = {
     "amber": "\033[38;2;255;190;55m",
     "red": "\033[38;2;255;75;95m",
     "white": "\033[1;37m",
-    "gray": "\033[38;2;120;130;150m",
-    "dark": "\033[38;2;75;85;105m",
+    "gray": "\033[38;2;200;205;215m",
+    "dark": "\033[38;2;145;155;175m",
     "bold": "\033[1m",
     "dim": "\033[2m",
     "reset": "\033[0m",
@@ -315,7 +315,7 @@ def format_log_line(line):
     if "threads:" in raw_line and "vram:" in raw_line:
         try:
             vram_val = float(raw_line.split("vram:")[1].strip())
-            cprint(f"     💾  [VRAM Allocation] {vram_val:.1f} GB GPU ➔ Safe Single-Thread Mode (~1.5 GB Active)", "dark")
+            cprint(f"     💾  [VRAM Allocation] {vram_val:.1f} GB GPU ➔ Safe Single-Thread Mode (~1.5 GB Active)", "gray")
         except Exception:
             pass
         return
@@ -464,10 +464,10 @@ def main():
             f"  {C['white']}Network    : {C['cyan']}{C['bold']}http://0.0.0.0:{PORT}",
             "",
             f"{C['white']}● WORKFLOW GUIDE:",
-            f"  {C['gray']}1. Open URL in browser ➔ Go to [Generate] tab",
-            f"  {C['gray']}2. Paste YouTube link ➔ Click [Process URL]",
-            f"  {C['gray']}3. Select Voice Model & Pitch ➔ Click [Generate]",
-            f"  {C['gray']}4. In-browser Player or 1-Click Download (.mp3)",
+            f"  {C['cyan']}1. {C['gray']}Open URL in browser ➔ Go to {C['white']}[Generate]{C['gray']} tab",
+            f"  {C['cyan']}2. {C['gray']}Paste YouTube link ➔ Click {C['white']}[Process URL]{C['gray']}",
+            f"  {C['cyan']}3. {C['gray']}Select Voice Model & Pitch ➔ Click {C['white']}[Generate]{C['gray']}",
+            f"  {C['cyan']}4. {C['gray']}In-browser Player or 1-Click Download {C['emerald']}(.mp3){C['gray']}",
             "",
             f"{C['dark']}[Press Ctrl+C in terminal to safely terminate server]",
         ]

@@ -50,6 +50,8 @@
 | **Runtime Notice Banner** | Formatted Amber notification (`⚠️  [RUNTIME NOTICE]`) contextualizing library deprecation warnings (e.g. yt-dlp Python 3.10 EOL) and confirming standard engine compatibility. |
 | **Active VRAM Working Set** | The actual memory occupied during inference (~1.2 - 1.5 GB in single-thread MDX-Net mode, ~1.8 - 2.2 GB during RVC v2 voice conversion) leaving remaining VRAM free for the operating system. |
 | **Total Physical VRAM** | The total hardware video memory capacity of the GPU (e.g. 4.0 GB on RTX 2050) queried to automatically select safe concurrency thresholds (`threads: 1`). |
+| **High-Contrast Terminal Palette** | Elevated secondary terminal color scheme using Light Silver (`RGB 200, 205, 215`) and Medium Slate (`RGB 145, 155, 175`) to guarantee sharp readability and WCAG-compliant contrast on dark backgrounds. |
+| **Visual Workflow Typography** | Scannable terminal onboarding guide styling that highlights sequential step numbers in Cyan (`1.`, `2.`) and UI click targets in Pure White (`[Generate]`, `[Process URL]`). |
 
 ## Pipeline Flow
 
