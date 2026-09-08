@@ -10,56 +10,89 @@ pinned: false
 license: mit
 ---
 
-# AICoverGen  
+<div align="center">
 
-## Overview  
-**AICoverGen** is a WebUI designed to create **AI-powered song covers** with customizable voice models, pitch adjustments, and audio mixing options.  
-Built with ❤️ for music enthusiasts and creators, it allows you to transform vocals, generate new covers, and manage models easily.  
+# 🎤 AICoverGen
 
-| Description | Link |  
-| ----------- | ---- |  
-| 📙 Colab Notebook | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/R3gm/AICoverGen/blob/main/colab_notebook.ipynb) |  
-| 🎉 Repository | [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-black?style=flat-square&logo=github)](https://github.com/R3gm/AICoverGen) |  
-| 🚀 Online DEMO | [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/r3gm/AICoverGen) |  
+**สร้าง AI Song Cover ด้วยเสียงใครก็ได้ — Create AI-powered song covers with any voice**
 
-## Key Functions  
-1. **Voice Models**  
-   - Store models inside the folder: `AICoverGen/rvc_models`.  
-   - Use the **Refresh Models 🔁** button after adding new ones.  
+[![Python](https://img.shields.io/badge/Python-3.10-blue?style=flat-square&logo=python)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.5.1+cu121-red?style=flat-square&logo=pytorch)](https://pytorch.org/)
+[![CUDA](https://img.shields.io/badge/CUDA-12.1-green?style=flat-square&logo=nvidia)](https://developer.nvidia.com/cuda-toolkit)
+[![Gradio](https://img.shields.io/badge/Gradio-5.44-orange?style=flat-square&logo=gradio)](https://gradio.app/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+[![Models](https://img.shields.io/badge/Voice_Models-59-purple?style=flat-square)](rvc_models/public_models.json)
 
-2. **Audio Input**  
-   - Upload audio files (songs, recordings).  
-   - Paste a **YouTube URL** for direct processing.  
+[🚀 Online Demo](https://huggingface.co/spaces/r3gm/AICoverGen) · [📙 Colab](https://colab.research.google.com/github/R3gm/AICoverGen/blob/main/colab_notebook.ipynb) · [🐛 Troubleshooting](TROUBLESHOOTING.md)
 
-3. **Pitch Control**  
-   - **Pitch Change (Vocals ONLY):** Adjust pitch for male ↔ female conversions (`+1` / `-1`).  
-   - **Overall Pitch Change:** Shift pitch/key of both vocals & instrumentals (semitones).  
+</div>
 
-4. **Voice Conversion Options**  
-   - Apply trained voice models to replace original vocals with AI-generated ones.  
+---
 
-5. **Audio Mixing Options**  
-   - Balance vocals and background for best quality results.  
+## ✨ Features | ฟีเจอร์
 
-6. **Cover Generation**  
-   - Generate AI covers and download the final track.  
+| 🎯 | EN | TH |
+|----|----|----|
+| 🎙️ **Voice Models** | 59+ public models, one-click download | โมเดลเสียง 59+ ตัว โหลดได้ในคลิกเดียว |
+| 🔗 **YouTube Input** | Standard, Shorts, Embed, Playlist, YouTube Music | รองรับลิงก์ทุกรูปแบบ + YouTube Music |
+| 🎚️ **Pitch Control** | Vocals-only (gender convert) + overall key shift | ปรับ pitch เสียงร้อง / ทั้งเพลง |
+| 🎛️ **Audio Mixing** | Reverb, chorus, delay, compressor, gain | เอฟเฟกต์ครบ: reverb, chorus, delay, compressor |
+| 🌐 **Bilingual UI** | Thai 🇹🇭 / English 🇬🇧 interface | หน้าจอ 2 ภาษา ไทย–อังกฤษ |
+| ⚡ **Low-VRAM Ready** | Auto-optimizes for 4GB GPUs (FP16, reduced padding) | ใช้ได้แม้การ์ดจอ VRAM 4GB |
+| 📊 **Live Progress** | Per-stage timing in terminal + WebUI log | เห็นเวลาทำงานแต่ละขั้นตอนแบบ real-time |
 
-## Local Windows Setup (RTX 2050 4GB)
+---
 
-### Quick Start
+## 📸 Screenshots | ภาพตัวอย่าง
+
+<div align="center">
+
+### Generate Tab | หน้าสร้างเพลง
+![Generate](images/webui_generate.png)
+
+### Download Model Tab | หน้าโหลดโมเดล
+![Download Model](images/webui_dl_model.png)
+
+### Upload Model Tab | หน้าอัปโหลดโมเดล
+![Upload Model](images/webui_upload_model.png)
+
+</div>
+
+---
+
+## 🚀 Quick Start | เริ่มใช้งาน (Windows)
+
+### 1️⃣ Double-click — ง่ายที่สุด
+
+```
+run_aicovergen.bat
+```
+
+Smart launcher: ฆ่า process เก่า → เช็ค Python → รัน WebUI → เปิด `http://127.0.0.1:7860`
+
+### 2️⃣ Alternatives | วิธีอื่น
 
 | Method | Command |
-|---|---|
-| Double-click (recommended) | `run_aicovergen.bat` |
-| PowerShell | `python launch.py` |
-| Simple (classic CMD) | `start_simple.bat` |
-| Manual | `.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860` |
+|--------|---------|
+| 🪟 PowerShell | `python launch.py` |
+| ⌨️ Classic CMD | `start_simple.bat` |
+| 🔧 Manual | `.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860` |
+| ▶️ Built-in player | เพิ่ม `--builtin-player` เพื่อฟังผลลัพธ์ใน WebUI โดยตรง |
 
-Open `http://127.0.0.1:7860` in your browser.
+> 🛑 **หยุดโปรแกรม:** กด `Ctrl+C` ในหน้าต่าง terminal (ฆ่าทั้ง process tree อัตโนมัติ)
 
-### Terminal Output
+---
 
-The launcher shows live progress with per-stage timing:
+## 🎵 How to Use | วิธีใช้งาน
+
+```
+1. 📥 Download model tab  →  เลือกเสียงจาก Public Models (เช่น Ado, YOASOBI, KOBASOLO)
+2. 🎼 Generate tab         →  วาง YouTube URL หรืออัปโหลดไฟล์เสียง
+3. 🎚️ ตั้ง Pitch            →  +1/-1 สำหรับแปลงเพศเสียง
+4. ▶️ กด Generate!          →  รอ + ดาวน์โหลดเพลงที่ได้
+```
+
+### ⏱️ Terminal Output | ตัวอย่างผลลัพธ์
 
 ```
 [18:15:02] [~] Starting AI Cover Generation Pipeline...
@@ -70,39 +103,73 @@ The launcher shows live progress with per-stage timing:
 [+] Total time all process: 7m 8s (428.1s)
 ```
 
-Each `[+Xs]` / `[+Xm XXs]` shows time spent since the previous stage.
-`[+] Total time all process` shows the full pipeline duration.
+`[+Xs]` = เวลาที่ใช้ในแต่ละขั้นตอน · `[+] Total time` = เวลารวมทั้งหมด
 
-### RTX 2050 4GB Optimization
+---
 
-No code changes needed — the codebase auto-detects VRAM:
+## 💻 Requirements | สิ่งที่ต้องมี
 
-- Half precision (FP16) on CUDA — halves VRAM usage
-- MDX uses 1 thread when VRAM < 8GB (`mdx.py`)
-- RVC uses reduced padding when VRAM <= 4GB (`rvc.py`: `x_pad=1, x_query=5, x_center=30, x_max=32`)
+| | |
+|--|--|
+| 🐍 Python | **3.10** (torch ไม่รองรับ 3.14) — ใช้ `.venv` ที่เตรียมไว้ |
+| 🎮 GPU | NVIDIA + CUDA (ทดสอบบน **RTX 2050 4GB** ✅) |
+| 💾 Disk | ~2GB (models) + พื้นที่ไฟล์เพลง |
+| 🎵 FFmpeg | มาพร้อม imageio-ffmpeg อัตโนมัติ |
 
-### YouTube Support
+### ⚡ RTX 2050 4GB Optimization
 
-Standard, Mobile, Short, Embed, Playlist, and **YouTube Music** (`music.youtube.com`) links all work.
+ไม่ต้องแก้โค้ด — โปรแกรมปรับให้อัตโนมัติตาม VRAM:
 
-### Built-in Audio Player
+- ✅ Half precision (FP16) บน CUDA — ใช้ VRAM ครึ่งเดียว
+- ✅ MDX ใช้ 1 thread เมื่อ VRAM < 8GB (`mdx.py`)
+- ✅ RVC ลด padding เมื่อ VRAM ≤ 4GB (`rvc.py`: `x_pad=1, x_query=5, x_center=30, x_max=32`)
 
-Add `--builtin-player` to play the result directly in the WebUI instead of only downloading:
+---
+
+## 🎙️ Voice Models | โมเดลเสียง
+
+- 📁 โมเดลเก็บใน `rvc_models/` — กด **Refresh Models 🔁** หลังเพิ่มไฟล์ใหม่
+- 🌐 **59 public models** ใน [`public_models.json`](rvc_models/public_models.json) — โหลดจากแท็บ Download ได้เลย
+- ⭐ ล่าสุด: **Ado**, **KOBASOLO**, **YOASOBI** (RVC V2)
+- 📤 มีไฟล์ `.pth` + `.index` ของตัวเอง? วางลง `rvc_models/<ชื่อ>/` ได้ทันที
+
+---
+
+## 📂 Project Structure | โครงสร้างโปรเจกต์
 
 ```
-.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860 --builtin-player
+AICoverGen/
+├── 🚀 run_aicovergen.bat   # Smart launcher (ดับเบิลคลิก)
+├── 🐍 launch.py            # Python launcher + live progress + ANSI detect
+├── ⌨️ start_simple.bat     # Simple launcher (classic CMD)
+├── 📖 TROUBLESHOOTING.md   # คู่มือแก้ปัญหา
+├── 📘 CONTEXT.md           # Domain glossary
+├── src/
+│   ├── 🖥️ webui.py         # Gradio WebUI (TH/EN)
+│   ├── ⚙️ main.py           # Cover pipeline + timing
+│   ├── 🎤 mdx.py            # Vocal separation (MDX)
+│   ├── 🗣️ rvc.py            # Voice conversion (RVC)
+│   └── ⬇️ download_models.py # Model downloader
+├── 🎙️ rvc_models/          # Voice models + public_models.json
+├── 🎼 mdxnet_models/       # MDX separation models (ONNX)
+└── 🎵 song_output/         # ผลลัพธ์เพลงที่สร้าง
 ```
 
-## Summary Table  
+---
 
-| Function                  | Description                                                                 |
-|---------------------------|-----------------------------------------------------------------------------|
-| **Voice Models**          | Manage voice models in the `rvc_models` folder.                             |
-| **Audio Upload**          | Import audio via file upload or YouTube URL.                                |
-| **Pitch Change (Vocals)** | Adjust pitch for gender conversion of vocals only.                          |
-| **Overall Pitch Change**  | Modify the pitch/key of both vocals and instrumentals together.              |
-| **Voice Conversion**      | Replace original vocals with selected AI voice models.                      |
-| **Audio Mixing**          | Fine-tune balance between vocals and instrumentals.                         |
-| **Generate & Download**   | Create your AI cover and download the result as an audio file.               |
+## 🆘 Troubleshooting | แก้ปัญหา
 
-👉 This is just a fork of [SociallyIneptWeeb/AICoverGen](https://github.com/SociallyIneptWeeb/AICoverGen), playing around with some changes and improvements.
+เจอ error? เปิด [**TROUBLESHOOTING.md**](TROUBLESHOOTING.md) — รวมวิธีแก้:
+
+- 🔌 Port 7860 ถูกใช้อยู่ → launcher ฆ่าให้อัตโนมัติ
+- 📦 MDX model hash ไม่ตรง → ลบไฟล์ + รัน `download_models.py` ใหม่
+- 🔤 ชื่อไฟล์ภาษาไทย error → ใช้ชื่อ video ID อัตโนมัติแล้ว
+- ⬇️ HuggingFace gated repo (401/403) → ใช้ public mirror แทน
+
+---
+
+## 🙏 Credits | ที่มา
+
+> 👉 Fork ของ [R3gm/AICoverGen](https://github.com/R3gm/AICoverGen) (ต้นฉบับจาก [SociallyIneptWeeb/AICoverGen](https://github.com/SociallyIneptWeeb/AICoverGen)) — ปรับปรุงเพิ่ม: Smart launcher, bilingual UI, live progress timing, public model index, TROUBLESHOOTING guide, low-VRAM optimization docs
+>
+> 🎤 Voice models: ดู credit ใน [`public_models.json`](rvc_models/public_models.json) · 🙏 ขอบคุณเจ้าของโมเดลทุกท่าน
