@@ -190,7 +190,7 @@ if __name__ == '__main__':
     parser.add_argument("--listen", action="store_true", default=False, help="Make the WebUI reachable from your local network.")
     parser.add_argument('--listen-host', type=str, help='The hostname that the server will use.')
     parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
-    parser.add_argument('--theme', type=str, default="NoCrypt/miku", help='Set the theme (default: NoCrypt/miku)')
+    parser.add_argument('--theme', type=str, default="ibm-software/gradio-carbon-theme", help='Set the theme (default: ibm-software/gradio-carbon-theme)')
     parser.add_argument("--ssr", action="store_true", help="Enable SSR (Server-Side Rendering)")
     args = parser.parse_args()
 
