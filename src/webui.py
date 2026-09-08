@@ -235,6 +235,88 @@ def show_hop_slider(pitch_detection_algo):
         return gr.update(visible=False)
 
 
+def render_player_card(cover_path=None):
+    if not cover_path or not os.path.exists(cover_path):
+        return """
+        <div style="
+            border: 1px dashed rgba(0, 240, 255, 0.25);
+            border-radius: 12px;
+            padding: 24px 20px;
+            text-align: center;
+            background: rgba(10, 15, 25, 0.5);
+            color: #64748b;
+            margin-top: 8px;
+        ">
+            <div style="font-size: 1.6rem; margin-bottom: 6px;">🎧</div>
+            <div style="font-size: 0.95rem; font-weight: 500; color: #94a3b8;">เครื่องเล่นเพลง AI / AI Cover Player (เล่นในเว็บได้ทันที 🔊)</div>
+            <div style="font-size: 0.8rem; color: #475569; margin-top: 4px;">เมื่อสร้างเพลงเสร็จ เครื่องเล่นเพลงพร้อมปุ่มดาวน์โหลดไฟล์จะปรากฏที่นี่ทันที</div>
+        </div>
+        """
+    try:
+        import base64
+        import html
+        with open(cover_path, "rb") as f:
+            audio_bytes = f.read()
+        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+        file_name = os.path.basename(cover_path)
+        file_size_mb = len(audio_bytes) / (1024 * 1024)
+        mime = "audio/mpeg" if cover_path.lower().endswith(".mp3") else "audio/wav"
+        data_uri = f"data:{mime};base64,{b64_audio}"
+        escaped_name = html.escape(file_name)
+        download_attr = html.escape(file_name, quote=True)
+
+        return f"""
+        <div style="
+            border: 1px solid rgba(0, 240, 255, 0.35);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.12), inset 0 0 15px rgba(0, 240, 255, 0.04);
+            border-radius: 12px;
+            padding: 18px 22px;
+            background: linear-gradient(135deg, rgba(10, 15, 28, 0.95) 0%, rgba(16, 24, 40, 0.95) 100%);
+            margin-top: 8px;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                    <span style="font-size: 1.5rem;">🎧</span>
+                    <div style="overflow: hidden;">
+                        <div style="font-weight: 600; font-size: 1.05rem; color: #00f0ff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            {escaped_name}
+                        </div>
+                        <div style="font-size: 0.78rem; color: #00ffa5; font-weight: 500; margin-top: 2px;">
+                            ⚡ AI Cover Ready · {file_size_mb:.2f} MB
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <audio controls style="width: 100%; height: 42px; border-radius: 8px; outline: none;" src="{data_uri}">
+                    เบราว์เซอร์ของคุณไม่รองรับการเล่นเสียง
+                </audio>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 12px;">
+                <a href="{data_uri}" download="{download_attr}" style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: linear-gradient(135deg, #00f0ff 0%, #00b4d8 100%);
+                    color: #050b14;
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                    padding: 9px 18px;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    box-shadow: 0 2px 10px rgba(0, 240, 255, 0.3);
+                ">
+                    <span>💾</span> ดาวน์โหลดเพลง (.mp3)
+                </a>
+            </div>
+        </div>
+        """
+    except Exception as e:
+        return f'<div style="color: red; padding: 10px;">Error rendering player: {e}</div>'
+
+
 if __name__ == '__main__':
     parser = ArgumentParser(description='Generate a AI cover song in the song_output/id directory.', add_help=True)
     parser.add_argument("--share", action="store_true", dest="share_enabled", default=False, help="Enable sharing")
@@ -340,11 +422,8 @@ if __name__ == '__main__':
                 generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')
 
             with gr.Row():
-                with gr.Column(scale=3):
-                    ai_cover_audio = gr.Audio(label='เครื่องเล่นเพลง AI / AI Cover Player (กดฟังได้ทันที 🔊)', type='filepath', interactive=False)
-                with gr.Column(scale=2):
-                    ai_cover_file = gr.File(label="ดาวน์โหลดไฟล์เพลง / Download Audio File 💾", interactive=False)
-            clear_btn.add([ai_cover_audio, ai_cover_file])
+                ai_cover_player = gr.HTML(render_player_card(None))
+            clear_btn.add([ai_cover_player])
             gr.Markdown("- You can also try `AICoverGen❤️` in Colab’s free tier, which provides free GPU [link](https://github.com/R3gm/AICoverGen?tab=readme-ov-file#aicovergen).")
 
             ref_btn.click(update_models_list, None, outputs=rvc_model)
@@ -352,18 +431,18 @@ if __name__ == '__main__':
 
             def run_cover_webui(*args):
                 cover_path = song_cover_pipeline(*args)
-                return cover_path, cover_path
+                return render_player_card(cover_path)
 
             generate_btn.click(run_cover_webui,
                                inputs=[local_file, rvc_model, pitch, keep_files, is_webui, main_gain, backup_gain,
                                        inst_gain, index_rate, filter_radius, rms_mix_rate, f0_method, crepe_hop_length,
                                        protect, pitch_all, reverb_rm_size, reverb_wet, reverb_dry, reverb_damping,
                                        output_format, extra_denoise, steps, song_title_input, fast_mode],
-                               outputs=[ai_cover_audio, ai_cover_file])
-            clear_btn.click(lambda: [0, 0, 0, 0, 0.5, 3, 0.25, 0.33, 'rmvpe+', 128, 0, 0.15, 0.2, 0.8, 0.7, 'mp3', None, None, True, 1, "", True],
+                               outputs=[ai_cover_player])
+            clear_btn.click(lambda: [0, 0, 0, 0, 0.5, 3, 0.25, 0.33, 'rmvpe+', 128, 0, 0.15, 0.2, 0.8, 0.7, 'mp3', render_player_card(None), True, 1, "", True],
                             outputs=[pitch, main_gain, backup_gain, inst_gain, index_rate, filter_radius, rms_mix_rate,
                                      protect, f0_method, crepe_hop_length, pitch_all, reverb_rm_size, reverb_wet,
-                                     reverb_dry, reverb_damping, output_format, ai_cover_audio, ai_cover_file, extra_denoise, steps, song_title_input, fast_mode])
+                                     reverb_dry, reverb_damping, output_format, ai_cover_player, extra_denoise, steps, song_title_input, fast_mode])
 
         # Download tab
         with gr.Tab('โหลดโมเดล / Download model'):

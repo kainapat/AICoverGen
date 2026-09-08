@@ -36,7 +36,7 @@ license: mit
 | :--- | :--- | :--- |
 | 🏷️ **Smart Song Naming** | ดึงชื่อเพลงจริงจาก YouTube + คลีนคำขยะ (`[Official MV]`, `4K`, `HD`) ไฟล์ผลลัพธ์เป็น `<ชื่อเพลง> (<โมเดล> Ver).mp3` ทันที | Auto-fetches real song title, strips noise tags (`[MV]`, `4K`), exports as `<Title> (<Model> Ver).mp3` |
 | ⚡ **Fast Mode (2x Speed)** | แยกเสียงร้องเร็วกว่าเดิม 2 เท่า (Default: ON) ลดเวลาลง ~50% เหลือเพียง 2-3 นาทีบน GPU 4GB ด้วยการปรับลำดับ ONNX ให้กระชับ | 2x faster MDX vocal isolation (Default: ON), cuts run time by ~50% down to 2-3 mins on 4GB GPUs |
-| 🔊 **Dual Player & Download** | มี **เครื่องเล่นเพลง (gr.Audio)** ฟังเพลงในเว็บได้ทันที พร้อม **กล่องดาวน์โหลดไฟล์ (gr.File)** แยกชัดเจน | Dual UI outputs: instant in-browser audio player with waveform + separate 1-click file download card |
+| 🎧 **Cyberpunk Audio Player** | เครื่องเล่นเพลงในตัวแบบ In-Memory Data URI เล่นในเว็บได้ทันที 100% ไม่ถูก IDM ดักจับ ป้องกัน Auto-Download และคงสระภาษาไทยครบถ้วน | In-memory Data URI player: 100% IDM-safe in-browser playback, zero unwanted auto-downloads, full Unicode Thai support |
 | 🎙️ **59+ Voice Models** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index (Ado, YOASOBI, Nont Tanont, Villager ฯลฯ) | One-click downloads from curated catalog of 59+ public RVC models |
 | 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, single-thread MDX & automatic VRAM cache flushing between stages |
 | 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal มีสีสันสวยงาม แถบความคืบหน้าแบบ Real-time, ตรวจจับการ์ดจอ และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic terminal launcher with live hardware telemetry, port resolver & real-time progress bars |
