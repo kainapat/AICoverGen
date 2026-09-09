@@ -34,7 +34,7 @@ license: mit
 
 | หมวดหมู่ | รายละเอียด (TH) | Description (EN) |
 | :--- | :--- | :--- |
-| 🏷️ **Smart Artist & Song Naming** | ดึงชื่อศิลปินและชื่อเพลงจริงจาก YouTube / YouTube Music ในฟอร์แมตสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Unicode Normalization (เช่น `《 เพลงรัก 》by Liz's` ➔ `Liz's x NATNON - เพลงรัก`) ป้องกันชื่อซ้ำซ้อน และตั้งชื่อไฟล์ผลลัพธ์เป็น `<ศิลปิน> - <ชื่อเพลง> (<โมเดล> Ver).mp3` ทันที | Auto-extracts `[Artist] - [Song]` with NFKC Unicode normalization, smart deduplication, and exports as `<Artist> - <Title> (<Model> Ver).mp3` |
+| 🏷️ **Smart Artist & Song Naming** | ดึงชื่อศิลปินและชื่อเพลงจริงจาก YouTube / YouTube Music ในฟอร์แมตสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Normalization, แยกศิลปินร่วมร้องเป็น `Feat. [ศิลปิน]` ต่อท้ายอย่างถูกต้อง และเพิ่มวงเล็บ Romaji ภาษาญี่ปุ่น/เกาหลีให้อัตโนมัติ (เช่น `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi`) โดยไม่กระทบเพลงไทยหรือสากล | Auto-extracts `[Artist] - [Song]` with NFKC normalization, CJK Romanization in parentheses, and structured `Feat. [Artist]` formatting |
 | 📁 **Dedicated Downloads & 1-Click Purge** | แยกโฟลเดอร์เก็บไฟล์ดาวน์โหลดต้นฉบับไว้ที่ `downloads/` โดยเฉพาะ ไม่ปะปนกับโฟลเดอร์โค้ด พร้อมปุ่ม `[ 🗑️ ล้างดาวน์โหลด / Clear ]` บน WebUI ให้ล้างแคชได้ในคลิกเดียว | Dedicated `downloads/` directory isolating source audio from project root, with a 1-click `[Clear Downloads]` button on WebUI to reclaim disk space |
 | ⚡ **Fast Mode (2x Speed)** | แยกเสียงร้องเร็วกว่าเดิม 2 เท่า (Default: ON) ลดเวลาลง ~50% เหลือเพียง 2-3 นาทีบน GPU 4GB ด้วยการปรับลำดับ ONNX ให้กระชับ | 2x faster MDX vocal isolation (Default: ON), cuts run time by ~50% down to 2-3 mins on 4GB GPUs |
 | 🎧 **Carbon Theme Audio Player** | เครื่องเล่นเพลง Custom HTML5 ดีไซน์หรูสอดรับกับธีม IBM Carbon (Carbon Blue `#0f62fe` + พื้นผิว Slate) แสดงจุดเลื่อนเพลง (Scrubber Thumb) ถาวร 100% โดยไม่ต้องเอาเมาส์ชี้, ป้องกัน IDM ดักจับ, ไม่มี Auto-Download กวนใจ, แก้ปัญหาค้าง 0:00 และคงสระภาษาไทยครบถ้วน | Theme-adaptive HTML5 player harmonized with IBM Carbon theme (Carbon Blue `#0f62fe` accents, 100% permanent scrubber thumb visibility, IDM-safe, full Thai Unicode support) |
@@ -100,7 +100,10 @@ graph LR
 2. **ใส่เพลงต้นฉบับ:**
    * วางลิงก์ YouTube / YouTube Music ในช่อง แล้วกดปุ่ม **"โหลด URL / Process URL"**
    * ไฟล์จะถูกดาวน์โหลดแยกเก็บในโฟลเดอร์เฉพาะ `downloads/<ศิลปิน> - <ชื่อเพลง>.mp3` อย่างเป็นระเบียบ (ไม่ปะปนกับโฟลเดอร์โค้ด)
-   * ระบบจะตรวจจับชื่อศิลปินและชื่อเพลงในฟอร์แมตสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Unicode Normalization โดยอัตโนมัติ (สามารถพิมพ์แก้ไขชื่อได้ตามต้องการ)
+   * 🏷️ **ระบบจัดรูปแบบชื่อเพลงอัจฉริยะ (Smart Formatter):**
+     * จัดรูปแบบเป็นสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมคลีนฟอนต์พิเศษด้วย NFKC Normalization
+     * **ถอดเสียง Romaji อัตโนมัติ:** หากเป็นเพลงภาษาญี่ปุ่นหรือเกาหลี ระบบจะใส่วงเล็บ `(Romaji)` ติดกับชื่อเพลงเดิม (เช่น `藍より群青 (Ai Yori Gunjou)` หรือ `밤양갱 (Bam-Yang-Gaeng)`) โดยไม่กระทบเพลงไทยหรือสากล
+     * **แยกศิลปิน Feat. สวยงาม:** หากมีศิลปินร่วมร้อง ระบบจะตัดคำว่า `feat.` ออกจากชื่อเพลงแล้วจัดรูปแบบต่อท้ายเป็น `Feat. [ศิลปิน]` เช่น `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi`
    * 🧹 **ปุ่มล้างแคช:** สามารถกดปุ่ม **"🗑️ ล้างดาวน์โหลด / Clear"** เพื่อลบไฟล์ที่ดาวน์โหลดค้างไว้ใน `downloads/` ได้ทุกเมื่อ
    * *(หรือกดอัปโหลดไฟล์เพลงจากเครื่องโดยตรง)*
 3. **ปรับระดับเสียง (Pitch):**
@@ -120,7 +123,10 @@ graph LR
      * 💾 **ปุ่มดาวน์โหลดไฟล์ (.mp3) ในตัว:** คลิกเพื่อดาวน์โหลดลงเครื่องได้ทันที โดยชื่อเพลงและสระภาษาไทย (`ั`, `้`, `ุ`) จะคงอยู่ครบถ้วน 100%
 
 > 📛 **รูปแบบชื่อไฟล์ผลลัพธ์:** `<ชื่อศิลปิน> - <ชื่อเพลง> (<ชื่อโมเดล> Ver).mp3`  
-> เช่น: `Liz's x NATNON - เพลงรัก (Ado Ver).mp3` หรือ `Nont Tanont - โต๊ะริม (Ado Ver).mp3`
+> เช่น:  
+> - `Liz's x NATNON - เพลงรัก (Ado Ver).mp3`  
+> - `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi (Ado Ver).mp3`  
+> - `BIBI - 밤양갱 (Bam-Yang-Gaeng) (NontTanont Ver).mp3`
 
 ---
 
@@ -170,9 +176,10 @@ AICoverGen/
 ├── 🚀 run_aicovergen.bat            # ดับเบิลคลิกเริ่มใช้งานทันที (One-click Launcher)
 ├── 🐍 launch.py                     # Cyberpunk Terminal Launcher (ANSI & Telemetry)
 ├── 🪟 start_webui.ps1              # สคริปต์สำหรับรันบน PowerShell
+├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube
 ├── 📁 src/
 │   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Dual Outputs)
-│   ├── ⚙️ main.py                  # Core Cover Pipeline + Real Song Title Sanitizer
+│   ├── ⚙️ main.py                  # Core Cover Pipeline + CJK Romanizer & Feat Formatter
 │   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX)
 │   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion)
 ├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง RVC (.pth, .index)

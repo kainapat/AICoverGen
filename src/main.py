@@ -143,8 +143,121 @@ def clean_song_title(raw_title):
     return sanitize_filename(cleaned)
 
 
+_kakasi = None
+
+
+def get_kakasi():
+    """Lazy initializer for pykakasi converter."""
+    global _kakasi
+    if _kakasi is None:
+        try:
+            import pykakasi
+            _kakasi = pykakasi.kakasi()
+        except Exception:
+            _kakasi = False
+    return _kakasi or None
+
+
+def romanize_cjk(text):
+    """If text contains Japanese (Kanji/Hiragana/Katakana) or Korean (Hangul),
+    appends Title-Cased Romaji / Romaja in parentheses: 'Original (Romaji)'.
+    Leaves Thai, English, Latin text completely untouched."""
+    if not text or not isinstance(text, str):
+        return text or ''
+    import re
+    # 1. Japanese check (Hiragana \u3040-\u309f, Katakana \u30a0-\u30ff, Kanji \u4e00-\u9fff)
+    if re.search(r'[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]', text):
+        k = get_kakasi()
+        if k:
+            conv = k.convert(text)
+            hepburn = ' '.join(item['hepburn'] for item in conv if item.get('hepburn')).strip()
+            hepburn = re.sub(r'\s+', ' ', hepburn).title()
+            if hepburn and hepburn.lower() not in text.lower():
+                return f"{text} ({hepburn})"
+
+    # 2. Korean check (Hangul \uac00-\ud7a3)
+    if re.search(r'[\uac00-\ud7a3]', text):
+        try:
+            import kroman
+            romaja = kroman.parse(text).strip()
+            romaja = re.sub(r'\s+', ' ', romaja).title()
+            if romaja and romaja.lower() not in text.lower():
+                return f"{text} ({romaja})"
+        except Exception:
+            pass
+
+    return text
+
+
+def parse_feat_clause(text):
+    """Detects and extracts 'feat.', 'ft.', or 'featuring' clause from a title/track string.
+    Returns (clean_title, extracted_feat_artist_or_None)."""
+    if not text:
+        return text, None
+    import re
+    feat_pattern = r'\s*[\(\[\{]?\s*(?:feat\.?|ft\.?|featuring)\s+([^\)\]\}]+)[\)\]\}]?'
+    m = re.search(feat_pattern, text, re.IGNORECASE)
+    if m:
+        feat_artist = m.group(1).strip()
+        clean_text = re.sub(feat_pattern, '', text, flags=re.IGNORECASE).strip()
+        return clean_text, feat_artist
+    return text, None
+
+
+def resolve_feat_artist(feat_raw, artists_list=None):
+    """Resolve clean featured artist name, preferring official metadata romanized name."""
+    if artists_list and len(artists_list) > 1:
+        return ', '.join(artists_list[1:])
+    if not feat_raw:
+        return None
+    import re
+    if re.search(r'[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]', feat_raw):
+        k = get_kakasi()
+        if k:
+            conv = k.convert(feat_raw)
+            rom = ' '.join(item['hepburn'] for item in conv if item.get('hepburn')).strip().title()
+            if rom:
+                return rom
+    elif re.search(r'[\uac00-\ud7a3]', feat_raw):
+        try:
+            import kroman
+            rom = kroman.parse(feat_raw).strip().title()
+            if rom:
+                return rom
+        except Exception:
+            pass
+    return feat_raw
+
+
+def resolve_artist_name(raw_artist, raw_channel, artists_list=None):
+    """Resolve main artist name, romanizing pure CJK script when no Latin representation exists."""
+    if artists_list and len(artists_list) > 0:
+        candidate = artists_list[0]
+    else:
+        candidate = raw_artist or raw_channel
+    cleaned = clean_channel_name(candidate)
+    import re
+    if cleaned and not re.search(r'[a-zA-Z]', cleaned):
+        if re.search(r'[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]', cleaned):
+            k = get_kakasi()
+            if k:
+                conv = k.convert(cleaned)
+                rom = ' '.join(item['hepburn'] for item in conv if item.get('hepburn')).strip().title()
+                if rom:
+                    return f"{cleaned} ({rom})"
+        elif re.search(r'[\uac00-\ud7a3]', cleaned):
+            try:
+                import kroman
+                rom = kroman.parse(cleaned).strip().title()
+                if rom:
+                    return f"{cleaned} ({rom})"
+            except Exception:
+                pass
+    return cleaned
+
+
 def extract_song_and_artist(info):
-    """Extract and format '[Artist] - [Song]' from yt-dlp metadata info dict with smart deduplication."""
+    """Extract and format '[Artist] - [Song] ([Romaji]) Feat. [Featured Artist]' from yt-dlp metadata info dict."""
     if not isinstance(info, dict):
         return clean_song_title(str(info))
 
@@ -155,38 +268,74 @@ def extract_song_and_artist(info):
     raw_track = info.get('track')
     raw_artist = info.get('artist')
     raw_channel = info.get('channel') or info.get('uploader')
+    artists_list = info.get('artists') or []
 
     # 1. Official YouTube Music track (has dedicated track and artist fields)
     if raw_track and raw_artist:
-        artist = clean_channel_name(raw_artist)
-        song = clean_song_title(raw_track)
-        if artist:
-            return sanitize_filename(f"{artist} - {song}")
-        return song
+        base_track, feat_in_track = parse_feat_clause(raw_track)
+        clean_track = clean_song_title(base_track)
+        song_with_romaji = romanize_cjk(clean_track)
+        main_artist = resolve_artist_name(raw_artist, raw_channel, artists_list)
+
+        feat_artist = None
+        if feat_in_track:
+            feat_artist = resolve_feat_artist(feat_in_track, artists_list)
+
+        if feat_artist:
+            return sanitize_filename(f"{main_artist} - {song_with_romaji} Feat. {feat_artist}")
+        elif main_artist:
+            return sanitize_filename(f"{main_artist} - {song_with_romaji}")
+        return sanitize_filename(song_with_romaji)
 
     title_norm = unicodedata.normalize('NFKC', str(raw_title))
 
     # 2. Check for 'Song by Artist' pattern (e.g. 《 เพลงรัก 》 by Liz's x NATNON)
     by_match = re.match(r'^[《【\[(]?\s*(.*?)\s*[》】\])]?\s*(?:by|โดย)\s+(.+)$', title_norm, re.IGNORECASE)
     if by_match:
-        song = clean_song_title(by_match.group(1))
-        artist = clean_channel_name(by_match.group(2))
+        base_song, feat_in_song = parse_feat_clause(by_match.group(1))
+        song = clean_song_title(base_song)
+        song_with_romaji = romanize_cjk(song)
+        artist = resolve_artist_name(by_match.group(2), raw_channel, artists_list)
+        if feat_in_song:
+            feat_artist = resolve_feat_artist(feat_in_song, artists_list)
+            return sanitize_filename(f"{artist} - {song_with_romaji} Feat. {feat_artist}")
         if artist:
-            return sanitize_filename(f"{artist} - {song}")
-        return song
+            return sanitize_filename(f"{artist} - {song_with_romaji}")
+        return sanitize_filename(song_with_romaji)
 
     clean_title = clean_song_title(title_norm)
 
-    # 3. If title already has ' - ' (Artist - Song or Song - Artist)
+    # 3. If title already has ' - ' (Artist - Song)
     if ' - ' in clean_title:
-        return clean_title
+        artist_part, song_part = clean_title.split(' - ', 1)
+        base_song, feat_in_song = parse_feat_clause(song_part)
+        clean_song = clean_song_title(base_song)
+        song_with_romaji = romanize_cjk(clean_song)
+        main_artist = resolve_artist_name(artist_part.strip(), raw_channel, artists_list)
+        if feat_in_song:
+            feat_artist = resolve_feat_artist(feat_in_song, artists_list)
+            return sanitize_filename(f"{main_artist} - {song_with_romaji} Feat. {feat_artist}")
+        return sanitize_filename(f"{main_artist} - {song_with_romaji}")
 
     # 4. Fallback to channel/artist if not already in title
-    artist_candidate = clean_channel_name(raw_artist or raw_channel)
-    if artist_candidate and artist_candidate.lower() not in clean_title.lower():
-        return sanitize_filename(f"{artist_candidate} - {clean_title}")
+    base_title, feat_in_title = parse_feat_clause(clean_title)
+    clean_title = clean_song_title(base_title)
+    song_with_romaji = romanize_cjk(clean_title)
+    artist_candidate = resolve_artist_name(raw_artist, raw_channel, artists_list)
 
-    return clean_title
+    feat_artist = None
+    if feat_in_title:
+        feat_artist = resolve_feat_artist(feat_in_title, artists_list)
+
+    if artist_candidate and artist_candidate.lower() not in song_with_romaji.lower():
+        if feat_artist:
+            return sanitize_filename(f"{artist_candidate} - {song_with_romaji} Feat. {feat_artist}")
+        return sanitize_filename(f"{artist_candidate} - {song_with_romaji}")
+
+    if feat_artist:
+        return sanitize_filename(f"{song_with_romaji} Feat. {feat_artist}")
+    return sanitize_filename(song_with_romaji)
+
 
 
 def yt_download(link):

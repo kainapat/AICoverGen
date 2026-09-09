@@ -58,6 +58,8 @@
 | **Direct File Pitch Transformation** | Native file-to-file SoX processing (`tfm.build_file`) replacing raw stdout pipe array streams, eliminating Windows CRT byte misalignment errors (`ValueError: buffer size must be a multiple of element size`) during overall pitch changes. |
 | **Downloads Directory** | Dedicated staging folder (`downloads/`) storing original downloaded audio files (`.mp3`) and sidecar title files (`.title`) from YouTube/YouTube Music, preventing project root workspace clutter. |
 | **Clear Downloads Action** | Maintenance action on WebUI (`🗑️ ล้างดาวน์โหลด / Clear`) purging cached staging `.mp3` and `.title` files from `downloads/` to reclaim disk space without affecting generated cover songs in `song_output/`. |
+| **CJK Romanization** | Automatic detection of Japanese (Hiragana, Katakana, Kanji via `pykakasi`) and Korean (Hangul via `kroman`) script in song titles, appending Title-Cased Romaji / Romaja in parentheses (e.g. `藍より群青 (Ai Yori Gunjou)`), leaving Thai, English, and Romanized songs 100% untouched. |
+| **Featured Artist Formatter** | Extraction and repositioning pipeline isolating `feat.`, `ft.`, or `featuring` clauses from song titles and metadata arrays, rearranging the structure into standard `[Main Artist] - [Song Title (Romaji)] Feat. [Featured Artist]` with official English/Romaji artist names prioritized. |
 
 ## Pipeline Flow
 
