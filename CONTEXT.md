@@ -61,6 +61,8 @@
 | **Clear Downloads Action** | Maintenance action on WebUI (`🗑️ ล้างดาวน์โหลด / Clear`) purging cached staging `.mp3` and `.title` files from `downloads/` to reclaim disk space without affecting generated cover songs in `song_output/`. |
 | **CJK Romanization** | Automatic detection of Japanese (Hiragana, Katakana, Kanji via `pykakasi`) and Korean (Hangul via `kroman`) script in song titles, appending Title-Cased Romaji / Romaja in parentheses (e.g. `藍より群青 (Ai Yori Gunjou)`), leaving Thai, English, and Romanized songs 100% untouched. |
 | **Featured Artist Formatter** | Extraction and repositioning pipeline isolating `feat.`, `ft.`, or `featuring` clauses from song titles and metadata arrays, rearranging the structure into standard `[Main Artist] - [Song Title (Romaji)] Feat. [Featured Artist]` with official English/Romaji artist names prioritized. |
+| **Smart Song-Artist Inversion** | Contextual title reordering detecting when YouTube creators title a video as `[Song] - [Artist]` (identifying the artist by cross-referencing with the channel/uploader identity) and automatically reversing the order to standard `[Artist] - [Song]`. |
+| **Extended Promotional Noise Filter** | Robust multi-pattern sanitizer eliminating `Official Lyrics Video` (plural and singular), pipe-enclosed promo tags (`|...|`), double-slash tags (`//...//`), visualizers, and trailing broadcast noise without damaging true song titles. |
 
 ## Pipeline Flow
 

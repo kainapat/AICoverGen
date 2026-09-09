@@ -117,18 +117,19 @@ def clean_channel_name(channel):
 
 def clean_song_title(raw_title):
     """Clean common promotional tags and suffixes from video titles
-    (e.g., [Official MV], (Official Audio), 【MV】, 4K, HD), normalize Unicode, and sanitize for Windows."""
+    (e.g., [Official MV], (Official Audio), |Official Lyrics Video|, 【MV】, 4K, HD), normalize Unicode, and sanitize for Windows."""
     import re
     import unicodedata
     if not raw_title:
         return 'song'
     cleaned = unicodedata.normalize('NFKC', str(raw_title))
     noise_patterns = [
-        r'\[\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*\]',
-        r'\(\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*\)',
-        r'【\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq)\s*】',
-        r'\|\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq).*$',
-        r'//\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyric\s*video|visualizer|hd|4k|hq).*$',
+        r'\[\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq)\s*\]',
+        r'\(\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq)\s*\)',
+        r'【\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq)\s*】',
+        r'\|\s*[^|]*(?:official|music|video|audio|mv|lyrics?|visualizer)[^|]*\|?',
+        r'//\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq).*$',
+        r'\b(?:official\s+)?(?:music\s+)?(?:lyrics?\s+video|visualizer)\b.*$',
         r'\b(?:4K|HD|HQ|1080p|720p)\b',
     ]
     for pat in noise_patterns:
@@ -141,6 +142,7 @@ def clean_song_title(raw_title):
     cleaned = re.sub(r'[\s\-_|/]+$', '', cleaned)
     cleaned = re.sub(r'^[\s\-_|/]+', '', cleaned)
     return sanitize_filename(cleaned)
+
 
 
 _kakasi = None
@@ -305,17 +307,35 @@ def extract_song_and_artist(info):
 
     clean_title = clean_song_title(title_norm)
 
-    # 3. If title already has ' - ' (Artist - Song)
+    # 3. If title already has ' - ' (Artist - Song or Song - Artist)
     if ' - ' in clean_title:
-        artist_part, song_part = clean_title.split(' - ', 1)
-        base_song, feat_in_song = parse_feat_clause(song_part)
+        part1, part2 = clean_title.split(' - ', 1)
+        part1 = part1.strip()
+        part2 = part2.strip()
+
+        # Inversion detection: check if uploader formatted as 'Song - Artist'
+        ch = clean_channel_name(raw_artist or raw_channel)
+        if ch and ch.lower() in part2.lower() and ch.lower() not in part1.lower():
+            # Inversion detected: part2 is artist, part1 is song
+            artist_raw = part2
+            song_raw = part1
+        else:
+            artist_raw = part1
+            song_raw = part2
+
+        base_song, feat_in_song = parse_feat_clause(song_raw)
+        base_artist, feat_in_artist = parse_feat_clause(artist_raw)
+        feat_candidate = feat_in_song or feat_in_artist
+
         clean_song = clean_song_title(base_song)
         song_with_romaji = romanize_cjk(clean_song)
-        main_artist = resolve_artist_name(artist_part.strip(), raw_channel, artists_list)
-        if feat_in_song:
-            feat_artist = resolve_feat_artist(feat_in_song, artists_list)
+        main_artist = resolve_artist_name(base_artist, raw_channel, artists_list)
+
+        if feat_candidate:
+            feat_artist = resolve_feat_artist(feat_candidate, artists_list)
             return sanitize_filename(f"{main_artist} - {song_with_romaji} Feat. {feat_artist}")
         return sanitize_filename(f"{main_artist} - {song_with_romaji}")
+
 
     # 4. Fallback to channel/artist if not already in title
     base_title, feat_in_title = parse_feat_clause(clean_title)
