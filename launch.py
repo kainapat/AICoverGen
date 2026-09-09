@@ -30,17 +30,18 @@ def init_terminal():
 
 init_terminal()
 
-# ─── Color Palette (Cyberpunk / Neon Tech) ───
+# ─── Color Palette (IBM Carbon Theme) ───
 C = {
-    "cyan": "\033[38;2;0;240;255m",
-    "magenta": "\033[38;2;215;75;255m",
-    "purple": "\033[38;2;160;70;255m",
-    "emerald": "\033[38;2;0;255;165m",
-    "amber": "\033[38;2;255;190;55m",
-    "red": "\033[38;2;255;75;95m",
-    "white": "\033[1;37m",
-    "gray": "\033[38;2;200;205;215m",
-    "dark": "\033[38;2;145;155;175m",
+    "blue": "\033[38;2;69;137;255m",       # Carbon Blue 60 (#4589ff) - primary accent
+    "blue_dark": "\033[38;2;15;98;254m",   # Carbon Blue 70 (#0f62fe)
+    "cyan": "\033[38;2;17;146;232m",       # Carbon Cyan 50 (#1192e8)
+    "emerald": "\033[38;2;66;190;101m",    # Carbon Green 40 (#42be65) - success
+    "amber": "\033[38;2;241;194;27m",      # Carbon Yellow 30 (#f1c21b) - warning
+    "red": "\033[38;2;250;77;86m",         # Carbon Red 50 (#fa4d56) - error
+    "white": "\033[38;2;244;244;244m",     # Carbon White (#f4f4f4) - high contrast text
+    "gray": "\033[38;2;198;198;198m",      # Carbon Gray 30 (#c6c6c6) - secondary text / silver
+    "dark": "\033[38;2;141;141;141m",      # Carbon Gray 50 (#8d8d8d) - muted / dividers
+    "slate": "\033[38;2;82;82;82m",        # Carbon Gray 70 (#525252) - box borders
     "bold": "\033[1m",
     "dim": "\033[2m",
     "reset": "\033[0m",
@@ -68,7 +69,7 @@ def color(text, col="white", bold=False):
 def cprint(text, col="white", bold=False, end="\n"):
     print(color(text, col, bold), end=end, flush=True)
 
-def render_box(lines, border_col="cyan", width=64):
+def render_box(lines, border_col="slate", width=64):
     c_b = C.get(border_col, "")
     c_res = C["reset"]
     out = [f"  {c_b}╭{'─' * width}╮{c_res}"]
@@ -81,6 +82,7 @@ def render_box(lines, border_col="cyan", width=64):
             out.append(f"  {c_b}│{c_res}  {line}{' ' * pad}{c_b}│{c_res}")
     out.append(f"  {c_b}╰{'─' * width}╯{c_res}")
     return "\n".join(out)
+
 
 # ─── Error Diagnostic Card ───
 _tb_buffer = []
@@ -164,8 +166,8 @@ def get_telemetry():
 
 # ─── Banner Display ───
 def banner(t):
-    title_left = f"{C['magenta']}▲  AICoverGen  {C['white']}v2.5"
-    title_right = f"{C['emerald']}[PRODUCTION]{C['reset']}"
+    title_left = f"{C['blue']}▲  AICoverGen  {C['white']}v2.5"
+    title_right = f"{C['blue']}[CARBON CONSOLE]{C['reset']}"
     spacing = 64 - 2 - vis_width(title_left) - vis_width(title_right) - 2
     title_line = f"{title_left}{' ' * max(1, spacing)}{title_right}"
 
@@ -173,7 +175,7 @@ def banner(t):
         title_line,
         f"{C['gray']}Autonomous Neural Voice & Music Source Separation Engine",
         "---",
-        f"{C['magenta']}● SYSTEM TELEMETRY",
+        f"{C['blue']}● SYSTEM TELEMETRY",
         f"{C['gray']}├─ Hardware  : {C['white']}{t['gpu']} ({t['vram']} VRAM)",
         f"{C['gray']}├─ Precision : {C['emerald']}FP16 Half-Precision (Tensor Core Optimized)",
         f"{C['gray']}├─ Storage   : {C['white']}{t['cache']} (Drive C Protection Active)",
@@ -181,12 +183,13 @@ def banner(t):
         f"{C['gray']}└─ Runtime   : {C['white']}{t['runtime']} (.venv / PyTorch 2.5.1+cu121)",
     ]
     print()
-    print(render_box(lines, "cyan", 64))
+    print(render_box(lines, "slate", 64))
     print()
 
 def step(num, total, text):
-    cprint(f"  [{num}/{total}] ", "cyan", bold=True, end="")
+    cprint(f"  [{num}/{total}] ", "blue", bold=True, end="")
     cprint(text, "white")
+
 
 def ok(msg):
     cprint(f"        ✔ {msg}", "emerald")
@@ -262,15 +265,13 @@ def format_log_line(line):
     if stripped.startswith("[download]") or "ETA Unknown" in stripped:
         return
 
-    # Python 3.10 Deprecation notice -> format as Cyberpunk Amber Notice
-    if "Support for Python version" in raw_line and "deprecated" in raw_line:
-        print()
-        cprint("  ⚠️  [RUNTIME NOTICE] Python 3.10 active (standard engine for PyTorch + Fairseq)", "amber", bold=True)
+    # Suppress Python 3.10 deprecation notice and JS runtime notices
+    if ("Support for Python version" in raw_line and "deprecated" in raw_line) or "No supported JavaScript runtime" in raw_line:
         return
 
     # Sub-step: Non-ASCII filename detection
     if "Non-ASCII filename detected" in raw_line:
-        cprint("     🛡️  [ASCII-Safe Routing] Activated for Thai/Unicode audio track", "cyan")
+        cprint("     🛡️  [ASCII-Safe Routing] Activated for Thai/Unicode audio track", "blue")
         return
 
     # Sub-step: RVC Model Weights match
@@ -295,11 +296,11 @@ def format_log_line(line):
             dur_str = f"{dur_m}m {dur_s:02d}s" if dur_m > 0 else f"{dur:.1f}s"
             if _last_exec_time and _last_exec_time > 0:
                 speed = dur / _last_exec_time
-                cprint(f"     ⚡  [RVC Speed] Inferred in {_last_exec_time:.1f}s (Audio: {dur_str} | {speed:.1f}x Real-time)", "cyan")
+                cprint(f"     ⚡  [RVC Speed] Inferred in {_last_exec_time:.1f}s (Audio: {dur_str} | {speed:.1f}x Real-time)", "blue")
             else:
-                cprint(f"     ⚡  [RVC Audio] Processed {dur_str} vocal track", "cyan")
+                cprint(f"     ⚡  [RVC Audio] Processed {dur_str} vocal track", "blue")
         except Exception:
-            cprint(f"     ⚡  {raw_line.strip()}", "cyan")
+            cprint(f"     ⚡  {raw_line.strip()}", "blue")
         _last_exec_time = None
         return
 
@@ -310,7 +311,7 @@ def format_log_line(line):
 
     # Sub-step: ONNX execution provider & VRAM allocation
     if "['CUDAExecutionProvider']" in raw_line:
-        cprint("     🎮  [ONNX Engine] CUDA Execution Provider active (GPU 0)", "cyan")
+        cprint("     🎮  [ONNX Engine] CUDA Execution Provider active (GPU 0)", "blue")
         return
     if "threads:" in raw_line and "vram:" in raw_line:
         try:
@@ -326,32 +327,32 @@ def format_log_line(line):
             sys.stdout.write(f"\r  {C['emerald']}✔ [2/6] Vocals & Instrumental Separation Complete!{' ' * 20}{C['reset']}\n")
         else:
             clean = raw_line.replace("MDX Progress:", "").strip()
-            sys.stdout.write(f"\r  {C['cyan']}⚡ MDX {clean}{C['reset']}   ")
+            sys.stdout.write(f"\r  {C['blue']}⚡ MDX {clean}{C['reset']}   ")
         sys.stdout.flush()
         return
 
     # Pipeline progress messages
     if "Starting AI Cover Generation Pipeline" in raw_line:
         print()
-        cprint("  ─────────────────────────────────────────────────────────────", "dark")
-        cprint("  ⚡ [PIPELINE STARTED] Processing audio cover workflow...", "cyan", bold=True)
+        cprint("  ─────────────────────────────────────────────────────────────", "slate")
+        cprint("  ⚡ [PIPELINE STARTED] Processing audio cover workflow...", "blue", bold=True)
     elif "Downloading song" in raw_line:
-        cprint("  ⬇️  [1/6] Downloading YouTube audio stream...", "cyan")
+        cprint("  ⬇️  [1/6] Downloading YouTube audio stream...", "blue")
     elif "Separating Vocals from Instrumental" in raw_line:
-        cprint("  🎼  [2/6] Separating Vocals & Instrumental (MDX-Net)...", "cyan")
+        cprint("  🎼  [2/6] Separating Vocals & Instrumental (MDX-Net)...", "blue")
     elif "Separating Main Vocals from Backup Vocals" in raw_line:
-        cprint("  🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...", "cyan")
+        cprint("  🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...", "blue")
     elif "Applying DeReverb" in raw_line:
-        cprint("  ✨  [4/6] De-reverberating Vocal Stems (FoxJoy HQ)...", "cyan")
+        cprint("  ✨  [4/6] De-reverberating Vocal Stems (FoxJoy HQ)...", "blue")
     elif "Converting voice using RVC" in raw_line:
-        cprint("  🎙️  [5/6] Converting Vocal Timbre with RVC v2 Model...", "magenta", bold=True)
+        cprint("  🎙️  [5/6] Converting Vocal Timbre with RVC v2 Model...", "blue", bold=True)
     elif "Applying audio effects" in raw_line:
-        cprint("  🎛️  [6/6] Mastering with Studio Effects & Reverb...", "cyan")
+        cprint("  🎛️  [6/6] Mastering with Studio Effects & Reverb...", "blue")
     elif "Combining AI Vocals and Instrumentals" in raw_line:
         cprint("  🎵  [FINAL] Merging Vocals & Instrumental Stems...", "emerald")
     elif "Total time all process" in raw_line:
         cprint(f"  🏆  {raw_line.strip()}", "emerald", bold=True)
-        cprint("  ─────────────────────────────────────────────────────────────", "dark")
+        cprint("  ─────────────────────────────────────────────────────────────", "slate")
         print()
     elif "Cover generated at" in raw_line:
         cprint(f"  💾  {raw_line.strip()}", "emerald", bold=True)
@@ -367,6 +368,7 @@ def format_log_line(line):
         cprint(f"     {raw_line}", "amber")
     else:
         cprint(f"     {raw_line}", "gray")
+
 
 def stream_output(proc, logfile):
     try:
@@ -460,20 +462,21 @@ def main():
             f"{C['emerald']}★ WEBUI IS READY & LISTENING",
             "---",
             "",
-            f"  {C['white']}Local URL  : {C['cyan']}{C['bold']}http://127.0.0.1:{PORT}",
-            f"  {C['white']}Network    : {C['cyan']}{C['bold']}http://0.0.0.0:{PORT}",
+            f"  {C['white']}Local URL  : {C['blue']}{C['bold']}http://127.0.0.1:{PORT}",
+            f"  {C['white']}Network    : {C['blue']}{C['bold']}http://0.0.0.0:{PORT}",
             "",
-            f"{C['white']}● WORKFLOW GUIDE:",
-            f"  {C['cyan']}1. {C['gray']}Open URL in browser ➔ Go to {C['white']}[Generate]{C['gray']} tab",
-            f"  {C['cyan']}2. {C['gray']}Paste YouTube link ➔ Click {C['white']}[Process URL]{C['gray']}",
-            f"  {C['cyan']}3. {C['gray']}Select Voice Model & Pitch ➔ Click {C['white']}[Generate]{C['gray']}",
-            f"  {C['cyan']}4. {C['gray']}In-browser Player or 1-Click Download {C['emerald']}(.mp3){C['gray']}",
+            f"{C['blue']}● WORKFLOW GUIDE:",
+            f"  {C['blue']}1. {C['gray']}Open URL in browser ➔ Go to {C['white']}[Generate]{C['gray']} tab",
+            f"  {C['blue']}2. {C['gray']}Paste YouTube link ➔ Click {C['white']}[Process URL]{C['gray']}",
+            f"  {C['blue']}3. {C['gray']}Select Voice Model & Pitch ➔ Click {C['white']}[Generate]{C['gray']}",
+            f"  {C['blue']}4. {C['gray']}In-browser Player or 1-Click Download {C['emerald']}(.mp3){C['gray']}",
             "",
             f"{C['dark']}[Press Ctrl+C in terminal to safely terminate server]",
         ]
         print()
-        print(render_box(ready_lines, "emerald", 64))
+        print(render_box(ready_lines, "slate", 64))
         print()
+
 
         try:
             proc.wait()

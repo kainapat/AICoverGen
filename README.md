@@ -40,8 +40,8 @@ license: mit
 | 🎧 **Carbon Theme Audio Player** | เครื่องเล่นเพลง Custom HTML5 ดีไซน์หรูสอดรับกับธีม IBM Carbon (Carbon Blue `#0f62fe` + พื้นผิว Slate) แสดงจุดเลื่อนเพลง (Scrubber Thumb) ถาวร 100% โดยไม่ต้องเอาเมาส์ชี้, ป้องกัน IDM ดักจับ, ไม่มี Auto-Download กวนใจ, แก้ปัญหาค้าง 0:00 และคงสระภาษาไทยครบถ้วน | Theme-adaptive HTML5 player harmonized with IBM Carbon theme (Carbon Blue `#0f62fe` accents, 100% permanent scrubber thumb visibility, IDM-safe, full Thai Unicode support) |
 | 🎙️ **59+ Voice Models & Thai Unicode** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index รองรับโฟลเดอร์โมเดลภาษาไทย 100% (เช่น โต ซิลลี่ฟูลส์, จ๋าย ไททศมิตร) พร้อมระบบ In-Memory FAISS Index Deserializer โหลดไฟล์ .index สมบูรณ์ไม่แครช | One-click downloads from 59+ public catalog, 100% Thai Unicode model directory support via in-memory FAISS deserializer |
 | 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX (กิน VRAM จริงเพียง ~1.5 GB บนโหมด 1 Thread) พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, lightweight ~1.5GB active single-thread MDX & automatic VRAM cache flushing |
-| 💻 **Cyberpunk Launcher** | หน้าต่าง Terminal คอนทราสต์สูงสบายตา (High-Contrast Light Silver), มี Workflow Guide เน้นปุ่มคลิกชัดเจน, คำนวณ RVC Speed (x Real-time), ป้ายเตือน Amber Runtime Notice ชัดเจน, หลอด Progress Bar คมชัด และเคลียร์พอร์ตอัตโนมัติ | High-aesthetic, high-contrast terminal launcher with scannable workflow guide, RVC speed multiplier, Amber runtime notices & live telemetry |
-| 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Cyberpunk Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Cyberpunk error diagnostic card with WinError 10054 noise filtering, full traceback drainer, and crash pause guard |
+| 💻 **Carbon Theme Launcher** | หน้าต่าง Terminal ดีไซน์สอดรับกับธีม IBM Carbon ของ WebUI (Carbon Blue `#4589ff` + Slate Gray `#525252`), กรอบมุมมนอ่านง่ายสบายตา, จัดระเบียบขั้นตอนประมวลผลชัดเจน, ซ่อนข้อความเตือน Deprecation กวนใจ, มี Workflow Guide และเคลียร์พอร์ตอัตโนมัติ | Unified IBM Carbon themed terminal launcher (Carbon Blue `#4589ff`, Slate Gray `#525252` borders, high-contrast typography, deprecation noise suppression & live telemetry) |
+| 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Carbon error diagnostic card with WinError 10054 noise filtering, full traceback drainer, and crash pause guard |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English |
 
 ---
@@ -150,11 +150,11 @@ graph LR
   🎛️  [6/6] Mastering with Studio Effects & Reverb...
      ✨  [Audio Mastering] Neural noise reduction applied
   🎵  [FINAL] Merging Vocals & Instrumental Stems...
-  💾  Cover generated at song_output\ฉบับท้ายสุด (NontTanont Ver).mp3
+  💾  Cover generated at song_output\Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi (Ado Ver).mp3
   🏆  Total time all process: 00:02:18 (⚡ Fast Mode ON)
   ─────────────────────────────────────────────────────────────
-  ⚠️  [RUNTIME NOTICE] Python 3.10 active (standard engine for PyTorch + Fairseq)
 ```
+
 
 ---
 
@@ -174,7 +174,7 @@ graph LR
 ```text
 AICoverGen/
 ├── 🚀 run_aicovergen.bat            # ดับเบิลคลิกเริ่มใช้งานทันที (One-click Launcher)
-├── 🐍 launch.py                     # Cyberpunk Terminal Launcher (ANSI & Telemetry)
+├── 🐍 launch.py                     # Carbon Terminal Launcher (ANSI & Telemetry)
 ├── 🪟 start_webui.ps1              # สคริปต์สำหรับรันบน PowerShell
 ├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube
 ├── 📁 src/

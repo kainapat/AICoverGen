@@ -36,9 +36,9 @@
 | **Song ID / Video ID** | 11-character YouTube video ID or hash used for internal working directories (`song_output/<song_id>`) to guarantee ASCII-safe intermediate file paths on Windows. |
 | **Clean Title Filter** | Regex post-processing on YouTube metadata stripping noise tags such as `[Official MV]`, `(Official Audio)`, `【MV】`, `4K`, `HD`. |
 | **Dual Output Display** | Pairing an in-browser audio player (`gr.Audio`) for instantaneous playback with a dedicated file card (`gr.File`) for direct download in the WebUI. |
-| **Cyberpunk Launcher CLI** | High-aesthetic terminal interface with rounded Unicode boxes, ANSI gradients, live GPU/VRAM hardware telemetry, and formatted pipeline stage streaming. |
+| **Carbon Theme Terminal Launcher** | Terminal interface harmonized with the WebUI's IBM Carbon theme using Carbon Blue (`#4589ff`), Slate Gray (`#525252`) box borders, Crisp White (`#f4f4f4`) typography, live GPU/VRAM telemetry, and cleanly formatted pipeline streaming. |
 | **Fast Mode** | Pipeline optimization flag (`fast_mode=True`) bypassing redundant multi-pass ONNX denoising, reducing separation duration by ~50% (~2-3 mins on 4GB VRAM) while preserving vocal clarity. |
-| **Error Diagnostic Card** | Cyberpunk-styled terminal alert box rendering exception classes, source locations, and human-readable remedies when errors occur. |
+| **Error Diagnostic Card** | Carbon-styled terminal alert box rendering exception classes, source locations, and human-readable remedies when errors occur. |
 | **Traceback Buffer Drainer** | Pipe management pattern in `launch.py` ensuring stdout/stderr buffers are fully drained on process crash so stacktraces are never truncated. |
 | **Atomic Chunk Counter** | Thread-safe in-memory progress counter in `src/mdx.py` replacing disabled `tqdm` to guarantee accurate chunk tracking (`X/Y chunks`) and realistic ETA calculations. |
 | **UTF-8 Pipe & Console Enforcement** | Explicit UTF-8 subprocess environment (`PYTHONUTF8=1`, `PYTHONIOENCODING=utf-8`) and stream reconfig preventing Windows code page Mojibake (`â–‘â–‘`). |
@@ -48,8 +48,9 @@
 | **Windows Asyncio Disconnect Suppressor** | Patch and log filter catching benign TCP resets (`WinError 10054` in `_ProactorBasePipeTransport`) caused by client page refreshes or tab closures, preventing false-positive error diagnostic cards. |
 | **Custom Carbon Audio Controller** | Fully custom-styled media player bar matching IBM Carbon design tokens with a dark slate container, Carbon Blue (`#0f62fe`) controls, monospace time display, volume slider, and 100% permanently visible timeline scrubber. |
 | **Permanent Scrubber Visibility** | Continuous 100% visibility of the timeline thumb circle (`::-webkit-slider-thumb`) and progress gradient without requiring mouse hover, overcoming Chromium's native Shadow DOM auto-hide behavior. |
-| **Cyberpunk Terminal Sub-steps** | Formatted secondary stdout/stderr stream lines indented with icons and colors (ASCII routing, ONNX provider, RVC keys match, speed multiplier, noise reduction) maintaining clean visual hierarchy. |
-| **Runtime Notice Banner** | Formatted Amber notification (`⚠️  [RUNTIME NOTICE]`) contextualizing library deprecation warnings (e.g. yt-dlp Python 3.10 EOL) and confirming standard engine compatibility. |
+| **Carbon Terminal Sub-steps** | Indented stream lines with Carbon-themed indicators (ASCII routing, ONNX provider, RVC keys match, speed multiplier, noise reduction) maintaining clean visual hierarchy. |
+| **Deprecation Noise Suppressor** | Log stream filter automatically suppressing noisy Python 3.10 and JavaScript engine deprecation warnings to keep the terminal distraction-free. |
+
 | **Active VRAM Working Set** | The actual memory occupied during inference (~1.2 - 1.5 GB in single-thread MDX-Net mode, ~1.8 - 2.2 GB during RVC v2 voice conversion) leaving remaining VRAM free for the operating system. |
 | **Total Physical VRAM** | The total hardware video memory capacity of the GPU (e.g. 4.0 GB on RTX 2050) queried to automatically select safe concurrency thresholds (`threads: 1`). |
 | **High-Contrast Terminal Palette** | Elevated secondary terminal color scheme using Light Silver (`RGB 200, 205, 215`) and Medium Slate (`RGB 145, 155, 175`) to guarantee sharp readability and WCAG-compliant contrast on dark backgrounds. |
