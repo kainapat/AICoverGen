@@ -11,6 +11,7 @@ import time
 import threading
 import unicodedata
 import re
+from launcher_process import WindowsJobManager, terminate_process_tree
 
 # ─── Windows ANSI & UTF-8 Setup ───
 def init_terminal():
@@ -235,6 +236,18 @@ def check_port(port):
     except Exception:
         return False
 
+def shutdown_server(proc, job_manager=None):
+    if proc is None:
+        return
+    print()
+    cprint("  🛑 Terminating WebUI server gracefully...", "amber")
+    try:
+        terminate_process_tree(proc, timeout=3.0)
+    finally:
+        if job_manager:
+            job_manager.close()
+    cprint("  ✔ Server stopped cleanly.", "emerald")
+
 # ─── Real-time Log Stream Formatter ───
 def format_log_line(line):
     global _tb_buffer
@@ -404,7 +417,7 @@ def stream_output(proc, logfile):
 # ─── Main Execution Loop ───
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="AICoverGen Cyberpunk Minimal Launcher", add_help=False)
+    parser = argparse.ArgumentParser(description="AICoverGen Cyberpunk Minimal Launcher")
     parser.add_argument("--share", action="store_true", help="Enable public Gradio share link")
     args, _ = parser.parse_known_args()
 
@@ -452,119 +465,118 @@ def main():
     if args.share:
         cmd.append("--share")
 
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        bufsize=1,
-        cwd=BASE_DIR,
-        env=child_env,
-        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-    )
-    ok(f"Process spawned successfully (PID: {proc.pid})")
+    proc = None
+    job_manager = None
+    try:
+        job_manager = WindowsJobManager()
+        flags = 0
+        if os.name == "nt":
+            flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+            cwd=BASE_DIR,
+            env=child_env,
+            creationflags=flags,
+        )
+        job_manager.bind_process(proc)
+        ok(f"Process spawned successfully (PID: {proc.pid})")
 
-    # Start background stream thread (non-daemon to guarantee clean drainage)
-    streamer = threading.Thread(target=stream_output, args=(proc, LOGFILE), daemon=True)
-    streamer.start()
+        # Start background stream thread (non-daemon to guarantee clean drainage)
+        streamer = threading.Thread(target=stream_output, args=(proc, LOGFILE), daemon=True)
+        streamer.start()
 
-    # Step 4: Await HTTP port
-    step(4, 4, "Awaiting HTTP daemon readiness...")
-    ready = False
-    for i in range(1, 65):
-        time.sleep(0.8)
-        if check_port(PORT):
-            ready = True
-            break
-        sub(f"Connecting to socket... ({i}/64)")
+        # Step 4: Await HTTP port
+        step(4, 4, "Awaiting HTTP daemon readiness...")
+        ready = False
+        for i in range(1, 65):
+            time.sleep(0.8)
+            if check_port(PORT):
+                ready = True
+                break
+            sub(f"Connecting to socket... ({i}/64)")
 
-    if ready:
-        if args.share and not _public_url and not _share_error:
-            sub("Awaiting public tunnel endpoint...")
-            for _ in range(70):
-                if _public_url or _share_error:
-                    break
-                time.sleep(0.5)
+        if ready:
+            if args.share and not _public_url and not _share_error:
+                sub("Awaiting public tunnel endpoint...")
+                for _ in range(70):
+                    if _public_url or _share_error:
+                        break
+                    time.sleep(0.5)
 
-        ready_lines = [
-            f"{C['emerald']}★ WEBUI IS READY & LISTENING",
-            "---",
-            "",
-            f"  {C['white']}Local URL  : {C['blue']}{C['bold']}http://127.0.0.1:{PORT}",
-            f"  {C['white']}Network    : {C['blue']}{C['bold']}http://0.0.0.0:{PORT}",
-        ]
-        if args.share:
-            if _public_url:
-                ready_lines.append(f"  {C['white']}Public URL : {C['cyan']}{C['bold']}{_public_url}")
-            elif _share_error:
-                ready_lines.append(f"  {C['white']}Public URL : {C['red']}Unavailable (tunnel connection failed)")
-            else:
-                ready_lines.append(f"  {C['white']}Public URL : {C['amber']}Tunnel timed out; Local URL remains active")
-        ready_lines.extend([
-            "",
-            f"{C['blue']}● WORKFLOW GUIDE:",
-            f"  {C['blue']}1. {C['gray']}Open URL in browser ➔ Go to {C['white']}[Generate]{C['gray']} tab",
-            f"  {C['blue']}2. {C['gray']}Paste YouTube link ➔ Click {C['white']}[Process URL]{C['gray']}",
-            f"  {C['blue']}3. {C['gray']}Select Voice Model & Pitch ➔ Click {C['white']}[Generate]{C['gray']}",
-            f"  {C['blue']}4. {C['gray']}In-browser Player or 1-Click Download {C['emerald']}(.mp3){C['gray']}",
-            "",
-            f"{C['dark']}[Press Ctrl+C in terminal to safely terminate server]",
-        ])
-        print()
-        print(render_box(ready_lines, "slate", 64))
-        print()
+            ready_lines = [
+                f"{C['emerald']}★ WEBUI IS READY & LISTENING",
+                "---",
+                "",
+                f"  {C['white']}Local URL  : {C['blue']}{C['bold']}http://127.0.0.1:{PORT}",
+                f"  {C['white']}Network    : {C['blue']}{C['bold']}http://0.0.0.0:{PORT}",
+            ]
+            if args.share:
+                if _public_url:
+                    ready_lines.append(f"  {C['white']}Public URL : {C['cyan']}{C['bold']}{_public_url}")
+                elif _share_error:
+                    ready_lines.append(f"  {C['white']}Public URL : {C['red']}Unavailable (tunnel connection failed)")
+                else:
+                    ready_lines.append(f"  {C['white']}Public URL : {C['amber']}Tunnel timed out; Local URL remains active")
+            ready_lines.extend([
+                "",
+                f"{C['blue']}● WORKFLOW GUIDE:",
+                f"  {C['blue']}1. {C['gray']}Open URL in browser ➔ Go to {C['white']}[Generate]{C['gray']} tab",
+                f"  {C['blue']}2. {C['gray']}Paste YouTube link ➔ Click {C['white']}[Process URL]{C['gray']}",
+                f"  {C['blue']}3. {C['gray']}Select Voice Model & Pitch ➔ Click {C['white']}[Generate]{C['gray']}",
+                f"  {C['blue']}4. {C['gray']}In-browser Player or 1-Click Download {C['emerald']}(.mp3){C['gray']}",
+                "",
+                f"{C['dark']}[Press Ctrl+C in terminal to safely terminate server]",
+            ])
+            print()
+            print(render_box(ready_lines, "slate", 64))
+            print()
 
-
-        try:
             proc.wait()
-        except KeyboardInterrupt:
-            print()
-            cprint("  🛑 Terminating WebUI server gracefully...", "amber")
-            subprocess.run(f"taskkill /T /F /PID {proc.pid}", capture_output=True, shell=True)
+
+            # Process exited on its own (could be crash or error)
             try:
-                proc.wait(timeout=4)
+                streamer.join(timeout=3)
             except Exception:
                 pass
-            cprint("  ✔ Server stopped cleanly.", "emerald")
-            return
+            flush_traceback()
 
-        # Process exited on its own (could be crash or error)
-        try:
-            streamer.join(timeout=3)
-        except Exception:
-            pass
-        flush_traceback()
-
-        if proc.returncode != 0:
-            print()
-            cprint(f"  ✖ WebUI process exited with failure code ({proc.returncode}).", "red", bold=True)
-            cprint(f"  Inspect full session log at: {LOGFILE}", "amber")
-            print()
+            if proc.returncode != 0:
+                print()
+                cprint(f"  ✖ WebUI process exited with failure code ({proc.returncode}).", "red", bold=True)
+                cprint(f"  Inspect full session log at: {LOGFILE}", "amber")
+                print()
+                try:
+                    input("  Press Enter to exit...")
+                except Exception:
+                    pass
+        else:
+            flush_traceback()
+            cprint("\n  ✖ WebUI failed to initialize within timeout.", "red", bold=True)
+            cprint(f"  Inspect log file for details: {LOGFILE}", "amber")
             try:
-                input("  Press Enter to exit...")
+                with open(LOGFILE) as f:
+                    lines = f.readlines()
+                    for line in lines[-15:]:
+                        print("   ", line.rstrip())
             except Exception:
                 pass
-    else:
-        flush_traceback()
-        cprint("\n  ✖ WebUI failed to initialize within timeout.", "red", bold=True)
-        cprint(f"  Inspect log file for details: {LOGFILE}", "amber")
-        try:
-            with open(LOGFILE) as f:
-                lines = f.readlines()
-                for line in lines[-15:]:
-                    print("   ", line.rstrip())
-        except Exception:
-            pass
-        try:
-            subprocess.run(f"taskkill /T /F /PID {proc.pid}", capture_output=True, shell=True)
-        except Exception:
-            pass
-        try:
-            input("\nPress Enter to exit...")
-        except Exception:
-            pass
+            shutdown_server(proc, job_manager)
+            try:
+                input("\nPress Enter to exit...")
+            except Exception:
+                pass
+    except KeyboardInterrupt:
+        shutdown_server(proc, job_manager)
+        return
+    finally:
+        if job_manager:
+            job_manager.close()
 
 if __name__ == "__main__":
     main()
