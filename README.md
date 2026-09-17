@@ -14,39 +14,57 @@ license: mit
 
 # 🎤 AICoverGen (Local Edition)
 
-**สร้าง AI Song Cover ด้วยเสียงที่คุณต้องการ — Create AI-powered song covers with any voice**  
-*ปรับปรุงพิเศษ: เมนูภาษาไทย, ระบบถอดชื่อเพลงอัตโนมัติ, เครื่องเล่นเพลงในตัว, และรองรับการ์ดจอ VRAM 4GB*
+**สร้าง AI Song Cover คุณภาพสตูดิโอด้วยเสียงที่คุณต้องการ — Create AI-powered song covers with any voice**  
+*ปรับแต่งพิเศษ: เมนูภาษาไทย 🇹🇭, ระบบถอดชื่อเพลงอัจฉริยะ, ตัวเล่นเพลง Carbon Player, ระบบปิดโปรแกรมไร้ Orphan Process, และรองรับ GPU VRAM 4GB สมบูรณ์แบบ*
 
-[![Python](https://img.shields.io/badge/Python-3.10-blue?style=for-the-badge&logo=python)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.5.1+cu121-red?style=for-the-badge&logo=pytorch)](https://pytorch.org/)
-[![CUDA](https://img.shields.io/badge/CUDA-12.1-green?style=for-the-badge&logo=nvidia)](https://developer.nvidia.com/cuda-toolkit)
-[![Gradio](https://img.shields.io/badge/Gradio-5.44-orange?style=for-the-badge&logo=gradio)](https://gradio.app/)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
-[![Models](https://img.shields.io/badge/Voice_Models-59+-purple?style=for-the-badge)](rvc_models/public_models.json)
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10"></a>
+  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.5.1+cu121-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch"></a>
+  <a href="https://developer.nvidia.com/cuda-toolkit"><img src="https://img.shields.io/badge/CUDA-12.1%20Ready-76B900?style=for-the-badge&logo=nvidia&logoColor=white" alt="CUDA"></a>
+  <a href="https://gradio.app/"><img src="https://img.shields.io/badge/Gradio-5.44-FF7C00?style=for-the-badge&logo=gradio&logoColor=white" alt="Gradio"></a>
+  <a href="https://github.com/microsoft/terminal"><img src="https://img.shields.io/badge/Windows-Job%20Object%20Guard-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 11"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-F7DF1E?style=for-the-badge" alt="License"></a>
+</p>
 
-[🚀 Online Demo](https://huggingface.co/spaces/r3gm/AICoverGen) · [📙 Colab](https://colab.research.google.com/github/R3gm/AICoverGen/blob/main/colab_notebook.ipynb) · [🐛 Troubleshooting](TROUBLESHOOTING.md)
+[🚀 Online Demo](https://huggingface.co/spaces/r3gm/AICoverGen) · [📙 Colab Notebook](https://colab.research.google.com/github/R3gm/AICoverGen/blob/main/colab_notebook.ipynb) · [🛠️ Troubleshooting Guide](TROUBLESHOOTING.md)
 
 </div>
 
 ---
 
-## ✨ Key Features | ฟีเจอร์เด่น
-
-| หมวดหมู่ | รายละเอียด (TH) | Description (EN) |
-| :--- | :--- | :--- |
-| 🏷️ **Smart Artist & Song Naming** | ดึงชื่อศิลปินและชื่อเพลงจริงจาก YouTube / YouTube Music ในฟอร์แมตสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Normalization, สลับตำแหน่งเพลง-ศิลปินกลับมาเป็นมาตรฐานอัตโนมัติหากคลิปตั้งชื่อสลับข้าง (เช่น `โฆษณาชวนเลือก - TaitosmitH |Official Lyrics Video|` ➔ `TaitosmitH - โฆษณาชวนเลือก`), ตัดคำขยะประเภท `Official Lyrics Video` และเครื่องหมายไปป์ `|...|` ออกหมดจด, จัดโครงสร้าง `Feat. [ศิลปิน]` และเพิ่มวงเล็บ Romaji ภาษาญี่ปุ่น/เกาหลีให้อัตโนมัติ โดยไม่กระทบเพลงไทยหรือสากล | Auto-extracts `[Artist] - [Song]` with smart song-artist inversion, extended promotional noise cleaning (lyrics video & pipes), CJK Romanization, and structured `Feat. [Artist]` formatting |
-| 📁 **Dedicated Downloads & 1-Click Purge** | แยกโฟลเดอร์เก็บไฟล์ดาวน์โหลดต้นฉบับไว้ที่ `downloads/` โดยเฉพาะ ไม่ปะปนกับโฟลเดอร์โค้ด พร้อมปุ่ม `[ 🗑️ ล้างดาวน์โหลด / Clear ]` บน WebUI ให้ล้างแคชได้ในคลิกเดียว | Dedicated `downloads/` directory isolating source audio from project root, with a 1-click `[Clear Downloads]` button on WebUI to reclaim disk space |
-| ⚡ **Fast Mode (2x Speed)** | แยกเสียงร้องเร็วกว่าเดิม 2 เท่า (Default: ON) ลดเวลาลง ~50% เหลือเพียง 2-3 นาทีบน GPU 4GB ด้วยการปรับลำดับ ONNX ให้กระชับ | 2x faster MDX vocal isolation (Default: ON), cuts run time by ~50% down to 2-3 mins on 4GB GPUs |
-| 🎧 **Carbon Theme Audio Player** | เครื่องเล่นเพลง Custom HTML5 ดีไซน์หรูสอดรับกับธีม IBM Carbon (Carbon Blue `#0f62fe` + พื้นผิว Slate) แสดงจุดเลื่อนเพลง (Scrubber Thumb) ถาวร 100% โดยไม่ต้องเอาเมาส์ชี้, ป้องกัน IDM ดักจับ, ไม่มี Auto-Download กวนใจ, แก้ปัญหาค้าง 0:00 และคงสระภาษาไทยครบถ้วน | Theme-adaptive HTML5 player harmonized with IBM Carbon theme (Carbon Blue `#0f62fe` accents, 100% permanent scrubber thumb visibility, IDM-safe, full Thai Unicode support) |
-| 🎙️ **59+ Voice Models & Thai Unicode** | โหลดเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index รองรับโฟลเดอร์โมเดลภาษาไทย 100% (เช่น โต ซิลลี่ฟูลส์, จ๋าย ไททศมิตร) พร้อมระบบ In-Memory FAISS Index Deserializer โหลดไฟล์ .index สมบูรณ์ไม่แครช | One-click downloads from 59+ public catalog, 100% Thai Unicode model directory support via in-memory FAISS deserializer |
-| 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050) ด้วย FP16 + Dynamic MDX (กิน VRAM จริงเพียง ~1.5 GB บนโหมด 1 Thread) พร้อมระบบ Auto-Flush คืนหน่วยความจำ VRAM ทุกขั้นตอน | Built for 4GB GPUs with FP16, lightweight ~1.5GB active single-thread MDX & automatic VRAM cache flushing |
-| 💻 **Carbon Theme Launcher** | หน้าต่าง Terminal ดีไซน์สอดรับกับธีม IBM Carbon ของ WebUI (Carbon Blue `#4589ff` + Slate Gray `#525252`), กรอบมุมมนอ่านง่ายสบายตา, จัดระเบียบขั้นตอนประมวลผลชัดเจน, ซ่อนข้อความเตือน Deprecation กวนใจ, มี Workflow Guide และเคลียร์พอร์ตอัตโนมัติ | Unified IBM Carbon themed terminal launcher (Carbon Blue `#4589ff`, Slate Gray `#525252` borders, high-contrast typography, deprecation noise suppression & live telemetry) |
-| 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Carbon error diagnostic card with WinError 10054 noise filtering, full traceback drainer, and crash pause guard |
-| 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English |
+## 📌 สารบัญ | Table of Contents
+- [✨ จุดเด่นและฟีเจอร์ใหม่ (Key Features)](#-จุดเด่นและฟีเจอร์ใหม่--key-features)
+- [📸 ภาพตัวอย่างหน้าจอ (Screenshots)](#--ภาพตัวอย่างหน้าจอ--screenshots)
+- [🚀 เริ่มต้นใช้งานบน Windows (Quick Start)](#--เริ่มต้นใช้งานบน-windows--quick-start)
+- [🎵 ขั้นตอนการสร้างเพลง Cover (Step-by-Step Guide)](#--ขั้นตอนการสร้างเพลง-cover--step-by-step-guide)
+- [💻 หน้าต่าง Terminal Carbon Console (Live Telemetry)](#--หน้าต่าง-terminal-carbon-console--live-telemetry)
+- [🛑 ระบบปิดโปรแกรมอย่างปลอดภัย (Reliable Shutdown Contract)](#--ระบบปิดโปรแกรมอย่างปลอดภัย--reliable-shutdown-contract)
+- [💻 ความต้องการของระบบ (System Requirements)](#--ความต้องการของระบบ--system-requirements)
+- [📂 โครงสร้างโปรเจกต์ (Project Layout)](#--โครงสร้างโปรเจกต์--project-layout)
+- [🆘 ปัญหาที่พบบ่อยและวิธีแก้ (Troubleshooting)](#--ปัญหาที่พบบ่อยและวิธีแก้--troubleshooting)
+- [🙏 เครดิตและผู้พัฒนา (Credits & Acknowledgments)](#--เครดิตและผู้พัฒนา--credits--acknowledgments)
 
 ---
 
-## 📸 Screenshots | ภาพตัวอย่างหน้าจอ
+## ✨ จุดเด่นและฟีเจอร์ใหม่ | Key Features
+
+| หมวดหมู่ | รายละเอียด (TH) | Description (EN) |
+| :--- | :--- | :--- |
+| 🏷️ **Smart Song & Artist Formatter** | ดึงชื่อศิลปินและชื่อเพลงจาก YouTube / YouTube Music จัดฟอร์แมตมาตรฐานสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Normalization, **ระบบสลับตำแหน่งเพลง-ศิลปินอัตโนมัติ (Smart Inversion)** หากคลิปตั้งชื่อเอาเพลงขึ้นก่อน, กวาดล้างคำขยะประเภท `Official Lyrics Video`, `|...|`, `//...//`, จัดโครงสร้าง `Feat. [ศิลปิน]`, และใส่วงเล็บ Romaji ภาษาญี่ปุ่น/เกาหลีให้อัตโนมัติ | Full-spectrum title extraction: auto-detects `[Artist] - [Song]`, smart song-artist inversion matching YouTube channel identity, extended promo noise cleaning, Romaji transliteration, and CJK support. |
+| 🛑 **Reliable Shutdown Guard** | ระบบยกเลิกและปิดโปรแกรมระดับ Kernel ผ่าน **Windows Job Object (`JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`)**: กด `Ctrl+C` เพื่อหยุดอย่างนุ่มนวล หรือคลิกปุ่ม **กากบาท (X)** ของหน้าต่าง Terminal เพื่อยกเลิกและคืนพอร์ต 7860 ทันที 100% ไร้ Process ตกค้าง | Kernel-level process lifecycle: Windows Job Object guarantees immediate tree termination upon closing terminal (`X`) or `Ctrl+C`, preventing orphaned WebUI/FFmpeg processes. |
+| 🌐 **Public Share Launcher** | สคริปต์เปิดแชร์ภายนอกโดยเฉพาะ (`run_aicovergen_share.bat`) เชื่อมต่อ Gradio Tunnel (`https://<id>.gradio.live`) ชั่วคราว แสดง URL ใน Carbon Console พร้อมใช้งานทันที โดยสคริปต์ปกติยังคงเป็น Local-only เพื่อความปลอดภัย | Dedicated opt-in public launcher generating temporary `*.gradio.live` HTTPS endpoints with real-time tunnel status telemetry in Carbon Console. |
+| 📁 **Dedicated Downloads & 1-Click Purge** | จัดเก็บไฟล์ดาวน์โหลดจาก YouTube ไว้ในโฟลเดอร์เฉพาะ `downloads/` ไม่ปะปนกับโฟลเดอร์ระบบ พร้อมปุ่ม `[ 🗑️ ล้างดาวน์โหลด / Clear ]` บน WebUI ให้ล้างไฟล์แคชได้ในคลิกเดียว | Isolates raw media downloads in `downloads/` with a 1-click purge button on the WebUI to reclaim disk space instantly. |
+| ⚡ **Fast Mode (2x Speed)** | แยกเสียงร้องเร็วกว่าเดิม 2 เท่า (เปิดเป็นค่าเริ่มต้น) ลดเวลาแยกเสียงลง ~50% เหลือเพียง 2-3 นาทีบน GPU VRAM 4GB ด้วยการปรับลำดับ ONNX ให้กระชับคงความคมชัดของเสียงร้อง | 2x faster vocal separation (Default: ON), halving MDX inference duration down to 2-3 mins on 4GB VRAM without vocal timbre loss. |
+| 🎧 **Carbon Theme Audio Player** | เครื่องเล่นเพลง Custom HTML5 ดีไซน์หรูสอดรับกับ IBM Carbon Theme พร้อมปุ่มควบคุม Carbon Blue (`#0f62fe`), แสดงจุดเลื่อนเพลง (Scrubber Thumb) ถาวร 100%, ป้องกัน IDM ดักดาวน์โหลด, แก้ปัญหาค้าง 0:00, และคงสระภาษาไทยสมบูรณ์ | Theme-adaptive HTML5 player matching IBM Carbon style tokens, featuring permanent scrubber visibility, IDM interception immunity, and lossless UTF-8 Thai diacritics. |
+| 🎙️ **59+ Voice Models & Thai Unicode** | ดาวน์โหลดโมเดลเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index และรองรับโฟลเดอร์โมเดลภาษาไทย 100% (เช่น โต ซิลลี่ฟูลส์, จ๋าย ไททศมิตร) ด้วย In-Memory FAISS Index Deserializer ไม่แครช | 1-click model downloads from 59+ public catalog; native support for Thai Unicode model folder names via in-memory FAISS deserialization. |
+| 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050 / GTX 1650) ด้วย FP16 Half-Precision + Single-Thread MDX (กิน VRAM จริงเพียง ~1.5 GB) พร้อมระบบ Auto-Flush คืนหน่วยความจำทุกขั้นตอน | Engineered for 4GB GPUs with FP16 precision, single-thread MDX safety, and automatic GPU VRAM cache purges between pipeline stages. |
+| 💻 **Carbon Console Launcher** | หน้าต่าง Terminal จัดเต็มด้วย ANSI IBM Carbon Palette (`#4589ff` + `#525252`), กรอบมุมมนอ่านสบายตา, จัดระเบียบขั้นตอนประมวลผลชัดเจน, ซ่อน Warning กวนใจ, พร้อม Live GPU/VRAM Telemetry | Sleek IBM Carbon themed console launcher with high-contrast typography, border boxes, stream progress indicators, and deprecation notice suppression. |
+| 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Carbon error diagnostic card with WinError 10054 noise filtering, full traceback buffer drainer, and crash pause guard. |
+| 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English across all tabs. |
+
+---
+
+## 📸 ภาพตัวอย่างหน้าจอ | Screenshots
 
 <div align="center">
 
@@ -60,35 +78,66 @@ license: mit
 
 ---
 
-## 🚀 Quick Start | เริ่มต้นใช้งาน (Windows)
+## 🚀 เริ่มต้นใช้งานบน Windows | Quick Start
 
-### 1️⃣ วิธีที่ง่ายที่สุด (แนะนำ)
+### 1️⃣ โหมดใช้งานในเครื่อง / เครือข่ายเดียวกัน (Local / LAN Mode)
 ดับเบิลคลิกที่ไฟล์:
 ```batch
 run_aicovergen.bat
 ```
-> 💡 **Smart Launcher ทำอะไรให้บ้าง?**  
-> ตรวจสอบและปิด process เก่าที่ค้างบน Port 7860 ➔ เช็ค Python Environment ➔ เปิด WebUI ➔ ตรวจสอบความพร้อมและแสดง URL `http://127.0.0.1:7860`
+> 💡 **Smart Launcher ทำงานอัตโนมัติ:**  
+> เคลียร์พอร์ตที่ค้าง ➔ เช็คสภาพแวดล้อม Python `.venv` ➔ เปิด Gradio WebUI ➔ ผูกระบบ Windows Job Object ➔ พร้อมใช้งานที่ `http://127.0.0.1:7860`
 
-### 🌐 เปิดลิงก์สาธารณะชั่วคราว
-ดับเบิลคลิก `run_aicovergen_share.bat` เมื่อต้องการเข้าจากอินเทอร์เน็ตหรือแชร์ให้คนที่ไว้ใจ Launcher จะแสดง URL รูปแบบ `https://<id>.gradio.live` ในกล่องสถานะ
+### 2️⃣ โหมดเปิดลิงก์สาธารณะชั่วคราว (Public Share Mode)
+เมื่อต้องการเปิดให้เพื่อนภายนอกเข้าใช้งาน หรือเปิดจากมือถือนอกบ้าน:
+```batch
+run_aicovergen_share.bat
+```
+> 🌐 **Public Share Launcher ทำงานอย่างไร:**  
+> ระบบจะเปิด Gradio HTTPS Tunnel และแสดง URL สาธารณะใน Terminal ทันที เช่น:  
+> `Public URL : https://xxxxxxxxxxxxxxxxxx.gradio.live`  
+> *(ลิงก์จะทำงานตราบเท่าที่เปิดหน้าต่าง Terminal และจะยุติการทำงานทันทีเมื่อปิดหน้าต่าง)*
 
-> ⚠️ ลิงก์ไม่มีระบบล็อกอิน ผู้ที่มีลิงก์สามารถใช้งาน WebUI และ GPU เครื่องนี้ได้ กด `Ctrl + C` หรือปิด Launcher เพื่อยุติลิงก์
-
-### 2️⃣ วิธีรันผ่านสคริปต์อื่น ๆ
+### 3️⃣ ตัวเลือกการรันอื่น ๆ (Alternative Run Scripts)
 
 | ตัวเปิดโปรแกรม | คำสั่ง | คำอธิบาย |
 | :--- | :--- | :--- |
 | 🪟 **PowerShell** | `powershell -ExecutionPolicy Bypass -File start_webui.ps1` | รันบน PowerShell พร้อมระบบเช็คสถานะ |
-| 🐍 **Python Launcher** | `python launch.py` | Launcher แสดงผลพร้อมสีและแถบสถานะ |
+| 🐍 **Python Direct** | `python launch.py` หรือ `python launch.py --share` | Launcher แสดงผลพร้อม ANSI Telemetry |
 | ⌨️ **Classic CMD** | `start_simple.bat` | รันแบบเรียบง่ายผ่าน Command Prompt |
 | 🔧 **Manual Terminal** | `.\.venv\Scripts\python.exe src\webui.py --listen --listen-port 7860` | รันตรงเข้าสคริปต์หลัก |
 
-> 🛑 **วิธีปิดโปรแกรม:** กด `Ctrl + C` ในหน้าต่าง Terminal (ระบบจะปิด Process ทั้งหมดอย่างปลอดภัย)
+---
+
+## 🛑 ระบบปิดโปรแกรมอย่างปลอดภัย | Reliable Shutdown Contract
+
+AICoverGen ติดตั้งระบบควบคุมวงจรชีวิตโปรเซส (Process Lifecycle Management) แบบ 2 ทิศทาง:
+
+```mermaid
+graph TD
+    A[ผู้ใช้สั่งปิดโปรแกรม] --> B{วิธีสั่งปิด}
+    B -->|กด Ctrl + C| C[ส่ง SIGBREAK สู่ WebUI Process Group]
+    C --> D[รอปิด Gracefully 3 วินาที]
+    D -->|หากค้าง| E[taskkill /T /F บังคับปิด]
+    E --> F[คืนพอร์ต 7860 และปิดหน้าต่างทันที]
+    
+    B -->|คลิกปุ่มกากบาท X| G[Windows Kernel ปิด Job Handle]
+    G --> H[JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE ทำงาน]
+    H --> I[ระบบปฏิบัติการกวาดล้าง Child Processes ทุกตัวทันที]
+    I --> J[พอร์ต 7860 ว่างทันที ไร้ Orphan Process 100%]
+```
+
+1. **กด `Ctrl + C` ใน Terminal:**
+   * สั่งระงับการทำงานอย่างนุ่มนวล (Graceful Shutdown)
+   * ปิดการประมวลผลโมเดลและ Gradio Tunnel อย่างปลอดภัย
+   * ปิดหน้าต่างลงทันทีโดยไม่ต้องกดปุ่มยืนยันซ้ำ
+2. **คลิกปุ่มกากบาท (`X`) ที่มุมหน้าต่าง:**
+   * ระบบ **Windows Job Object** ในระดับ OS Kernel จะตัดการทำงานของโปรเซสย่อยทั้งหมดทันที (WebUI, FFmpeg, SoX, Python Worker, `frpc`)
+   * พอร์ต 7860 จะถูกปล่อยเป็นอิสระทันที ไม่เกิดปัญหาพอร์ตชนเมื่อเปิดโปรแกรมใหม่
 
 ---
 
-## 🎵 Step-by-Step Guide | ขั้นตอนการสร้างเพลง Cover
+## 🎵 ขั้นตอนการสร้างเพลง Cover | Step-by-Step Guide
 
 ```mermaid
 graph LR
@@ -104,30 +153,26 @@ graph LR
    * หรือหากมีโมเดลของตัวเอง ให้นำไฟล์ `.pth` และ `.index` ไปวางในโฟลเดอร์ `rvc_models/<ชื่อโมเดล>/` แล้วกดปุ่ม **รีเฟรชโมเดล / Refresh 🔁**
 2. **ใส่เพลงต้นฉบับ:**
    * วางลิงก์ YouTube / YouTube Music ในช่อง แล้วกดปุ่ม **"โหลด URL / Process URL"**
-   * ไฟล์จะถูกดาวน์โหลดแยกเก็บในโฟลเดอร์เฉพาะ `downloads/<ศิลปิน> - <ชื่อเพลง>.mp3` อย่างเป็นระเบียบ (ไม่ปะปนกับโฟลเดอร์โค้ด)
+   * ไฟล์จะถูกดาวน์โหลดเก็บแยกในโฟลเดอร์ `downloads/<ศิลปิน> - <ชื่อเพลง>.mp3`
    * 🏷️ **ระบบจัดรูปแบบชื่อเพลงอัจฉริยะ (Smart Formatter):**
      * จัดรูปแบบเป็นสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมคลีนฟอนต์พิเศษด้วย NFKC Normalization
-     * **สลับตำแหน่งเพลง-ศิลปินอัตโนมัติ (Smart Inversion):** หากคลิปตั้งชื่อเอาเพลงขึ้นก่อน เช่น `โฆษณาชวนเลือก - TaitosmitH |Official Lyrics Video|` ระบบจะเทียบกับชื่อช่องและสลับกลับมาเป็น `TaitosmitH - โฆษณาชวนเลือก` ให้อัตโนมัติ พร้อมกวาดล้างคำขยะประเภท `Official Lyrics Video` และเครื่องหมายไปป์ `|...|` ออกหมดจด
+     * **สลับตำแหน่งเพลง-ศิลปินอัตโนมัติ (Smart Inversion):** หากคลิปตั้งชื่อเอาเพลงขึ้นก่อน เช่น `โฆษณาชวนเลือก - TaitosmitH |Official Lyrics Video|` ระบบจะเทียบกับชื่อช่องและสลับกลับมาเป็น `TaitosmitH - โฆษณาชวนเลือก` ให้อัตโนมัติ พร้อมลบคำขยะและเครื่องหมายไปป์ `|...|` ออกหมดจด
      * **ถอดเสียง Romaji อัตโนมัติ:** หากเป็นเพลงภาษาญี่ปุ่นหรือเกาหลี ระบบจะใส่วงเล็บ `(Romaji)` ติดกับชื่อเพลงเดิม (เช่น `藍より群青 (Ai Yori Gunjou)` หรือ `밤양갱 (Bam-Yang-Gaeng)`) โดยไม่กระทบเพลงไทยหรือสากล
-     * **แยกศิลปิน Feat. สวยงาม:** หากมีศิลปินร่วมร้อง ระบบจะตัดคำว่า `feat.` ออกจากชื่อเพลงแล้วจัดรูปแบบต่อท้ายเป็น `Feat. [ศิลปิน]` เช่น `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi`
-   * 🧹 **ปุ่มล้างแคช:** สามารถกดปุ่ม **"🗑️ ล้างดาวน์โหลด / Clear"** เพื่อลบไฟล์ที่ดาวน์โหลดค้างไว้ใน `downloads/` ได้ทุกเมื่อ
-
-   * *(หรือกดอัปโหลดไฟล์เพลงจากเครื่องโดยตรง)*
+     * **แยกศิลปิน Feat. สวยงาม:** จัดโครงสร้างศิลปินร่วมร้องเป็น `Feat. [ศิลปิน]` เช่น `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi`
+   * 🧹 **ปุ่มล้างแคช:** กดปุ่ม **"🗑️ ล้างดาวน์โหลด / Clear"** เพื่อล้างไฟล์ชั่วคราวใน `downloads/` ได้ทุกเมื่อ
 3. **ปรับระดับเสียง (Pitch):**
    * **แปลงเสียง ชาย ➔ หญิง:** ปรับ `+1` (หรือ 12 Semitones)
    * **แปลงเสียง หญิง ➔ ชาย:** ปรับ `-1` (หรือ -12 Semitones)
    * **เพศเดียวกัน:** คงไว้ที่ `0`
 4. **โหมดประมวลผลความเร็วสูง (⚡ Fast Mode):**
-   * ⚡ **เปิดใช้งาน Fast Mode (ค่าเริ่มต้น - แนะนำ):** แยกเสียงร้องเร็วกว่าเดิม 2 เท่า ลดเวลาเหลือเพียง ~2-3 นาทีบน RTX 2050 เหมาะอย่างยิ่งสำหรับเพลง Pop/Rock ทั่วไป
-   * 🎧 **ปิด Fast Mode:** สำหรับกรณีที่ต้องการคุณภาพแยกเสียงระดับสตูดิโอสูงสุดแบบ Multi-pass Denoising (เช่น เพลงที่มีเสียงคอรัสหรือเสียงเอฟเฟกต์หนาแน่นเป็นพิเศษ)
+   * ⚡ **เปิดใช้งาน Fast Mode (ค่าเริ่มต้น - แนะนำ):** แยกเสียงร้องเร็วกว่าเดิม 2 เท่า ลดเวลาเหลือเพียง ~2-3 นาทีบน RTX 2050
+   * 🎧 **ปิด Fast Mode:** สำหรับกรณีที่ต้องการคุณภาพแยกเสียงระดับสตูดิโอสูงสุดแบบ Multi-pass Denoising
 5. **กด "สร้างเพลง / Generate":**
-   * รอระบบแยกเสียงดนตรี ➔ แปลงเสียงด้วย RVC ➔ ผสมเสียง Reverb
-   * เมื่อประมวลผลเสร็จสิ้น การ์ด **Carbon Theme Audio Player** แบบ Custom Controller จะแสดงขึ้นมาทันที:
-     * 🎧 **กดฟังเพลงได้ทันทีในเบราว์เซอร์:** ดีไซน์หรูหรากลมกลืนกับ IBM Carbon Theme พร้อมปุ่ม Play/Pause สไตล์ Carbon Blue (`#0f62fe`) และปุ่มปรับระดับเสียง/Mute
-     * 🏷️ **ป้าย Carbon Pill Badge:** แสดงสถานะ `⚡ AI Cover Ready` พร้อมระบุขนาดไฟล์อย่างชัดเจน
-     * 📍 **เห็นตำแหน่งเพลงตลอดเวลา (Permanent Scrubber):** จุดเลื่อนเพลง (Thumb) สีน้ำเงินและแถบความคืบหน้าแสดงผลตลอดเวลา 100% ไม่หายไปแม้นำเมาส์ออกจากเครื่องเล่น
-     * 🛡️ **ปลอดภัยจาก IDM:** ป้องกันโปรแกรม IDM เด้งดาวน์โหลดอัตโนมัติ และป้องกันปัญหาเครื่องเล่นค้างที่ 0:00
-     * 💾 **ปุ่มดาวน์โหลดไฟล์ (.mp3) ในตัว:** คลิกเพื่อดาวน์โหลดลงเครื่องได้ทันที โดยชื่อเพลงและสระภาษาไทย (`ั`, `้`, `ุ`) จะคงอยู่ครบถ้วน 100%
+   * เมื่อเสร็จสิ้น การ์ด **Carbon Theme Audio Player** จะแสดงขึ้นมาทันที:
+     * 🎧 **กดฟังเพลงได้ทันทีในเบราว์เซอร์:** ควบคุมเสียง เล่น/หยุด ปรับท่อนเพลงได้อย่างลื่นไหล
+     * 📍 **เห็นตำแหน่งเพลงตลอดเวลา (Permanent Scrubber):** จุดเลื่อนเพลงสีน้ำเงินเด่นชัดตลอดเวลา 100%
+     * 🛡️ **ปลอดภัยจาก IDM:** ป้องกันโปรแกรม IDM เด้งตัดการเชื่อมต่อ และป้องกันปัญหาเครื่องเล่นค้าง 0:00
+     * 💾 **ปุ่มดาวน์โหลดไฟล์ (.mp3) ในตัว:** คลิกเพื่อดาวน์โหลดลงเครื่องทันที พร้อมคงสระภาษาไทยครบถ้วน 100%
 
 > 📛 **รูปแบบชื่อไฟล์ผลลัพธ์:** `<ชื่อศิลปิน> - <ชื่อเพลง> (<ชื่อโมเดล> Ver).mp3`  
 > เช่น:  
@@ -137,72 +182,94 @@ graph LR
 
 ---
 
-## ⏱️ Terminal Live Timing | ตัวอย่างเวลาประมวลผล
+## 💻 หน้าต่าง Terminal Carbon Console | Live Telemetry
+
+เมื่อเปิดโปรแกรมผ่าน Launcher หน้าต่างคอนโซลจะแสดงผลแบบ Full IBM Carbon Theme:
 
 ```text
-  ─────────────────────────────────────────────────────────────
-  ⚡ [PIPELINE STARTED] Processing audio cover workflow...
-     🛡️  [ASCII-Safe Routing] Activated for Thai/Unicode audio track
-  ⬇️  [1/6] Downloading YouTube audio stream...
-  🎼  [2/6] Separating Vocals & Instrumental (MDX-Net Fast Mode)...
-     🎮  [ONNX Engine] CUDA Execution Provider active (GPU 0)
-     💾  [VRAM Allocation] 4.0 GB GPU ➔ Safe Single-Thread Mode (~1.5 GB Active)
-     ⚡ MDX [████████████████░░░░] 80% | 64/80 chunks | ETA: 7s
-     🧹 GPU VRAM cache flushed successfully.
-  🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...
-  ✨  [4/6] De-reverberating Vocal Stems (FoxJoy HQ)...
-  🎙️  [5/6] Converting Vocal Timbre with RVC v2 Model...
-     ✔   [RVC Weights] All model weight keys matched successfully
-     ⚡  [RVC Speed] Inferred in 14.5s (Audio: 4m 14s | 17.5x Real-time)
-  🎛️  [6/6] Mastering with Studio Effects & Reverb...
-     ✨  [Audio Mastering] Neural noise reduction applied
-  🎵  [FINAL] Merging Vocals & Instrumental Stems...
-  💾  Cover generated at song_output\Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi (Ado Ver).mp3
-  🏆  Total time all process: 00:02:18 (⚡ Fast Mode ON)
-  ─────────────────────────────────────────────────────────────
-```
+  ╭────────────────────────────────────────────────────────────────╮
+  │  ▲  AICoverGen  v2.5 [CARBON CONSOLE]                          │
+  │  Autonomous Neural Voice & Music Source Separation Engine      │
+  ├────────────────────────────────────────────────────────────────┤
+  │  ● SYSTEM TELEMETRY                                            │
+  │  ├─ Hardware  : NVIDIA GeForce RTX 2050 (4.0 GB VRAM)          │
+  │  ├─ Precision : FP16 Half-Precision (Tensor Core Optimized)    │
+  │  ├─ Storage   : D:\AI_Cache (Drive C Protection Active)        │
+  │  ├─ Voice Hub : 12 Installed / 59+ Catalog                     │
+  │  └─ Runtime   : Python 3.10.11 (.venv / PyTorch 2.5.1+cu121)   │
+  ╰────────────────────────────────────────────────────────────────╯
+  [1/4] Verifying local socket availability...
+        ✔ Port 7860 is clean and available
+  [2/4] Inspecting Python virtual environment...
+        ✔ Python 3.10.11 located at .venv
+  [3/4] Spawning Gradio WebUI neural service...
+        ✔ Process spawned successfully (PID: 35340)
+  [4/4] Awaiting HTTP daemon readiness...
+        ✔ CUDA device confirmed: FP16 half-precision active
 
+  ╭────────────────────────────────────────────────────────────────╮
+  │  ★ WEBUI IS READY & LISTENING                                  │
+  ├────────────────────────────────────────────────────────────────┤
+  │                                                                │
+  │    Local URL  : http://127.0.0.1:7860                          │
+  │    Network    : http://0.0.0.0:7860                            │
+  │    Public URL : https://58987f07421eff6d5e.gradio.live         │
+  │                                                                │
+  │  ● WORKFLOW GUIDE:                                             │
+  │    1. Open URL in browser ➔ Go to [Generate] tab               │
+  │    2. Paste YouTube link ➔ Click [Process URL]                 │
+  │    3. Select Voice Model & Pitch ➔ Click [Generate]            │
+  │    4. In-browser Player or 1-Click Download (.mp3)             │
+  │                                                                │
+  │  [Press Ctrl+C in terminal to safely terminate server]         │
+  ╰────────────────────────────────────────────────────────────────╯
+```
 
 ---
 
-## 💻 System Requirements | ความต้องการของระบบ
+## 💻 ความต้องการของระบบ | System Requirements
 
 | อุปกรณ์ | สเปกขั้นต่ำ / แนะนำ | หมายเหตุ |
 | :--- | :--- | :--- |
-| 🐍 **Python** | **3.10.x** | ใช้ผ่าน `.venv` ของโปรเจกต์ (PyTorch + Fairseq ต้องใช้ 3.10) |
-| 🎮 **GPU** | **NVIDIA GPU (CUDA 12+)** | ทดสอบและปรับแต่งพิเศษสำหรับ **RTX 2050 (VRAM 4GB)** ✅ |
-| 💾 **Drive Space** | แนะนำพื้นที่ว่างอย่างน้อย 20GB | สำหรับจัดเก็บโมเดลเสียง, โมเดลแยกเสียง และผลลัพธ์เพลง Cover |
-| 🎵 **FFmpeg** | ติดตั้งมาพร้อมไลบรารีในตัว | ไม่ต้องลงโปรแกรมแยก |
+| 🐍 **Python** | **3.10.x** | รันผ่าน `.venv` ของโปรเจกต์ (PyTorch + Fairseq รองรับ 3.10 สมบูรณ์ที่สุด) |
+| 🎮 **GPU** | **NVIDIA GPU (CUDA 12+)** | ทดสอบและปรับแต่งพิเศษสำหรับ **RTX 2050 (VRAM 4GB)** และตระกูล GTX/RTX ทุกรุ่น |
+| 💾 **Drive Space** | แนะนำพื้นที่ว่างอย่างน้อย 20GB | สำหรับจัดเก็บโมเดล RVC, โมเดลแยกเสียง ONNX และแคช AI |
+| 🎵 **FFmpeg** | ติดตั้งมาพร้อมไลบรารีในตัว | ไม่จำเป็นต้องลงโปรแกรมภายนอกแยก |
+| 🪟 **OS** | **Windows 10 / 11 (64-bit)** | รองรับ Windows Job Object และ UTF-8 Terminal Mode เต็มรูปแบบ |
 
 ---
 
-## 📂 โครงสร้างโฟลเดอร์สำคัญ (Project Layout)
+## 📂 โครงสร้างโปรเจกต์ | Project Layout
 
 ```text
 AICoverGen/
-├── 🚀 run_aicovergen.bat            # ดับเบิลคลิกเริ่มใช้งานทันที (One-click Launcher)
-├── 🌐 run_aicovergen_share.bat      # เปิด Gradio public link ชั่วคราว (Trusted users only)
-├── 🐍 launch.py                     # Carbon Terminal Launcher (ANSI & Telemetry)
-├── 🪟 start_webui.ps1              # สคริปต์สำหรับรันบน PowerShell
+├── 🚀 run_aicovergen.bat            # ดับเบิลคลิกเริ่มใช้งานทันที (Local / LAN Mode)
+├── 🌐 run_aicovergen_share.bat      # เปิดแชร์ผ่าน Gradio Public Tunnel ชั่วคราว
+├── 🐍 launch.py                     # IBM Carbon Terminal Launcher & Telemetry Engine
+├── 🛡️ launcher_process.py          # Windows Job Object & Kernel Process Guard
+├── 🪟 start_webui.ps1              # สคริปต์รันบน PowerShell พร้อมระบบตรวจเช็ค
 ├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube
+├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E)
 ├── 📁 src/
-│   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Dual Outputs)
-│   ├── ⚙️ main.py                  # Core Cover Pipeline + CJK Romanizer & Feat Formatter
-│   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX)
-│   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion)
+│   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Carbon Audio Player)
+│   ├── ⚙️ main.py                  # Core Pipeline + Smart Title Inversion & Romaji Formatter
+│   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX Fast Mode)
+│   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion v2)
 ├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง RVC (.pth, .index)
 ├── 🎼 mdxnet_models/                # โมเดลแยกเสียง ONNX
-└── 🎵 song_output/                  # โฟลเดอร์ผลลัพธ์เพลง AI Cover
+└── 🎵 song_output/                  # โฟลเดอร์ผลลัพธ์เพลง AI Cover ที่สร้างเสร็จสมบูรณ์
 ```
 
 ---
 
-## 🆘 Troubleshooting | คำถามที่พบบ่อยและวิธีแก้ปัญหา
+## 🆘 ปัญหาที่พบบ่อยและวิธีแก้ | Troubleshooting
 
 * 🔌 **พอร์ต 7860 ชน / หน้าเว็บไม่ขึ้น:**  
-  ดับเบิลคลิก `run_aicovergen.bat` อีกครั้ง ระบบจะช่วย Kill Process เก่าที่ค้างอยู่และเริ่มใหม่ให้อัตโนมัติ
-* 🛡️ **ระบบวินิจฉัยข้อผิดพลาด (Error Diagnostic Card & Crash Guard):**  
-  หากกระบวนการทำงานสะดุดหรือมีข้อผิดพลาด Launcher จะจับ Stacktrace ทั้งหมดและแสดงผลเป็นการ์ดสรุปปัญหา พร้อมระบบ **Crash Pause Guard** (ค้างหน้าต่าง Terminal ไว้ไม่ให้ปิดหนีอัตโนมัติ) เพื่อให้คุณอ่านหรือ Copy Log ไปวิเคราะห์ได้ทันที:
+  ดับเบิลคลิก `run_aicovergen.bat` ระบบจะตรวจสอบพอร์ตและสั่งปิดโปรเซสเดิมที่ค้างอยู่ให้อัตโนมัติในขั้นตอนที่ 1
+* 🛑 **วิธียกเลิกหรือปิดโปรแกรม:**  
+  กด `Ctrl+C` หรือคลิกปุ่ม **กากบาท (X)** ของหน้าต่าง Terminal ระบบ Windows Job Object จะสั่งยุติการทำงานของโปรเซสย่อยทั้งหมดทันที พอร์ต 7860 จะว่างพร้อมเปิดใหม่ได้ทันที
+* 🛡️ **ระบบวินิจฉัยข้อผิดพลาด (Crash Pause Guard):**  
+  หากเกิดข้อผิดพลาด Launcher จะจับ Stacktrace ทั้งหมดและแสดงเป็นการ์ดสรุปปัญหา พร้อมค้างหน้าต่าง Terminal ไว้เพื่อให้อ่านหรือ Copy Log ได้ทันที:
   ```text
   ╭─ EXCEPTION DIAGNOSTIC DETECTED ─────────────────────────────╮
   │ TYPE:    RuntimeError / CUDA OOM                            │
@@ -214,25 +281,16 @@ AICoverGen/
   ╰─────────────────────────────────────────────────────────────╯
   Press Enter to exit...
   ```
-* 🔤 **ชื่อเพลงภาษาไทยหรืออักขระพิเศษ:**  
-  ระบบรองรับภาษาไทย, ญี่ปุ่น, จีน และ Unicode เต็มรูปแบบ โดยจะแยกการประมวลผลภายในเป็น ASCII-Safe เพื่อป้องกันไลบรารี C++ แครช และแปลงกลับเป็นชื่อเพลงภาษาไทยในขั้นตอนสุดท้าย
-* 🎧 **ปัญหา IDM ดักดาวน์โหลด / แถบตำแหน่งเพลงหายเมื่อไม่ชี้เมาส์ / เครื่องเล่นค้าง 0:00 / สระภาษาไทยหาย:**  
-  * **ปัญหาเดิมของ WebUI:**
-    1. หากเบราว์เซอร์ติดตั้ง Extension ช่วยดาวน์โหลด เช่น Internet Download Manager (IDM) เมื่อสร้างเพลงเสร็จ ระบบ WebUI ทั่วไปจะส่งไฟล์ผ่าน HTTP GET ทำให้ IDM เข้าดักจับตัดการเชื่อมต่อ ส่งผลให้เครื่องเล่นเสียงค้างที่ `0:00 / 0:00`, มีหน้าต่างดาวน์โหลดเด้งขึ้นมากวนใจทันที และระบบ Sanitizer ของ IDM มักจะตัดสระภาษาไทย (เช่น `ั`, `้`, `ุ`) ออก ทำให้ชื่อเพลงผิดเพี้ยน (เช่น `ฉบับท้ายสุด` กลายเป็น `ฉบบทายสด`)
-    2. ตัวเล่นของเบราว์เซอร์ Chromium (Chrome/Edge) บังคับซ่อนจุดเลื่อนสถานะเพลง (Timeline Scrubber Thumb) เมื่อไม่ได้นำเมาส์ไปชี้ ทำให้ไม่ทราบว่าเพลงเล่นถึงจุดใด
-  * **การแก้ไขของ AICoverGen:** พัฒนา **Custom Cyberpunk Audio Controller** ที่แปลงข้อมูลเป็น In-Memory Base64 Data URI และสร้างแถบควบคุมแบบ Dark Glass นีออนเฉพาะตัว:
-    * 📍 **เห็นตำแหน่งเพลงตลอดเวลา (Permanent Scrubber):** จุด Thumb เรืองแสงและแถบสีสถานะเพลงแสดงผลเด่นชัดตลอดเวลา 100% โดยไม่ต้องเอาเมาส์ไปชี้
-    * 🛡️ **ไม่ถูก IDM ดักจับ 100%:** ไม่มีหน้าต่างดาวน์โหลดเด้งขึ้นมาเองกวนใจ
-    * ⚡ **เล่นได้ทันที:** พร้อมปุ่ม Play/Pause นีออน, ตัวเลขอ่านเวลา `0:00 / 2:32`, แถบ Seek bar ปรับท่อนเพลง และปุ่มปรับระดับเสียง/Mute
-    * 💾 **คงสระภาษาไทยครบถ้วน:** มีปุ่ม `💾 ดาวน์โหลดเพลง (.mp3)` ในตัวที่ส่งต่อชื่อไฟล์ UTF-8 ให้เบราว์เซอร์บันทึกลงเครื่องโดยตรง
-* 🔇 **ข้อความเตือน `ConnectionResetError: [WinError 10054]` เมื่อกดรีเฟรชหน้าเว็บ (Windows Asyncio Filter):**  
-  บน Windows เมื่อผู้ใช้กดรีเฟรชเบราว์เซอร์ (F5) หรือปิดแท็บ ขณะที่เซิร์ฟเวอร์กำลังรอคำขอ ระบบเครือข่ายของ Windows Proactor Loop จะเกิดอีเวนต์ Client Disconnect ซึ่งเป็นพฤติกรรมปกติ ไม่ใช่ข้อผิดพลาดของโมเดล AI หรือโปรแกรมแครช AICoverGen ได้ติดตั้งตัวกรองระดับ Transport Layer และ Launcher เพื่อดักจับและระงับข้อความดังกล่าว ทำให้ Terminal สะอาดและไม่แสดงเป็นการ์ดสีแดงแจ้งเตือนผิดพลาด
+* 🎧 **ปัญหา IDM ดักดาวน์โหลด / สระภาษาไทยหาย:**  
+  WebUI ใช้ **Carbon Custom Audio Controller** ทำงานผ่าน In-Memory Base64 Data URI ป้องกัน IDM ดักตัดการเชื่อมต่อ 100% สระภาษาไทย (`ั`, `้`, `ุ`) จะไม่สูญหาย และสามารถฟังเพลงพร้อมเลื่อนท่อนเพลงได้อย่างแม่นยำ
+* 🔇 **ข้อความเตือน `ConnectionResetError: [WinError 10054]` เมื่อกดรีเฟรชหน้าเว็บ:**  
+  เป็นพฤติกรรมปกติของ Windows Asyncio เมื่อผู้ใช้กด F5 หรือปิดแท็บเบราว์เซอร์ ระบบได้ติดตั้งตัวกรองระดับ Transport Layer เพื่อระงับข้อความดังกล่าวแล้ว ทำให้ Terminal สะอาดและไม่ขึ้นกล่องแดงผิดพลาด
 * 🔒 **เจอปัญหาดาวน์โหลดโมเดลจาก Hugging Face ติดสิทธิ์ (Error 401/403):**  
   เข้าเว็บ huggingface.co ไปที่หน้ารายการโมเดลนั้น แล้วกดยอมรับเงื่อนไข จากนั้นสร้าง Access Token ฟรีที่ `huggingface.co/settings/tokens` แล้วนำมาวางในช่อง **🔑 HF Token** ในแท็บ Download Model
 
 ---
 
-## 🙏 Credits & Acknowledgments
+## 🙏 เครดิตและผู้พัฒนา | Credits & Acknowledgments
 
 * Fork พัฒนาต่อยอดจาก [R3gm/AICoverGen](https://github.com/R3gm/AICoverGen) (ต้นฉบับโดย [SociallyIneptWeeb/AICoverGen](https://github.com/SociallyIneptWeeb/AICoverGen))
 * **RVC Project:** [RVC-Project/Retrieval-based-Voice-Conversion-WebUI](https://github.com/R3gm/Retrieval-based-Voice-Conversion-WebUI)
