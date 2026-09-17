@@ -450,12 +450,12 @@ def main():
     # Step 4: Await HTTP port
     step(4, 4, "Awaiting HTTP daemon readiness...")
     ready = False
-    for i in range(1, 25):
+    for i in range(1, 65):
         time.sleep(0.8)
         if check_port(PORT):
             ready = True
             break
-        sub(f"Connecting to socket... ({i}/25)")
+        sub(f"Connecting to socket... ({i}/64)")
 
     if ready:
         ready_lines = [
@@ -516,6 +516,10 @@ def main():
                 lines = f.readlines()
                 for line in lines[-15:]:
                     print("   ", line.rstrip())
+        except Exception:
+            pass
+        try:
+            subprocess.run(f"taskkill /T /F /PID {proc.pid}", capture_output=True, shell=True)
         except Exception:
             pass
         try:
