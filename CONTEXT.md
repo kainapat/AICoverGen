@@ -17,6 +17,7 @@
 | **VRAM** | Video RAM on the GPU; RTX 2050 has ~4GB. Critical bottleneck for this pipeline. |
 | **Song Cover Pipeline** | Full workflow: download → separate vocals → extract main vocals → deReverb → RVC voice change → audio effects → combine → output. |
 | **WebUI** | Gradio-based web interface (`src/webui.py`) providing GUI for the cover pipeline. Runs on port 7860. |
+| **Gradio Share Link** | Temporary public HTTPS URL created by Gradio for a running WebUI. It expires when that WebUI process stops and is intended only for trusted recipients when no authentication is configured. |
 | **Spaces** | HuggingFace ZeroGPU decorator (`@spaces.GPU`); no-op when `SPACES_ZERO_GPU` env var is unset (local runs). |
 | **Pitch Change** | Transposition applied to AI vocals only. `+1` = male→female, `-1` = female→male. In semitones × 12. |
 | **Pitch Change All** | Transposition applied to both vocals AND instrumentals (slightly reduces quality). |
@@ -29,6 +30,7 @@
 | **Total time all process** | Terminal line printed at pipeline end showing full duration from start to finish (e.g. `[+] Total time all process: 7m 8s (428.1s)`). |
 | **Stage timing** | `[+Xs]` / `[+Xm XXs]` suffix on each progress line showing time spent since the previous pipeline stage. |
 | **Smart Launcher** | `run_aicovergen.bat` — kills orphaned processes, checks port, launches WebUI with logging, verifies startup. |
+| **Public Share Launcher** | `run_aicovergen_share.bat` — dedicated launcher invoking `launch.py --share`, activating Gradio's public tunneling mechanism and reporting the resulting ephemeral HTTPS URL in the Carbon console. |
 | **Song Title** | Clean, human-readable title of the song formatted as `<Artist> - <Song Title>` (e.g. `Liz's x NATNON - เพลงรัก`, `Nont Tanont - ฝืนตัวเองไม่เป็น`) with NFKC Unicode normalization and promotional noise removed. Used for UI display and final file naming. |
 | **Artist-Title Formatter** | Extraction pipeline combining metadata tags (`artist` + `track`), `Song by Artist` patterns, and channel fallbacks with smart deduplication into standard `[Artist] - [Song]` layout. |
 | **NFKC Unicode Normalizer** | Compatibility layer converting fancy mathematical bold/italic/script characters (e.g. `𝗯𝘆 𝗟𝗶𝘇'𝘀 x 𝐍𝐀𝐓𝐍𝐎𝐍`) and full-width brackets (`《 》`, `【 】`) into standard alphanumeric text safe for Windows filenames. |

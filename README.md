@@ -70,6 +70,11 @@ run_aicovergen.bat
 > 💡 **Smart Launcher ทำอะไรให้บ้าง?**  
 > ตรวจสอบและปิด process เก่าที่ค้างบน Port 7860 ➔ เช็ค Python Environment ➔ เปิด WebUI ➔ ตรวจสอบความพร้อมและแสดง URL `http://127.0.0.1:7860`
 
+### 🌐 เปิดลิงก์สาธารณะชั่วคราว
+ดับเบิลคลิก `run_aicovergen_share.bat` เมื่อต้องการเข้าจากอินเทอร์เน็ตหรือแชร์ให้คนที่ไว้ใจ Launcher จะแสดง URL รูปแบบ `https://<id>.gradio.live` ในกล่องสถานะ
+
+> ⚠️ ลิงก์ไม่มีระบบล็อกอิน ผู้ที่มีลิงก์สามารถใช้งาน WebUI และ GPU เครื่องนี้ได้ กด `Ctrl + C` หรือปิด Launcher เพื่อยุติลิงก์
+
 ### 2️⃣ วิธีรันผ่านสคริปต์อื่น ๆ
 
 | ตัวเปิดโปรแกรม | คำสั่ง | คำอธิบาย |
@@ -176,6 +181,7 @@ graph LR
 ```text
 AICoverGen/
 ├── 🚀 run_aicovergen.bat            # ดับเบิลคลิกเริ่มใช้งานทันที (One-click Launcher)
+├── 🌐 run_aicovergen_share.bat      # เปิด Gradio public link ชั่วคราว (Trusted users only)
 ├── 🐍 launch.py                     # Carbon Terminal Launcher (ANSI & Telemetry)
 ├── 🪟 start_webui.ps1              # สคริปต์สำหรับรันบน PowerShell
 ├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube

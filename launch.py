@@ -87,6 +87,8 @@ def render_box(lines, border_col="slate", width=64):
 # ─── Error Diagnostic Card ───
 _tb_buffer = []
 _last_exec_time = None
+_public_url = None
+_share_error = None
 
 def render_error_card(tb_lines):
     last_line = tb_lines[-1].strip() if tb_lines else "Unknown Error"
@@ -358,6 +360,18 @@ def format_log_line(line):
         cprint(f"  💾  {raw_line.strip()}", "emerald", bold=True)
     elif "cuda:0 half>>" in raw_line:
         ok("CUDA device confirmed: FP16 half-precision active")
+    elif "gradio.live" in raw_line or "Running on public URL" in raw_line:
+        global _public_url
+        m = re.search(r'https://[a-zA-Z0-9-]+\.gradio\.live', raw_line)
+        if m:
+            _public_url = m.group(0)
+            cprint(f"  🌐  [Public Link] Generated: {_public_url}", "cyan", bold=True)
+            return
+    elif "Could not create share link." in raw_line:
+        global _share_error
+        _share_error = raw_line.strip()
+        warn("Public tunnel unavailable; Local and Network URLs remain active")
+        return
     elif "Running on local URL" in raw_line or "http://" in raw_line:
         pass  # Handled by ready banner
     elif "error" in raw_line.lower() or "exception" in raw_line.lower():
@@ -389,6 +403,11 @@ def stream_output(proc, logfile):
 
 # ─── Main Execution Loop ───
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="AICoverGen Cyberpunk Minimal Launcher", add_help=False)
+    parser.add_argument("--share", action="store_true", help="Enable public Gradio share link")
+    args, _ = parser.parse_known_args()
+
     os.system("cls" if os.name == "nt" else "clear")
     telemetry = get_telemetry()
     banner(telemetry)
@@ -417,7 +436,7 @@ def main():
         sys.exit(1)
 
     # Step 3: Launch daemon
-    step(3, 4, "Spawning Gradio WebUI neural service...")
+    step(3, 4, f"Spawning Gradio WebUI neural service{' (Public Share Mode)' if args.share else ''}...")
     if os.path.exists(LOGFILE):
         try:
             os.remove(LOGFILE)
@@ -429,8 +448,12 @@ def main():
     child_env["PYTHONIOENCODING"] = "utf-8"
     child_env["PYTHONLEGACYWINDOWSSTDIO"] = "0"
 
+    cmd = [PYTHON, "-u", SCRIPT, "--listen", "--listen-port", str(PORT)]
+    if args.share:
+        cmd.append("--share")
+
     proc = subprocess.Popen(
-        [PYTHON, "-u", SCRIPT, "--listen", "--listen-port", str(PORT)],
+        cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -458,12 +481,28 @@ def main():
         sub(f"Connecting to socket... ({i}/64)")
 
     if ready:
+        if args.share and not _public_url and not _share_error:
+            sub("Awaiting public tunnel endpoint...")
+            for _ in range(70):
+                if _public_url or _share_error:
+                    break
+                time.sleep(0.5)
+
         ready_lines = [
             f"{C['emerald']}★ WEBUI IS READY & LISTENING",
             "---",
             "",
             f"  {C['white']}Local URL  : {C['blue']}{C['bold']}http://127.0.0.1:{PORT}",
             f"  {C['white']}Network    : {C['blue']}{C['bold']}http://0.0.0.0:{PORT}",
+        ]
+        if args.share:
+            if _public_url:
+                ready_lines.append(f"  {C['white']}Public URL : {C['cyan']}{C['bold']}{_public_url}")
+            elif _share_error:
+                ready_lines.append(f"  {C['white']}Public URL : {C['red']}Unavailable (tunnel connection failed)")
+            else:
+                ready_lines.append(f"  {C['white']}Public URL : {C['amber']}Tunnel timed out; Local URL remains active")
+        ready_lines.extend([
             "",
             f"{C['blue']}● WORKFLOW GUIDE:",
             f"  {C['blue']}1. {C['gray']}Open URL in browser ➔ Go to {C['white']}[Generate]{C['gray']} tab",
@@ -472,7 +511,7 @@ def main():
             f"  {C['blue']}4. {C['gray']}In-browser Player or 1-Click Download {C['emerald']}(.mp3){C['gray']}",
             "",
             f"{C['dark']}[Press Ctrl+C in terminal to safely terminate server]",
-        ]
+        ])
         print()
         print(render_box(ready_lines, "slate", 64))
         print()
