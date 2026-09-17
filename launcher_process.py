@@ -1,9 +1,7 @@
 import ctypes
-import os
 import signal
 import subprocess
 import sys
-import threading
 import time
 
 if sys.platform == "win32":
