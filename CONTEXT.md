@@ -31,6 +31,7 @@
 | **Stage timing** | `[+Xs]` / `[+Xm XXs]` suffix on each progress line showing time spent since the previous pipeline stage. |
 | **Smart Launcher** | `run_aicovergen.bat` — kills orphaned processes, checks port, launches WebUI with logging, verifies startup. |
 | **Public Share Launcher** | `run_aicovergen_share.bat` — dedicated launcher invoking `launch.py --share`, activating Gradio's public tunneling mechanism and reporting the resulting ephemeral HTTPS URL in the Carbon console. |
+| **Launcher Shutdown Contract** | Closing a launcher means cancelling the active cover operation and terminating the WebUI, media workers, and public tunnel without leaving processes bound to port 7860. `Ctrl+C` allows a brief orderly shutdown before forced termination; closing the terminal window cancels immediately. |
 | **Song Title** | Clean, human-readable title of the song formatted as `<Artist> - <Song Title>` (e.g. `Liz's x NATNON - เพลงรัก`, `Nont Tanont - ฝืนตัวเองไม่เป็น`) with NFKC Unicode normalization and promotional noise removed. Used for UI display and final file naming. |
 | **Artist-Title Formatter** | Extraction pipeline combining metadata tags (`artist` + `track`), `Song by Artist` patterns, and channel fallbacks with smart deduplication into standard `[Artist] - [Song]` layout. |
 | **NFKC Unicode Normalizer** | Compatibility layer converting fancy mathematical bold/italic/script characters (e.g. `𝗯𝘆 𝗟𝗶𝘇'𝘀 x 𝐍𝐀𝐓𝐍𝐎𝐍`) and full-width brackets (`《 》`, `【 】`) into standard alphanumeric text safe for Windows filenames. |
