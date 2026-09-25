@@ -50,7 +50,7 @@ license: mit
 
 | หมวดหมู่ | รายละเอียด (TH) | Description (EN) |
 | :--- | :--- | :--- |
-| 🏷️ **Smart Song & Artist Formatter** | ดึงชื่อศิลปินและชื่อเพลงจาก YouTube / YouTube Music จัดฟอร์แมตมาตรฐานสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Normalization, **ระบบสลับตำแหน่งเพลง-ศิลปินอัตโนมัติ (Smart Inversion)** หากคลิปตั้งชื่อเอาเพลงขึ้นก่อน, กวาดล้างคำขยะประเภท `Official Lyrics Video`, `|...|`, `//...//`, จัดโครงสร้าง `Feat. [ศิลปิน]`, และใส่วงเล็บ Romaji ภาษาญี่ปุ่น/เกาหลีให้อัตโนมัติ | Full-spectrum title extraction: auto-detects `[Artist] - [Song]`, smart song-artist inversion matching YouTube channel identity, extended promo noise cleaning, Romaji transliteration, and CJK support. |
+| 🏷️ **Smart Song & Artist Formatter** | ดึงชื่อศิลปินและชื่อเพลงจาก YouTube / YouTube Music จัดฟอร์แมตมาตรฐานสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมแปลงฟอนต์พิเศษด้วย NFKC Normalization, **ระบบสลับตำแหน่งเพลง-ศิลปินอัตโนมัติ (Smart Inversion)** หากคลิปตั้งชื่อเอาเพลงขึ้นก่อน, **กวาดล้างแท็กโปรโมทและเครดิตโปรดิวเซอร์หมดจด**: ตัด `(Prod. by ...)`, `[PROD. BY ...]`, `(Produced by ...)`, `[ MV]`, `[M/V]`, `【 MV 】`, `Official Lyrics Video`, `|...|`, `//...//`, จัดโครงสร้าง `Feat. [ศิลปิน]`, และใส่วงเล็บ Romaji ภาษาญี่ปุ่น/เกาหลีให้อัตโนมัติ | Full-spectrum title extraction: auto-detects `[Artist] - [Song]`, smart song-artist inversion matching YouTube channel identity, removes producer credits (`Prod. by ...`, `Produced by`) & MV tags (`[ MV]`, `[M/V]`, `【MV】`), extended promo noise cleaning, Romaji transliteration, and CJK support. |
 | 🛑 **Reliable Shutdown Guard** | ระบบยกเลิกและปิดโปรแกรมระดับ Kernel ผ่าน **Windows Job Object (`JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`)**: กด `Ctrl+C` เพื่อหยุดอย่างนุ่มนวล หรือคลิกปุ่ม **กากบาท (X)** ของหน้าต่าง Terminal เพื่อยกเลิกและคืนพอร์ต 7860 ทันที 100% ไร้ Process ตกค้าง | Kernel-level process lifecycle: Windows Job Object guarantees immediate tree termination upon closing terminal (`X`) or `Ctrl+C`, preventing orphaned WebUI/FFmpeg processes. |
 | 🌐 **Public Share Launcher** | สคริปต์เปิดแชร์ภายนอกโดยเฉพาะ (`run_aicovergen_share.bat`) เชื่อมต่อ Gradio Tunnel (`https://<id>.gradio.live`) ชั่วคราว แสดง URL ใน Carbon Console พร้อมใช้งานทันที โดยสคริปต์ปกติยังคงเป็น Local-only เพื่อความปลอดภัย | Dedicated opt-in public launcher generating temporary `*.gradio.live` HTTPS endpoints with real-time tunnel status telemetry in Carbon Console. |
 | 📁 **Dedicated Downloads & 1-Click Purge** | จัดเก็บไฟล์ดาวน์โหลดจาก YouTube ไว้ในโฟลเดอร์เฉพาะ `downloads/` ไม่ปะปนกับโฟลเดอร์ระบบ พร้อมปุ่ม `[ 🗑️ ล้างดาวน์โหลด / Clear ]` บน WebUI ให้ล้างไฟล์แคชได้ในคลิกเดียว | Isolates raw media downloads in `downloads/` with a 1-click purge button on the WebUI to reclaim disk space instantly. |
@@ -157,6 +157,10 @@ graph LR
    * 🏷️ **ระบบจัดรูปแบบชื่อเพลงอัจฉริยะ (Smart Formatter):**
      * จัดรูปแบบเป็นสากล `[ศิลปิน] - [ชื่อเพลง]` พร้อมคลีนฟอนต์พิเศษด้วย NFKC Normalization
      * **สลับตำแหน่งเพลง-ศิลปินอัตโนมัติ (Smart Inversion):** หากคลิปตั้งชื่อเอาเพลงขึ้นก่อน เช่น `โฆษณาชวนเลือก - TaitosmitH |Official Lyrics Video|` ระบบจะเทียบกับชื่อช่องและสลับกลับมาเป็น `TaitosmitH - โฆษณาชวนเลือก` ให้อัตโนมัติ พร้อมลบคำขยะและเครื่องหมายไปป์ `|...|` ออกหมดจด
+     * **กวาดล้างแท็กเครดิต Prod. และแท็กวิดีโอ (Clean Noise & Producer Tags):** ตัดแท็กขยะออกอัตโนมัติทั้งพิมพ์เล็กและพิมพ์ใหญ่ เช่น:
+       * เครดิตโปรดิวเซอร์: `(Prod. by TRILOGY)`, `[PROD. BY ...]`, `(prod by ...)`, `(Produced by ...)`, `- Prod. by ...`
+       * แท็ก MV/วิดีโอ: `[ MV]`, `[MV]`, `[ M/V ]`, `( MV )`, `【 MV 】`, `[Official MV]`
+       * ปลอดภัย ไม่กระทบชื่อเพลงปกติที่มีคำว่า Prod หรือ Product (เช่น `Product of Love`, `Prodigy`)
      * **ถอดเสียง Romaji อัตโนมัติ:** หากเป็นเพลงภาษาญี่ปุ่นหรือเกาหลี ระบบจะใส่วงเล็บ `(Romaji)` ติดกับชื่อเพลงเดิม (เช่น `藍より群青 (Ai Yori Gunjou)` หรือ `밤양갱 (Bam-Yang-Gaeng)`) โดยไม่กระทบเพลงไทยหรือสากล
      * **แยกศิลปิน Feat. สวยงาม:** จัดโครงสร้างศิลปินร่วมร้องเป็น `Feat. [ศิลปิน]` เช่น `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi`
    * 🧹 **ปุ่มล้างแคช:** กดปุ่ม **"🗑️ ล้างดาวน์โหลด / Clear"** เพื่อล้างไฟล์ชั่วคราวใน `downloads/` ได้ทุกเมื่อ
@@ -174,11 +178,17 @@ graph LR
      * 🛡️ **ปลอดภัยจาก IDM:** ป้องกันโปรแกรม IDM เด้งตัดการเชื่อมต่อ และป้องกันปัญหาเครื่องเล่นค้าง 0:00
      * 💾 **ปุ่มดาวน์โหลดไฟล์ (.mp3) ในตัว:** คลิกเพื่อดาวน์โหลดลงเครื่องทันที พร้อมคงสระภาษาไทยครบถ้วน 100%
 
-> 📛 **รูปแบบชื่อไฟล์ผลลัพธ์:** `<ชื่อศิลปิน> - <ชื่อเพลง> (<ชื่อโมเดล> Ver).mp3`  
-> เช่น:  
-> - `Liz's x NATNON - เพลงรัก (Ado Ver).mp3`  
-> - `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi (Ado Ver).mp3`  
-> - `BIBI - 밤양갱 (Bam-Yang-Gaeng) (NontTanont Ver).mp3`
+> 📛 **รูปแบบชื่อไฟล์ผลลัพธ์ (Clean Output Naming):**  
+> ระบบจะนำชื่อที่ผ่านการคลีนและจัดฟอร์แมตแล้วมาตั้งชื่อไฟล์ผลลัพธ์:  
+> `<ชื่อศิลปิน> - <ชื่อเพลง> (<ชื่อโมเดล> Ver).mp3`  
+>  
+> ✨ **ตัวอย่างผลลัพธ์การคลีนชื่อไฟล์:**  
+> - `ชื่อคลิป YouTube: Liz's x NATNON - เพลงรัก (Prod. by TRILOGY) [Official MV]`  
+>   ➔ ผลลัพธ์: `Liz's x NATNON - เพลงรัก (Ado Ver).mp3`  
+> - `ชื่อคลิป YouTube: [ MV] Takaaki Natsushiro - 藍より群青 feat. Suisei Hoshimachi (prod by ...)`  
+>   ➔ ผลลัพธ์: `Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi (Ado Ver).mp3`  
+> - `ชื่อคลิป YouTube: BIBI (비비) - 밤양갱 [Official M/V]`  
+>   ➔ ผลลัพธ์: `BIBI - 밤양갱 (Bam-Yang-Gaeng) (NontTanont Ver).mp3`  
 
 ---
 

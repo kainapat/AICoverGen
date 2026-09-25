@@ -124,11 +124,13 @@ def clean_song_title(raw_title):
         return 'song'
     cleaned = unicodedata.normalize('NFKC', str(raw_title))
     noise_patterns = [
-        r'\[\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq)\s*\]',
-        r'\(\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq)\s*\)',
-        r'【\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq)\s*】',
-        r'\|\s*[^|]*(?:official|music|video|audio|mv|lyrics?|visualizer)[^|]*\|?',
-        r'//\s*(?:official\s*)?(?:music\s*)?(?:video|audio|mv|lyrics?\s*video|visualizer|hd|4k|hq).*$',
+        r'\[\s*(?:official\s*)?(?:music\s*)?(?:video|audio|m/?v|lyrics?\s*video|visualizer|hd|4k|hq)\s*\]',
+        r'\(\s*(?:official\s*)?(?:music\s*)?(?:video|audio|m/?v|lyrics?\s*video|visualizer|hd|4k|hq)\s*\)',
+        r'【\s*(?:official\s*)?(?:music\s*)?(?:video|audio|m/?v|lyrics?\s*video|visualizer|hd|4k|hq)\s*】',
+        r'[\(\[\{【]\s*(?:prod\.?|produced)\s*(?:by)?\s*[^)\]\}】]+[\)\]\}】]',
+        r'[\s\-_|/]+(?:prod\.?|produced)\s+by\s+[^\-_|/]+',
+        r'\|\s*[^|]*(?:official|music|video|audio|m/?v|lyrics?|visualizer)[^|]*\|?',
+        r'//\s*(?:official\s*)?(?:music\s*)?(?:video|audio|m/?v|lyrics?\s*video|visualizer|hd|4k|hq).*$',
         r'\b(?:official\s+)?(?:music\s+)?(?:lyrics?\s+video|visualizer)\b.*$',
         r'\b(?:4K|HD|HQ|1080p|720p)\b',
     ]
