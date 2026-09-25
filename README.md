@@ -113,19 +113,10 @@ run_aicovergen_share.bat
 
 AICoverGen ติดตั้งระบบควบคุมวงจรชีวิตโปรเซส (Process Lifecycle Management) แบบ 2 ทิศทาง:
 
-```mermaid
-graph TD
-    A[ผู้ใช้สั่งปิดโปรแกรม] --> B{วิธีสั่งปิด}
-    B -->|กด Ctrl + C| C[ส่ง SIGBREAK สู่ WebUI Process Group]
-    C --> D[รอปิด Gracefully 3 วินาที]
-    D -->|หากค้าง| E[taskkill /T /F บังคับปิด]
-    E --> F[คืนพอร์ต 7860 และปิดหน้าต่างทันที]
-    
-    B -->|คลิกปุ่มกากบาท X| G[Windows Kernel ปิด Job Handle]
-    G --> H[JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE ทำงาน]
-    H --> I[ระบบปฏิบัติการกวาดล้าง Child Processes ทุกตัวทันที]
-    I --> J[พอร์ต 7860 ว่างทันที ไร้ Orphan Process 100%]
-```
+<div align="center">
+  <img src="images/shutdown_diagram.svg" alt="AICoverGen Reliable Shutdown Contract Diagram" width="100%">
+</div>
+
 
 1. **กด `Ctrl + C` ใน Terminal:**
    * สั่งระงับการทำงานอย่างนุ่มนวล (Graceful Shutdown)
@@ -139,14 +130,10 @@ graph TD
 
 ## 🎵 ขั้นตอนการสร้างเพลง Cover | Step-by-Step Guide
 
-```mermaid
-graph LR
-    A[1. วางลิงก์ YouTube] --> B[2. กด โหลด URL / Process URL]
-    B --> C[3. ระบบดึง ศิลปิน - ชื่อเพลง + คลีนคำขยะ]
-    C --> D[4. เลือกโมเดลเสียง + ติ๊ก Fast Mode 2x]
-    D --> E[5. กด สร้างเพลง / Generate]
-    E --> F[6. ฟังเพลงด้วย Carbon Player หรือดาวน์โหลด]
-```
+<div align="center">
+  <img src="images/pipeline_diagram.svg" alt="AICoverGen Audio Separation & Voice Conversion Pipeline Diagram" width="100%">
+</div>
+
 
 1. **เลือกโมเดลเสียง (Voice Model):**
    * ไปที่แท็บ **โหลดโมเดล / Download model** เพื่อเลือกโหลดเสียงที่ต้องการ (เช่น `NontTanont`, `Ado`, `Minecraft_Villager`)

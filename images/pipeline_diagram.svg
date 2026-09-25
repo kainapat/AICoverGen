@@ -1,0 +1,198 @@
+<svg viewBox="0 0 980 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pipeline-diagram-title pipeline-diagram-desc" style="background:#0b0f19; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <title id="pipeline-diagram-title">AICoverGen Audio Separation &amp; Voice Conversion Pipeline</title>
+  <desc id="pipeline-diagram-desc">Complete end-to-end data flow showing stem separation, RVC voice conversion, and audio effects mixing with Fast Mode optimization.</desc>
+
+  <defs>
+    <!-- Background Grid -->
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="0.75" fill="rgba(255, 255, 255, 0.05)"/>
+    </pattern>
+
+    <!-- Gradients -->
+    <linearGradient id="grad-vocal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="grad-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <linearGradient id="grad-fast" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <linearGradient id="grad-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+
+    <linearGradient id="grad-output" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+
+    <!-- Markers -->
+    <marker id="arrow-blue" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0 0 L7 3.5 L0 7 Z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-emerald" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0 0 L7 3.5 L0 7 Z" fill="#10b981"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0 0 L7 3.5 L0 7 Z" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0 0 L7 3.5 L0 7 Z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="980" height="430" rx="12" fill="#0b0f19"/>
+  <rect width="980" height="430" rx="12" fill="url(#grid)"/>
+  <rect x="1" y="1" width="978" height="428" rx="11" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Top Category / Stage Badges -->
+  <g transform="translate(40, 20)">
+    <text x="0" y="15" fill="#f8fafc" font-size="14" font-weight="700" letter-spacing="0.05em">AUDIO PROCESSING &amp; STEM SEPARATION PIPELINE</text>
+    <text x="0" y="32" fill="#94a3b8" font-size="11">Data flow across UVR MDX-Net ONNX models, RVC v2 inference, and Pedalboard audio mastering</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(680, 22)">
+    <circle cx="10" cy="10" r="5" fill="#3b82f6"/>
+    <text x="22" y="14" fill="#94a3b8" font-size="10">Active Stem</text>
+    <circle cx="110" cy="10" r="5" fill="#10b981"/>
+    <text x="122" y="14" fill="#94a3b8" font-size="10">Fast Mode 2x</text>
+    <circle cx="210" cy="10" r="5" fill="#f59e0b"/>
+    <text x="222" y="14" fill="#94a3b8" font-size="10">AI Converted</text>
+  </g>
+
+  <!-- Horizontal Swimlane Guides -->
+  <line x1="40" y1="65" x2="940" y2="65" stroke="#1e293b" stroke-width="1"/>
+  
+  <!-- Lane Labels -->
+  <text x="40" y="115" fill="#475569" font-size="10" font-weight="700" letter-spacing="0.1em">VOCAL STEM LANE</text>
+  <text x="40" y="365" fill="#475569" font-size="10" font-weight="700" letter-spacing="0.1em">INSTRUMENTAL STEM LANE</text>
+
+  <!-- ==================== CONNECTING ARROWS ==================== -->
+  <!-- 1. Input to MDX Voc_FT -->
+  <path d="M140 195 H180" stroke="#3b82f6" stroke-width="1.8" fill="none" marker-end="url(#arrow-blue)"/>
+  
+  <!-- 2. MDX Voc_FT to Instrumental (Lower Branch) -->
+  <path d="M255 235 V340 Q255 350 265 350 H770" stroke="#64748b" stroke-width="1.8" fill="none" stroke-dasharray="4 4" marker-end="url(#arrow-gray)"/>
+  <text x="320" y="342" fill="#64748b" font-size="9" font-family="monospace">Instrumental (-7dB)</text>
+
+  <!-- 3. MDX Voc_FT to Karaoke KARA_2 (Upper Branch) -->
+  <path d="M330 195 H365" stroke="#3b82f6" stroke-width="1.8" fill="none" marker-end="url(#arrow-blue)"/>
+  <text x="335" y="187" fill="#93c5fd" font-size="9">Vocals</text>
+
+  <!-- 4. Karaoke to Backup Vocals (Middle-Lower Branch) -->
+  <path d="M440 235 V280 Q440 290 450 290 H770" stroke="#64748b" stroke-width="1.8" fill="none" marker-end="url(#arrow-gray)"/>
+  <text x="480" y="283" fill="#64748b" font-size="9" font-family="monospace">Backup Vocals (-6dB)</text>
+
+  <!-- 5. Karaoke to DeReverb (Normal Mode) / Direct to RVC (Fast Mode) -->
+  <!-- Fast Mode bypass curve -->
+  <path d="M515 175 C540 120 570 120 610 175" stroke="#10b981" stroke-width="2" fill="none" stroke-dasharray="5 3" marker-end="url(#arrow-emerald)"/>
+  <rect x="525" y="112" width="75" height="18" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="0.8"/>
+  <text x="562" y="124" fill="#6ee7b7" font-size="9" font-weight="700" text-anchor="middle">⚡ Fast Mode</text>
+
+  <!-- Normal Mode to DeReverb -->
+  <path d="M515 195 H545" stroke="#3b82f6" stroke-width="1.8" fill="none" marker-end="url(#arrow-blue)"/>
+  <!-- DeReverb to RVC -->
+  <path d="M605 210 H625" stroke="#3b82f6" stroke-width="1.8" fill="none" marker-end="url(#arrow-blue)"/>
+
+  <!-- 6. RVC to Pedalboard Effects -->
+  <path d="M720 195 H745" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arrow-amber)"/>
+
+  <!-- 7. Effects to Mixer -->
+  <path d="M820 195 H855" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arrow-amber)"/>
+  <text x="825" y="187" fill="#fbbf24" font-size="9">AI Vocals (-4dB)</text>
+
+  <!-- 8. Mixer to Final Output -->
+  <path d="M915 225 V280" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+
+  <!-- ==================== NODES / CARDS ==================== -->
+
+  <!-- Node 1: Input -->
+  <g transform="translate(40, 160)">
+    <rect width="100" height="70" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="50" y="24" fill="#60a5fa" font-size="9" font-weight="700" text-anchor="middle">INPUT AUDIO</text>
+    <text x="50" y="42" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">YouTube / File</text>
+    <rect x="18" y="50" width="64" height="14" rx="3" fill="#0f172a"/>
+    <text x="50" y="60" fill="#94a3b8" font-size="8" text-anchor="middle">44.1kHz Stereo</text>
+  </g>
+
+  <!-- Node 2: Stage 1 MDX Voc_FT -->
+  <g transform="translate(180, 155)">
+    <rect width="150" height="80" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
+    <rect x="8" y="8" width="55" height="16" rx="3" fill="#1d4ed8"/>
+    <text x="35" y="19" fill="#ffffff" font-size="8" font-weight="700" text-anchor="middle">STAGE 1</text>
+    <text x="135" y="20" fill="#64748b" font-size="9" text-anchor="end">ONNX Model</text>
+    <text x="12" y="42" fill="#f8fafc" font-size="12" font-weight="700">MDX-NET Voc_FT</text>
+    <text x="12" y="58" fill="#94a3b8" font-size="10">Separates Vocals vs Inst</text>
+    <text x="12" y="72" fill="#3b82f6" font-size="8" font-family="monospace">UVR-MDX-NET-Voc_FT</text>
+  </g>
+
+  <!-- Node 3: Stage 2 MDX KARA_2 -->
+  <g transform="translate(365, 155)">
+    <rect width="150" height="80" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
+    <rect x="8" y="8" width="55" height="16" rx="3" fill="#1d4ed8"/>
+    <text x="35" y="19" fill="#ffffff" font-size="8" font-weight="700" text-anchor="middle">STAGE 2</text>
+    <text x="135" y="20" fill="#64748b" font-size="9" text-anchor="end">ONNX Model</text>
+    <text x="12" y="42" fill="#f8fafc" font-size="12" font-weight="700">MDX Karaoke 2</text>
+    <text x="12" y="58" fill="#94a3b8" font-size="10">Main vs Backup Vocals</text>
+    <text x="12" y="72" fill="#3b82f6" font-size="8" font-family="monospace">UVR_MDXNET_KARA_2</text>
+  </g>
+
+  <!-- Node 4: Stage 3 DeReverb (FoxJoy) -->
+  <g transform="translate(545, 165)">
+    <rect width="60" height="60" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+    <text x="30" y="24" fill="#94a3b8" font-size="8" font-weight="700" text-anchor="middle">STAGE 3</text>
+    <text x="30" y="39" fill="#f8fafc" font-size="10" font-weight="600" text-anchor="middle">DeReverb</text>
+    <text x="30" y="51" fill="#64748b" font-size="7" text-anchor="middle">FoxJoy HQ</text>
+  </g>
+
+  <!-- Node 5: Stage 4 RVC Voice Conversion (Focal Node) -->
+  <g transform="translate(625, 145)">
+    <rect width="95" height="100" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+    <rect x="8" y="8" width="55" height="16" rx="3" fill="#b45309"/>
+    <text x="35" y="19" fill="#ffffff" font-size="8" font-weight="700" text-anchor="middle">STAGE 4</text>
+    <text x="47" y="44" fill="#fbbf24" font-size="13" font-weight="800" text-anchor="middle">RVC v2</text>
+    <text x="47" y="60" fill="#f8fafc" font-size="9" font-weight="600" text-anchor="middle">Voice Conversion</text>
+    <text x="47" y="74" fill="#94a3b8" font-size="8" text-anchor="middle">RMVPE / Crepe</text>
+    <rect x="8" y="80" width="79" height="14" rx="2" fill="#0f172a"/>
+    <text x="47" y="90" fill="#f59e0b" font-size="7.5" font-family="monospace" text-anchor="middle">.pth + .index</text>
+  </g>
+
+  <!-- Node 6: Stage 5 Pedalboard Effects -->
+  <g transform="translate(745, 160)">
+    <rect width="75" height="70" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
+    <text x="37" y="22" fill="#94a3b8" font-size="8" font-weight="700" text-anchor="middle">STAGE 5</text>
+    <text x="37" y="38" fill="#f8fafc" font-size="10" font-weight="700" text-anchor="middle">Effects</text>
+    <text x="37" y="52" fill="#94a3b8" font-size="8" text-anchor="middle">HPF + Reverb</text>
+    <text x="37" y="62" fill="#94a3b8" font-size="8" text-anchor="middle">Compressor</text>
+  </g>
+
+  <!-- Node 7: Stage 6 Audio Mixer (pydub) -->
+  <g transform="translate(855, 155)">
+    <rect width="85" height="80" rx="8" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="42" y="24" fill="#a5b4fc" font-size="9" font-weight="700" text-anchor="middle">STAGE 6</text>
+    <text x="42" y="44" fill="#f8fafc" font-size="12" font-weight="700" text-anchor="middle">Combine</text>
+    <text x="42" y="60" fill="#94a3b8" font-size="9" text-anchor="middle">Multi-track Mix</text>
+    <text x="42" y="72" fill="#818cf8" font-size="8" font-family="monospace" text-anchor="middle">pydub overlay</text>
+  </g>
+
+  <!-- Node 8: Final Cover Output Card -->
+  <g transform="translate(775, 290)">
+    <rect width="165" height="100" rx="8" fill="url(#grad-output)" stroke="#818cf8" stroke-width="1.5"/>
+    <text x="82" y="25" fill="#e0e7ff" font-size="10" font-weight="700" text-anchor="middle">FINAL COVER OUTPUT</text>
+    <text x="82" y="48" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">&lt;Artist&gt; - &lt;Song&gt;</text>
+    <text x="82" y="64" fill="#c7d2fe" font-size="10" text-anchor="middle">(&lt;Model&gt; Ver).mp3 / .wav</text>
+    <rect x="20" y="74" width="125" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+    <text x="82" y="86" fill="#a5f3fc" font-size="9" font-weight="600" text-anchor="middle">Carbon Player / Download</text>
+  </g>
+
+</svg>
