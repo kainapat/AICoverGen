@@ -67,6 +67,7 @@
 | **Smart Song-Artist Inversion** | Contextual title reordering detecting when YouTube creators title a video as `[Song] - [Artist]` (identifying the artist by cross-referencing with the channel/uploader identity) and automatically reversing the order to standard `[Artist] - [Song]`. |
 | **Extended Promotional Noise Filter** | Robust multi-pattern sanitizer eliminating `Official Lyrics Video` (plural and singular), pipe-enclosed promo tags (`|...|`), double-slash tags (`//...//`), visualizers, and trailing broadcast noise without damaging true song titles. |
 | **Title Pre-cleaning Pipeline** | Architecture pattern in `extract_song_and_artist()` executing `clean_song_title()` on normalized titles prior to evaluating `Song by Artist` and `Artist - Song` grammar. Prevents internal `by` keywords in producer credits (e.g. `(Prod. by TRILOGY)`) from hijacking the artist-detection parser. |
+| **SongMetadata Module** | Deep domain module (`src/song_metadata.py`) encapsulating Unicode normalization, promotional noise cleaning, producer credit removal, CJK romanization, and smart song-artist inversion behind a unified seam: `SongMetadata.from_input()`. |
 
 ## Pipeline Flow
 
