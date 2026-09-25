@@ -193,3 +193,6 @@ cython_debug/
 .trae/
 .windsurf/
 skills-lock.json
+
+# PR Lens previews
+.pr-lens/
