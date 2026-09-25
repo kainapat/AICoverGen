@@ -39,6 +39,7 @@ license: mit
 - [🎵 ขั้นตอนการสร้างเพลง Cover (Step-by-Step Guide)](#--ขั้นตอนการสร้างเพลง-cover--step-by-step-guide)
 - [💻 หน้าต่าง Terminal Carbon Console (Live Telemetry)](#--หน้าต่าง-terminal-carbon-console--live-telemetry)
 - [🛑 ระบบปิดโปรแกรมอย่างปลอดภัย (Reliable Shutdown Contract)](#--ระบบปิดโปรแกรมอย่างปลอดภัย--reliable-shutdown-contract)
+- [📐 แผนภาพสถาปัตยกรรมและกระบวนการทำงาน (System Diagrams)](#--แผนภาพสถาปัตยกรรมและกระบวนการทำงาน--system-diagrams)
 - [💻 ความต้องการของระบบ (System Requirements)](#--ความต้องการของระบบ--system-requirements)
 - [📂 โครงสร้างโปรเจกต์ (Project Layout)](#--โครงสร้างโปรเจกต์--project-layout)
 - [🆘 ปัญหาที่พบบ่อยและวิธีแก้ (Troubleshooting)](#--ปัญหาที่พบบ่อยและวิธีแก้--troubleshooting)
@@ -114,7 +115,11 @@ run_aicovergen_share.bat
 AICoverGen ติดตั้งระบบควบคุมวงจรชีวิตโปรเซส (Process Lifecycle Management) แบบ 2 ทิศทาง:
 
 <div align="center">
-  <img src="images/shutdown_diagram.svg" alt="AICoverGen Reliable Shutdown Contract Diagram" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/shutdown_diagram.svg">
+    <source media="(prefers-color-scheme: light)" srcset="images/shutdown_diagram_light.svg">
+    <img src="images/shutdown_diagram.svg" alt="AICoverGen Reliable Shutdown Contract Diagram" width="100%">
+  </picture>
 </div>
 
 
@@ -131,7 +136,11 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
 ## 🎵 ขั้นตอนการสร้างเพลง Cover | Step-by-Step Guide
 
 <div align="center">
-  <img src="images/pipeline_diagram.svg" alt="AICoverGen Audio Separation & Voice Conversion Pipeline Diagram" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/pipeline_diagram.svg">
+    <source media="(prefers-color-scheme: light)" srcset="images/pipeline_diagram_light.svg">
+    <img src="images/pipeline_diagram.svg" alt="AICoverGen Audio Separation & Voice Conversion Pipeline Diagram" width="100%">
+  </picture>
 </div>
 
 
@@ -235,6 +244,46 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
 | 💾 **Drive Space** | แนะนำพื้นที่ว่างอย่างน้อย 20GB | สำหรับจัดเก็บโมเดล RVC, โมเดลแยกเสียง ONNX และแคช AI |
 | 🎵 **FFmpeg** | ติดตั้งมาพร้อมไลบรารีในตัว | ไม่จำเป็นต้องลงโปรแกรมภายนอกแยก |
 | 🪟 **OS** | **Windows 10 / 11 (64-bit)** | รองรับ Windows Job Object และ UTF-8 Terminal Mode เต็มรูปแบบ |
+
+---
+
+## 📐 แผนภาพสถาปัตยกรรมและกระบวนการทำงาน | System Diagrams
+
+ไดอะแกรมเชิงลึกรองรับทั้ง **Dark Mode** และ **Light Mode** อัตโนมัติตามธีมของ GitHub:
+
+### 1️⃣ System Context Diagram (C4 Level 1)
+แสดงขอบเขตของระบบ ผู้ใช้งานทั้งระดับ Local และการแชร์สาธารณะ พร้อมการเชื่อมต่อไปยัง YouTube, Hugging Face และ Gradio Tunnel:
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/context_diagram.svg">
+    <source media="(prefers-color-scheme: light)" srcset="images/context_diagram_light.svg">
+    <img src="images/context_diagram.svg" alt="AICoverGen System Context Diagram" width="100%">
+  </picture>
+</div>
+
+---
+
+### 2️⃣ Component Architecture Diagram (C4 Level 2)
+แสดงโครงสร้างโมดูลหลัก 3 ชั้น: Presentation & Entrypoint Layer, Core Domain Layer (`SongMetadata`), และ Inference Engines (`MDX-Net`, `RVC v2`):
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/component_diagram.svg">
+    <source media="(prefers-color-scheme: light)" srcset="images/component_diagram_light.svg">
+    <img src="images/component_diagram.svg" alt="AICoverGen Component Architecture Diagram" width="100%">
+  </picture>
+</div>
+
+---
+
+### 3️⃣ Sequence Diagram (AI Cover Generation Lifecycle)
+แสดงลำดับขั้นการส่งข้อมูลแบบ Time-ordered Interaction ตั้งแต่เริ่มวางลิงก์ YouTube ➔ คลีนชื่อเพลง ➔ สแกนโมเดล ➔ แยกเสียงร้อง ➔ แปลงเสียง RVC ➔ รวมมิกซ์เพลง:
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/sequence_diagram.svg">
+    <source media="(prefers-color-scheme: light)" srcset="images/sequence_diagram_light.svg">
+    <img src="images/sequence_diagram.svg" alt="AICoverGen Pipeline Sequence Diagram" width="100%">
+  </picture>
+</div>
 
 ---
 

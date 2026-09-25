@@ -1,0 +1,107 @@
+<svg viewBox="0 0 980 490" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="seq-title-l seq-desc-l" style="background:#f8fafc; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <title id="seq-title-l">AICoverGen Pipeline Sequence Diagram (Light Mode)</title>
+  <desc id="seq-desc-l">UML Sequence diagram detailing time-ordered invocations between User, WebUI, SongMetadata, ModelRegistry, MDX-Net, and RVC in light theme.</desc>
+
+  <defs>
+    <pattern id="grid-seq-l" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="0.8" fill="rgba(15, 23, 42, 0.08)"/>
+    </pattern>
+    <marker id="arr-blue-sl" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#0284c7"/>
+    </marker>
+    <marker id="arr-amber-sl" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#d97706"/>
+    </marker>
+    <marker id="arr-green-sl" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#059669"/>
+    </marker>
+  </defs>
+
+  <rect width="980" height="490" rx="12" fill="#f8fafc"/>
+  <rect width="980" height="490" rx="12" fill="url(#grid-seq-l)"/>
+  <rect x="1" y="1" width="978" height="488" rx="11" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Title -->
+  <g transform="translate(40, 25)">
+    <text x="0" y="15" fill="#0f172a" font-size="14" font-weight="700" letter-spacing="0.05em">SEQUENCE DIAGRAM: AI COVER GENERATION LIFECYCLE</text>
+    <text x="0" y="32" fill="#64748b" font-size="11">Time-ordered interactions across WebUI, domain sanitizers, model registries, and ONNX/CUDA inference</text>
+  </g>
+
+  <!-- Lifeline Headers -->
+  <!-- 1. User/Browser (X=90) -->
+  <rect x="30" y="65" width="120" height="35" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="1.2"/>
+  <text x="90" y="87" fill="#0284c7" font-size="11" font-weight="700" text-anchor="middle">User (Browser)</text>
+  <line x1="90" y1="100" x2="90" y2="455" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="1"/>
+
+  <!-- 2. WebUI / API (X=250) -->
+  <rect x="190" y="65" width="120" height="35" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="1.2"/>
+  <text x="250" y="87" fill="#0284c7" font-size="11" font-weight="700" text-anchor="middle">Gradio WebUI</text>
+  <line x1="250" y1="100" x2="250" y2="455" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="1"/>
+
+  <!-- 3. SongMetadata (X=410) -->
+  <rect x="350" y="65" width="120" height="35" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.2"/>
+  <text x="410" y="87" fill="#059669" font-size="11" font-weight="700" text-anchor="middle">SongMetadata</text>
+  <line x1="410" y1="100" x2="410" y2="455" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="1"/>
+
+  <!-- 4. ModelRegistry (X=570) -->
+  <rect x="510" y="65" width="120" height="35" rx="6" fill="#ffffff" stroke="#059669" stroke-width="1.2"/>
+  <text x="570" y="87" fill="#059669" font-size="11" font-weight="700" text-anchor="middle">ModelRegistry</text>
+  <line x1="570" y1="100" x2="570" y2="455" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="1"/>
+
+  <!-- 5. MDX Engine (X=730) -->
+  <rect x="670" y="65" width="120" height="35" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="1.2"/>
+  <text x="730" y="87" fill="#4338ca" font-size="11" font-weight="700" text-anchor="middle">MDX-Net Engine</text>
+  <line x1="730" y1="100" x2="730" y2="455" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="1"/>
+
+  <!-- 6. RVC Inference (X=890) -->
+  <rect x="830" y="65" width="120" height="35" rx="6" fill="#ffffff" stroke="#d97706" stroke-width="1.2"/>
+  <text x="890" y="87" fill="#b45309" font-size="11" font-weight="700" text-anchor="middle">RVC v2 Inference</text>
+  <line x1="890" y1="100" x2="890" y2="455" stroke="#cbd5e1" stroke-dasharray="4 4" stroke-width="1"/>
+
+  <!-- ==================== MESSAGES ==================== -->
+
+  <!-- 1. Input URL / Process URL -->
+  <path d="M90 125 H245" stroke="#0284c7" stroke-width="1.5" fill="none" marker-end="url(#arr-blue-sl)"/>
+  <text x="170" y="120" fill="#0f172a" font-size="9" font-weight="600" text-anchor="middle">1. Process URL (YouTube link)</text>
+
+  <!-- 2. Normalize Title -->
+  <path d="M250 155 H405" stroke="#059669" stroke-width="1.5" fill="none" marker-end="url(#arr-green-sl)"/>
+  <text x="330" y="150" fill="#047857" font-size="9" font-weight="600" text-anchor="middle">2. SongMetadata.from_input(meta)</text>
+
+  <!-- Self return -->
+  <path d="M410 170 C435 170 435 185 410 185" stroke="#059669" stroke-width="1.2" fill="none"/>
+  <text x="440" y="180" fill="#64748b" font-size="8">Strip noise, Prod., CJK</text>
+
+  <path d="M410 200 H255" stroke="#059669" stroke-width="1.2" stroke-dasharray="3 3" fill="none" marker-end="url(#arr-green-sl)"/>
+  <text x="330" y="195" fill="#64748b" font-size="8" text-anchor="middle">Clean Song Title</text>
+
+  <!-- 3. Click Generate -->
+  <path d="M90 230 H245" stroke="#0284c7" stroke-width="1.5" fill="none" marker-end="url(#arr-blue-sl)"/>
+  <text x="170" y="225" fill="#0f172a" font-size="9" font-weight="600" text-anchor="middle">3. Click [Generate] (Model, Pitch, Gains)</text>
+
+  <!-- 4. Query Model Registry -->
+  <path d="M250 255 H565" stroke="#059669" stroke-width="1.5" fill="none" marker-end="url(#arr-green-sl)"/>
+  <text x="410" y="250" fill="#047857" font-size="9" font-weight="600" text-anchor="middle">4. get_model_paths(voice_model)</text>
+
+  <path d="M570 275 H255" stroke="#059669" stroke-width="1.2" stroke-dasharray="3 3" fill="none" marker-end="url(#arr-green-sl)"/>
+  <text x="410" y="270" fill="#64748b" font-size="8" text-anchor="middle">Return .pth &amp; .index paths</text>
+
+  <!-- 5. Stem Separation -->
+  <path d="M250 305 H725" stroke="#4338ca" stroke-width="1.5" fill="none" marker-end="url(#arr-blue-sl)"/>
+  <text x="490" y="300" fill="#4338ca" font-size="9" font-weight="600" text-anchor="middle">5. MDX Separation (Vocals, Inst, Karaoke, DeReverb)</text>
+
+  <path d="M730 335 H255" stroke="#4338ca" stroke-width="1.2" stroke-dasharray="3 3" fill="none" marker-end="url(#arr-blue-sl)"/>
+  <text x="490" y="330" fill="#64748b" font-size="8" text-anchor="middle">Separated Stems (WAV)</text>
+
+  <!-- 6. Voice Conversion -->
+  <path d="M250 365 H885" stroke="#d97706" stroke-width="1.5" fill="none" marker-end="url(#arr-amber-sl)"/>
+  <text x="570" y="360" fill="#b45309" font-size="9" font-weight="600" text-anchor="middle">6. RVC Inference (RMVPE/Crepe + Index Rate + Protect)</text>
+
+  <path d="M890 395 H255" stroke="#d97706" stroke-width="1.2" stroke-dasharray="3 3" fill="none" marker-end="url(#arr-amber-sl)"/>
+  <text x="570" y="390" fill="#64748b" font-size="8" text-anchor="middle">Converted Vocals (WAV)</text>
+
+  <!-- 7. Combine & Play -->
+  <path d="M250 425 H95" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="3 3" fill="none" marker-end="url(#arr-blue-sl)"/>
+  <text x="170" y="420" fill="#0284c7" font-size="9" font-weight="700" text-anchor="middle">7. Render Carbon Player &amp; Audio File</text>
+
+</svg>
