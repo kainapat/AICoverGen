@@ -66,6 +66,7 @@
 | **Featured Artist Formatter** | Extraction and repositioning pipeline isolating `feat.`, `ft.`, or `featuring` clauses from song titles and metadata arrays, rearranging the structure into standard `[Main Artist] - [Song Title (Romaji)] Feat. [Featured Artist]` with official English/Romaji artist names prioritized. |
 | **Smart Song-Artist Inversion** | Contextual title reordering detecting when YouTube creators title a video as `[Song] - [Artist]` (identifying the artist by cross-referencing with the channel/uploader identity) and automatically reversing the order to standard `[Artist] - [Song]`. |
 | **Extended Promotional Noise Filter** | Robust multi-pattern sanitizer eliminating `Official Lyrics Video` (plural and singular), pipe-enclosed promo tags (`|...|`), double-slash tags (`//...//`), visualizers, and trailing broadcast noise without damaging true song titles. |
+| **Title Pre-cleaning Pipeline** | Architecture pattern in `extract_song_and_artist()` executing `clean_song_title()` on normalized titles prior to evaluating `Song by Artist` and `Artist - Song` grammar. Prevents internal `by` keywords in producer credits (e.g. `(Prod. by TRILOGY)`) from hijacking the artist-detection parser. |
 
 ## Pipeline Flow
 

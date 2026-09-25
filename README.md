@@ -183,6 +183,8 @@ graph LR
 > `<ชื่อศิลปิน> - <ชื่อเพลง> (<ชื่อโมเดล> Ver).mp3`  
 >  
 > ✨ **ตัวอย่างผลลัพธ์การคลีนชื่อไฟล์:**  
+> - `ชื่อคลิป YouTube: ZENTYARB - ฉบับท้ายสุด (Prod. by TRILOGY) [Official MV]`  
+>   ➔ ผลลัพธ์: `ZENTYARB - ฉบับท้ายสุด (Ado Ver).mp3`  
 > - `ชื่อคลิป YouTube: Liz's x NATNON - เพลงรัก (Prod. by TRILOGY) [Official MV]`  
 >   ➔ ผลลัพธ์: `Liz's x NATNON - เพลงรัก (Ado Ver).mp3`  
 > - `ชื่อคลิป YouTube: [ MV] Takaaki Natsushiro - 藍より群青 feat. Suisei Hoshimachi (prod by ...)`  

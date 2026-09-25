@@ -5,7 +5,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from main import clean_song_title
+from main import clean_song_title, extract_song_and_artist
 
 
 class TestCleanSongTitle(unittest.TestCase):
@@ -70,6 +70,44 @@ class TestCleanSongTitle(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.assertEqual(clean_song_title(raw), expected)
 
+
+
+class TestExtractSongAndArtist(unittest.TestCase):
+    def test_youtube_video_with_prod_by_and_official_mv(self):
+        # Test exact metadata from YouTube video: 2OZktFecG_g
+        info = {
+            "title": "ZENTYARB - ฉบับท้ายสุด (Prod. by TRILOGY) [Official MV]",
+            "uploader": "ZENTYARB",
+            "channel": "ZENTYARB",
+        }
+        self.assertEqual(extract_song_and_artist(info), "ZENTYARB - ฉบับท้ายสุด")
+
+    def test_youtube_video_with_song_by_artist(self):
+        info = {
+            "title": "《 เพลงรัก 》 by Liz's x NATNON",
+            "uploader": "Liz's x NATNON",
+            "channel": "Liz's x NATNON",
+        }
+        self.assertEqual(extract_song_and_artist(info), "Liz's x NATNON - เพลงรัก")
+
+    def test_youtube_video_inversion_and_cleaning(self):
+        info = {
+            "title": "โฆษณาชวนเลือก - TaitosmitH |Official Lyrics Video|",
+            "uploader": "TaitosmitH Official",
+            "channel": "TaitosmitH Official",
+        }
+        self.assertEqual(extract_song_and_artist(info), "TaitosmitH - โฆษณาชวนเลือก")
+
+    def test_youtube_video_with_cjk_and_prod(self):
+        info = {
+            "title": "Takaaki Natsushiro - 藍より群青 feat. Suisei Hoshimachi (Prod. by TRILOGY) [ MV]",
+            "uploader": "Takaaki Natsushiro",
+            "channel": "Takaaki Natsushiro",
+        }
+        self.assertEqual(
+            extract_song_and_artist(info),
+            "Takaaki Natsushiro - 藍より群青 (Ai Yori Gunjou) Feat. Suisei Hoshimachi",
+        )
 
 if __name__ == "__main__":
     unittest.main()

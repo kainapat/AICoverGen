@@ -292,22 +292,23 @@ def extract_song_and_artist(info):
         return sanitize_filename(song_with_romaji)
 
     title_norm = unicodedata.normalize('NFKC', str(raw_title))
+    clean_title = clean_song_title(title_norm)
 
     # 2. Check for 'Song by Artist' pattern (e.g. 《 เพลงรัก 》 by Liz's x NATNON)
-    by_match = re.match(r'^[《【\[(]?\s*(.*?)\s*[》】\])]?\s*(?:by|โดย)\s+(.+)$', title_norm, re.IGNORECASE)
-    if by_match:
-        base_song, feat_in_song = parse_feat_clause(by_match.group(1))
-        song = clean_song_title(base_song)
-        song_with_romaji = romanize_cjk(song)
-        artist = resolve_artist_name(by_match.group(2), raw_channel, artists_list)
-        if feat_in_song:
-            feat_artist = resolve_feat_artist(feat_in_song, artists_list)
-            return sanitize_filename(f"{artist} - {song_with_romaji} Feat. {feat_artist}")
-        if artist:
-            return sanitize_filename(f"{artist} - {song_with_romaji}")
-        return sanitize_filename(song_with_romaji)
-
-    clean_title = clean_song_title(title_norm)
+    # Only evaluate if title does not already have an explicit ' - ' separator
+    if ' - ' not in clean_title:
+        by_match = re.match(r'^[《【\[(]?\s*(.*?)\s*[》】\])]?\s+(?:by|โดย)\s+(.+)$', clean_title, re.IGNORECASE)
+        if by_match:
+            base_song, feat_in_song = parse_feat_clause(by_match.group(1))
+            song = clean_song_title(base_song)
+            song_with_romaji = romanize_cjk(song)
+            artist = resolve_artist_name(by_match.group(2), raw_channel, artists_list)
+            if feat_in_song:
+                feat_artist = resolve_feat_artist(feat_in_song, artists_list)
+                return sanitize_filename(f"{artist} - {song_with_romaji} Feat. {feat_artist}")
+            if artist:
+                return sanitize_filename(f"{artist} - {song_with_romaji}")
+            return sanitize_filename(song_with_romaji)
 
     # 3. If title already has ' - ' (Artist - Song or Song - Artist)
     if ' - ' in clean_title:
