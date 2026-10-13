@@ -66,6 +66,7 @@ license: mit
 | 🔍 **Lyrics Checker (Optional)** | ฟังเสียงร้องด้วย ASR (faster-whisper) แล้วเทียบกับเนื้อเพลงอ้างอิง รายงานความต่างที่น่าสงสัย (`substitution`/`omission`/`insertion`/`uncertain`) พร้อมเวลาระดับคำ/ระดับช่วง ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก รองรับไทย-อังกฤษ + ขยายภาษาได้โดยไม่แตะ core | Optional ASR-based lyric verification with word/segment-level timestamps and extensible multilingual rules. Off by default; never blocks cover generation. Supports Thai & English. |
 | 🔬 **Post-RVC Analysis (Optional)** | เทียบเสียงร้องต้นฉบับกับเสียงหลัง RVC ด้วย ASR ค่าเดียวกันทั้งสองฝั่ง รายงานแยก 5 เคส (อ้างอิง-vs-ต้นฉบับ/อ้างอิง-vs-หลัง RVC/Transcript-เทียบกัน/คุณภาพสัญญาณ/ข้อจำกัด) พร้อมเวลาอ้างอิงไฟล์หลัง RVC อ่านอย่างเดียว ไม่แตะ RVC settings ไม่ลบไฟล์ cover | Optional pre/post-RVC vocal comparison with same ASR settings on both sides. Read-only; never retunes RVC or deletes outputs. |
 | ✏️ **Lyric Review (Optional)** | ตรวจทานและแก้ไขเนื้อร้องทีละจุด (`MATCH`/`POSSIBLE_MISMATCH`/`MISSING_TEXT`/`EXTRA_TEXT`/`ALIGNMENT_UNRELIABLE`) พร้อม Preview/ยืนยัน/ย้อนกลับ ต้นฉบับ ASR ไม่ถูกแตะ ทุกการแก้มีประวัติ บันทึก JSON sidecar ได้ ปิดไว้โดยปริยาย | Optional item-by-item lyric review with preview/confirm/revert. Immutable ASR original with audit trail. Off by default. |
+| 📊 **Audio Quality Eval (Optional)** | วัดคุณภาพสัญญาณที่นิยามชัด (peak/rms/เงียบ/clipping/ความยาว) + สัดส่วนเวลาที่เชื่อถือได้ (`timed_ratio`) + เวลารัน/VRAM แยกตัวเลขระดับสัญญาณออกจากการประเมินความไพเราะของเสียง | Measurable signal metrics and alignment coverage with explicit definitions. Levels only, never naturalness claims. |
 
 ---
 
@@ -232,6 +233,10 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
 
 > ⚠️ **ข้อจำกัด:** Pipeline สร้าง cover รองรับเฉพาะทั้งเพลง (`song_cover_pipeline`/`process_song`/`voice_change` ไม่มีพารามิเตอร์ช่วงเวลา) จึง**ไม่มีการประมวลผลเสียงเฉพาะ segment** ในรอบนี้ — Phase 4 ส่งมอบเฉพาะ workflow ตรวจทาน/แก้ไขข้อความ ไม่มีการตัดต่อหรือสร้างเสียงใหม่ และไม่รับประกันว่ารัน RVC ซ้ำจะทำให้คำร้องถูกต้องขึ้น
 
+### 📊 ประเมินคุณภาพเสียง (Phase 5, วัดได้จริง)
+
+โมดูล `src/lyrics/eval.py` รวมตัวเลขที่มีนิยามชัด: `peak`/`rms`/สัดส่วนเงียบ/`clipping`/ความยาว-SR-channels (`audio_info` + `signal_checks`) สัดส่วน mismatch ที่มีเวลา (`timed_ratio` + granularity ผ่าน `alignment_stats`) และเวลารัน + CUDA peak ของ torch allocator (ผ่าน `measure_runtime` — ไม่รวม VRAM ของ ctranslate2 ดูทั้งการ์ดด้วย `nvidia-smi`) ตัวเลขเหล่านี้บอกแค่ระดับสัญญาณกับการรู้จำของ ASR **ไม่ได้รับประกันความไพเราะ สำเนียง หรือความเหมือนเสียงร้อง** วิธีรันทดสอบทั้งหมดดูที่ `tests/README.md` (unit บน system Python, real-audio/`tiny` ASR บน `.venv`)
+
 ---
 
 ## 💻 หน้าต่าง Terminal Carbon Console | Live Telemetry
@@ -341,12 +346,12 @@ AICoverGen/
 ├── 🛡️ launcher_process.py          # Windows Job Object & Kernel Process Guard
 ├── 🪟 start_webui.ps1              # สคริปต์รันบน PowerShell พร้อมระบบตรวจเช็ค
 ├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube
-├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E + Lyrics Checker/Post-RVC/Review)
+├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E + Lyrics Checker/Post-RVC/Review/Eval) — วิธีรันดู `tests/README.md`
 ├── 📁 src/
 │   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Carbon Audio Player)
 │   ├── ⚙️ main.py                  # Core Engine & Audio Processing Pipeline
 │   ├── 🏷️ song_metadata.py         # Deep Module: SongMetadata Domain & Multi-language Normalizer
-│   ├── 🔍 lyrics/                   # Optional Lyrics Checker + Post-RVC + Review (asr/compare/align/report/postrvc/review, fail-safe)
+│   ├── 🔍 lyrics/                   # Optional Lyrics Checker + Post-RVC + Review + Eval (asr/compare/align/report/postrvc/review/eval, fail-safe)
 │   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX Fast Mode)
 │   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion v2)
 ├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง RVC (.pth, .index)

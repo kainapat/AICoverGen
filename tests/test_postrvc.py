@@ -202,6 +202,16 @@ class TestAudioMetrics(unittest.TestCase):
         q = postrvc.signal_checks(p)
         self.assertEqual(q["flags"], [])
 
+    def test_rms_value_not_shadowed(self):
+        # Regression: the silence loop must not overwrite the overall rms.
+        # 0.3 sine has rms 0.3/sqrt(2) ≈ 0.2121, not the last window's level.
+        import math
+        p = self._p("r.wav")
+        t = np.arange(self.sr * 2) / self.sr
+        write_wav(p, 0.3 * np.sin(2 * np.pi * 440 * t), self.sr)
+        q = postrvc.signal_checks(p)
+        self.assertAlmostEqual(q["rms"], 0.3 / math.sqrt(2), places=3)
+
     def test_duration_mismatch_warns_but_proceeds(self):
         s = self._p("s.wav")
         c = self._p("c.wav")

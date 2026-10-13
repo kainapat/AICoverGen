@@ -91,6 +91,9 @@ def signal_checks(audio_path: str) -> dict:
     mono = data.mean(axis=1) if data.shape[1] > 1 else data[:, 0]
     sr = info["sample_rate"]
     peak = float(np.max(np.abs(mono))) if mono.size else 0.0
+    # RMS overall level (linear, full-scale ref): loudness-adjacent metric,
+    # NOT a quality verdict. See eval.format_metrics_block for the disclaimer.
+    rms = float(np.sqrt(np.mean(mono ** 2))) if mono.size else 0.0
     clipping_ratio = float(np.mean(np.abs(mono) >= CLIPPING_LEVEL)) if mono.size else 0.0
     win = max(int(sr * 0.1), 1)
     n_win = max(len(mono) // win, 1)
@@ -99,8 +102,10 @@ def signal_checks(audio_path: str) -> dict:
     run_start: Optional[int] = None
     for i in range(n_win):
         chunk = mono[i * win:(i + 1) * win]
-        rms = float(np.sqrt(np.mean(chunk ** 2))) if chunk.size else 0.0
-        if rms < SILENCE_RMS_THRESHOLD:
+        # NOTE: must not reuse the name `rms` here — it holds the overall
+        # level computed above (F-bug caught by Phase 5 real-audio check).
+        w_rms = float(np.sqrt(np.mean(chunk ** 2))) if chunk.size else 0.0
+        if w_rms < SILENCE_RMS_THRESHOLD:
             silent_windows += 1
             if run_start is None:
                 run_start = i
@@ -128,6 +133,7 @@ def signal_checks(audio_path: str) -> dict:
         "duration_sec": info["duration_sec"],
         "sample_rate": sr,
         "peak": peak,
+        "rms": rms,
         "clipping_ratio": clipping_ratio,
         "silent_ratio": silent_ratio,
         "longest_silence": (
@@ -235,7 +241,8 @@ class PostRVCReport:
                 continue
             flag_txt = "; ".join(q.get("flags", [])) or "ปกติ / no flags"
             lines.append(
-                f"- {label}: peak {q.get('peak', 0):.3f}, เงียบ {q.get('silent_ratio', 0):.0%}, "
+                f"- {label}: peak {q.get('peak', 0):.3f}, rms {q.get('rms', 0):.4f}, "
+                f"เงียบ {q.get('silent_ratio', 0):.0%}, "
                 f"clip {q.get('clipping_ratio', 0):.2%} → {flag_txt}")
         lines.append("### เคส 5 — ข้อจำกัด")
         lines.append(
