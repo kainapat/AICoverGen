@@ -37,6 +37,7 @@ license: mit
 - [📸 ภาพตัวอย่างหน้าจอ (Screenshots)](#--ภาพตัวอย่างหน้าจอ--screenshots)
 - [🚀 เริ่มต้นใช้งานบน Windows (Quick Start)](#--เริ่มต้นใช้งานบน-windows--quick-start)
 - [🎵 ขั้นตอนการสร้างเพลง Cover (Step-by-Step Guide)](#--ขั้นตอนการสร้างเพลง-cover--step-by-step-guide)
+- [🔍 ตรวจสอบเนื้อร้อง (Lyrics Checker)](#--ตรวจสอบเนื้อร้อง-lyrics-checker)
 - [💻 หน้าต่าง Terminal Carbon Console (Live Telemetry)](#--หน้าต่าง-terminal-carbon-console--live-telemetry)
 - [🛑 ระบบปิดโปรแกรมอย่างปลอดภัย (Reliable Shutdown Contract)](#--ระบบปิดโปรแกรมอย่างปลอดภัย--reliable-shutdown-contract)
 - [📐 แผนภาพสถาปัตยกรรมและกระบวนการทำงาน (System Diagrams)](#--แผนภาพสถาปัตยกรรมและกระบวนการทำงาน--system-diagrams)
@@ -62,6 +63,7 @@ license: mit
 | 💻 **Carbon Console Launcher** | หน้าต่าง Terminal จัดเต็มด้วย ANSI IBM Carbon Palette (`#4589ff` + `#525252`), กรอบมุมมนอ่านสบายตา, จัดระเบียบขั้นตอนประมวลผลชัดเจน, ซ่อน Warning กวนใจ, พร้อม Live GPU/VRAM Telemetry | Sleek IBM Carbon themed console launcher with high-contrast typography, border boxes, stream progress indicators, and deprecation notice suppression. |
 | 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Carbon error diagnostic card with WinError 10054 noise filtering, full traceback buffer drainer, and crash pause guard. |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English across all tabs. |
+| 🔍 **Lyrics Checker (Optional)** | ฟังเสียงร้องด้วย ASR (faster-whisper) แล้วเทียบกับเนื้อร้องที่วางไว้ รายงานคำที่อาจผิด/ขาด/เกินพร้อม timestamp ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก รองรับไทย-อังกฤษ | Optional ASR-based lyric verification against pasted reference lyrics with timestamped mismatch reports. Off by default; never blocks cover generation. Supports Thai & English. |
 
 ---
 
@@ -190,6 +192,28 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
 
 ---
 
+## 🔍 ตรวจสอบเนื้อร้อง | Lyrics Checker
+
+ระบบเสริม (ปิดไว้โดยปริยาย) ใช้ ASR ฟังเสียงร้องแล้วเทียบกับเนื้อร้องที่คุณวางไว้ เหมาะสำหรับเช็กว่าเนื้อเพลงต้นฉบับตรงกับที่ร้องจริงหรือไม่ **ก่อน/หลัง** แปลงเสียง RVC:
+
+1. **ติดตั้ง dependency เสริม (ครั้งเดียว):**
+   ```powershell
+   .\.venv\Scripts\pip install "faster-whisper>=1.0.0"
+   ```
+   > ⚠️ หาก MDX แยกเสียงบน GPU ไม่ทำงานหลังติดตั้ง (เมนู CUDA หาย) ให้รันคำสั่งนี้เพื่อคืน `onnxruntime-gpu`:
+   > ```powershell
+   > .\.venv\Scripts\pip uninstall -y onnxruntime
+   > .\.venv\Scripts\pip install "onnxruntime-gpu==1.22.0" "numpy==1.23.5" "sympy==1.13.1"
+   > ```
+2. **เปิดใช้งาน:** แท็บสร้างเพลง → กาง Accordion **ตรวจสอบเนื้อร้อง / Lyrics Checker** → ติ๊กเปิดใช้
+3. **วางเนื้อร้องอ้างอิงทั้งเพลงตามลำดับท่อน** (ถ้าวางแค่ท่อนฮุก ท่อนอื่นจะโดนรายงานว่าขาด)
+4. **เลือกภาษา** (`th`/`en` หรือ `auto`) และ**ขนาดโมเดล** (ค่าเริ่มต้น `base` + `cpu` ปลอดภัยกับ VRAM 4GB) แล้วกด **ตรวจสอบเนื้อร้อง / Check lyrics**
+5. **อ่านรายงาน:** ตารางคำที่อาจผิด/ขาด/เกิน (`substitution`/`omission`/`insertion`/`uncertain`) พร้อมเวลาระดับคำเมื่อเชื่อถือได้
+
+> 💡 **ข้อควรรู้:** ASR ฟังเสียงร้องเพลงได้ไม่สมบูรณ์ ผลต่างอาจมาจากเทคนิคการร้อง เสียงดนตรีปน หรือ ASR เอง — **ไม่ใช่หลักฐานว่า RVC เปลี่ยนเนื้อร้อง** ควรฟังเสียงต้นฉบับตรง timestamp นั้นเทียบก่อนเสมอ | Singing ASR is imperfect; mismatches are suspicions, not proof of changed lyrics.  
+
+---
+
 ## 💻 หน้าต่าง Terminal Carbon Console | Live Telemetry
 
 เมื่อเปิดโปรแกรมผ่าน Launcher หน้าต่างคอนโซลจะแสดงผลแบบ Full IBM Carbon Theme:
@@ -297,11 +321,12 @@ AICoverGen/
 ├── 🛡️ launcher_process.py          # Windows Job Object & Kernel Process Guard
 ├── 🪟 start_webui.ps1              # สคริปต์รันบน PowerShell พร้อมระบบตรวจเช็ค
 ├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube
-├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E)
+├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E + Lyrics Checker)
 ├── 📁 src/
 │   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Carbon Audio Player)
 │   ├── ⚙️ main.py                  # Core Engine & Audio Processing Pipeline
 │   ├── 🏷️ song_metadata.py         # Deep Module: SongMetadata Domain & Multi-language Normalizer
+│   ├── 🔍 lyrics/                   # Optional Lyrics Checker (asr/compare/align/report, fail-safe)
 │   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX Fast Mode)
 │   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion v2)
 ├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง RVC (.pth, .index)
@@ -336,6 +361,10 @@ AICoverGen/
   เป็นพฤติกรรมปกติของ Windows Asyncio เมื่อผู้ใช้กด F5 หรือปิดแท็บเบราว์เซอร์ ระบบได้ติดตั้งตัวกรองระดับ Transport Layer เพื่อระงับข้อความดังกล่าวแล้ว ทำให้ Terminal สะอาดและไม่ขึ้นกล่องแดงผิดพลาด
 * 🔒 **เจอปัญหาดาวน์โหลดโมเดลจาก Hugging Face ติดสิทธิ์ (Error 401/403):**  
   เข้าเว็บ huggingface.co ไปที่หน้ารายการโมเดลนั้น แล้วกดยอมรับเงื่อนไข จากนั้นสร้าง Access Token ฟรีที่ `huggingface.co/settings/tokens` แล้วนำมาวางในช่อง **🔑 HF Token** ในแท็บ Download Model
+* 🔍 **Lyrics Checker ถอดเสียงได้ว่างเปล่า / เกือบว่าง:**  
+  ระบบปิด VAD Filter เป็นค่าเริ่มต้นแล้วเพราะ VAD สำหรับเสียงพูดมักตัดเสียงร้องทิ้ง หากยังว่าง ให้ลองโมเดลใหญ่ขึ้น (`small`) หรือใช้ไฟล์เสียงร้องที่แยกแล้ว (`*_Vocals_Main.wav`) แทนไฟล์เพลงทั้งเพลง
+* 🎮 **ลง faster-whisper แล้ว MDX ไม่ใช้ GPU:**  
+  ตัวติดตั้ง faster-whisper ดึง `onnxruntime` (CPU) มาทับ `onnxruntime-gpu` ให้รันคำสั่งคืนค่าตามข้อ 1 ของหัวข้อ [🔍 ตรวจสอบเนื้อร้อง](#--ตรวจสอบเนื้อร้อง-lyrics-checker)
 
 ---
 

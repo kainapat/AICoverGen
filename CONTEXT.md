@@ -68,6 +68,11 @@
 | **Extended Promotional Noise Filter** | Robust multi-pattern sanitizer eliminating `Official Lyrics Video` (plural and singular), pipe-enclosed promo tags (`|...|`), double-slash tags (`//...//`), visualizers, and trailing broadcast noise without damaging true song titles. |
 | **Title Pre-cleaning Pipeline** | Architecture pattern in `extract_song_and_artist()` executing `clean_song_title()` on normalized titles prior to evaluating `Song by Artist` and `Artist - Song` grammar. Prevents internal `by` keywords in producer credits (e.g. `(Prod. by TRILOGY)`) from hijacking the artist-detection parser. |
 | **SongMetadata Module** | Deep domain module (`src/song_metadata.py`) encapsulating Unicode normalization, promotional noise cleaning, producer credit removal, CJK romanization, and smart song-artist inversion behind a unified seam: `SongMetadata.from_input()`. |
+| **Lyrics Checker** | Optional subsystem (`src/lyrics/`) that transcribes vocals with ASR and compares against user-supplied reference lyrics. Disabled by default; failures never break the RVC pipeline. |
+| **Reference Lyrics** | Expected lyric text supplied by the user. |
+| **Recognized Lyrics** | Text produced by ASR listening to the (sung) vocals — imperfect by nature. |
+| **Mismatch** | Classified difference between reference and recognized lyrics: `substitution`, `omission`, `insertion`, or `uncertain`. A mismatch is a suspicion, not proof the lyrics were changed. |
+| **Timestamp Reliability** | Whether word-level times are trustworthy. Unreliable/missing times are shown as "—" with an explicit warning. |
 
 ## Pipeline Flow
 

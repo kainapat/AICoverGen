@@ -763,6 +763,34 @@ if __name__ == '__main__':
                 gr.Markdown('### รูปแบบไฟล์เสียง / Output Format')
                 output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='ชนิดไฟล์ / Output file type', info='mp3: ไฟล์เล็ก คุณภาพพอใช้ wav: ไฟล์ใหญ่ คุณภาพดีสุด / mp3: small file, decent quality. wav: large file, best quality')
 
+            with gr.Accordion('ตรวจสอบเนื้อร้อง / Lyrics Checker (optional)', open=False):
+                gr.Markdown('ฟังเสียงร้องด้วย ASR แล้วเทียบกับเนื้อร้องที่ให้มา — ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก / Transcribes vocals and compares with your reference lyrics. Off by default; never blocks cover generation.')
+                lyrics_enable = gr.Checkbox(False, label='เปิดใช้ Lyrics Checker / Enable', info='ต้องติดตั้ง faster-whisper ก่อน (optional) / Requires faster-whisper (optional dep)')
+                with gr.Row():
+                    lyrics_ref = gr.Textbox(label='เนื้อร้องอ้างอิง / Reference lyrics', placeholder='วางเนื้อร้องที่นี่... / Paste expected lyrics here', lines=5)
+                    with gr.Column():
+                        lyrics_lang = gr.Dropdown(['auto', 'th', 'en'], value='auto', label='ภาษา / Language', info='auto = ตรวจอัตโนมัติ (อาจผิดสำหรับเพลงร้อง) / Auto-detect may err on singing')
+                        lyrics_model = gr.Dropdown(['tiny', 'base', 'small'], value='base', label='ขนาดโมเดล ASR / ASR model', info='base+CPU ปลอดภัยกับ VRAM 4GB / Safe default for 4GB VRAM')
+                        lyrics_device = gr.Dropdown(['cpu', 'cuda'], value='cpu', label='อุปกรณ์ / Device', info='ใช้ cpu เพื่อไม่แย่ง VRAM กับ RVC / cpu avoids VRAM contention')
+                lyrics_btn = gr.Button('ตรวจสอบเนื้อร้อง / Check lyrics 🔍', variant='secondary')
+                lyrics_report = gr.Markdown('ติ๊กเปิดใช้แล้วกดปุ่มตรวจสอบ / Enable and press Check.')
+
+                def run_lyrics_check(audio_file, enabled, ref, lang, model, device):
+                    if not enabled:
+                        return '☑️ Lyrics Checker ปิดอยู่ — เปิดสวิตช์ก่อน / Checker is disabled.'
+                    if not audio_file:
+                        return '❌ กรุณาเลือกไฟล์เสียงก่อน / Please select an audio file first.'
+                    try:
+                        from lyrics import analyze_vocals
+                    except ImportError as e:
+                        return f'❌ โมดูล lyrics โหลดไม่ได้: {e}'
+                    rep = analyze_vocals(audio_file, ref or '', lang, model, device)
+                    return rep.to_markdown()
+
+                lyrics_btn.click(run_lyrics_check,
+                                 inputs=[local_file, lyrics_enable, lyrics_ref, lyrics_lang, lyrics_model, lyrics_device],
+                                 outputs=[lyrics_report])
+
             with gr.Row():
                 clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input, fast_mode])
                 generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')

@@ -26,3 +26,8 @@ spaces
 matplotlib-inline
 pykakasi==2.3.0
 kroman==1.1
+# Optional: Lyrics Checker (ASR) only — the RVC pipeline works without it.
+# NOTE: installs plain `onnxruntime` (CPU). If MDX GPU stops using CUDA after
+# installing this, run: pip uninstall -y onnxruntime && pip install "onnxruntime-gpu==1.22.0"
+# (the `onnxruntime` module is provided by either package; faster-whisper works with both).
+faster-whisper>=1.0.0
