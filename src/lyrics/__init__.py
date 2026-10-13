@@ -43,10 +43,13 @@ from .compare import (
     supported_languages,
 )
 from .report import LyricsReport, build_report, error_report
+from .review import REVIEW_STATUSES, build_review
 
 __all__ = [
     "analyze_vocals",
     "analyze_transcript",
+    "build_review",
+    "REVIEW_STATUSES",
     "compare_texts",
     "compare_source_converted",
     "compare_lyrics",

@@ -65,6 +65,7 @@ license: mit
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English across all tabs. |
 | 🔍 **Lyrics Checker (Optional)** | ฟังเสียงร้องด้วย ASR (faster-whisper) แล้วเทียบกับเนื้อเพลงอ้างอิง รายงานความต่างที่น่าสงสัย (`substitution`/`omission`/`insertion`/`uncertain`) พร้อมเวลาระดับคำ/ระดับช่วง ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก รองรับไทย-อังกฤษ + ขยายภาษาได้โดยไม่แตะ core | Optional ASR-based lyric verification with word/segment-level timestamps and extensible multilingual rules. Off by default; never blocks cover generation. Supports Thai & English. |
 | 🔬 **Post-RVC Analysis (Optional)** | เทียบเสียงร้องต้นฉบับกับเสียงหลัง RVC ด้วย ASR ค่าเดียวกันทั้งสองฝั่ง รายงานแยก 5 เคส (อ้างอิง-vs-ต้นฉบับ/อ้างอิง-vs-หลัง RVC/Transcript-เทียบกัน/คุณภาพสัญญาณ/ข้อจำกัด) พร้อมเวลาอ้างอิงไฟล์หลัง RVC อ่านอย่างเดียว ไม่แตะ RVC settings ไม่ลบไฟล์ cover | Optional pre/post-RVC vocal comparison with same ASR settings on both sides. Read-only; never retunes RVC or deletes outputs. |
+| ✏️ **Lyric Review (Optional)** | ตรวจทานและแก้ไขเนื้อร้องทีละจุด (`MATCH`/`POSSIBLE_MISMATCH`/`MISSING_TEXT`/`EXTRA_TEXT`/`ALIGNMENT_UNRELIABLE`) พร้อม Preview/ยืนยัน/ย้อนกลับ ต้นฉบับ ASR ไม่ถูกแตะ ทุกการแก้มีประวัติ บันทึก JSON sidecar ได้ ปิดไว้โดยปริยาย | Optional item-by-item lyric review with preview/confirm/revert. Immutable ASR original with audit trail. Off by default. |
 
 ---
 
@@ -225,6 +226,12 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
 
 กาง Accordion **ตรวจสอบหลัง RVC / Post-RVC Analysis** แล้วเลือกไฟล์เสียงร้องต้นฉบับ (`*_Vocals_Main_DeReverb.wav`) กับเสียงหลัง RVC (`*_<voice>_..._.wav`) ระบบถอดเสียงทั้งสองฝั่งด้วย ASR ค่าเดียวกัน แล้วรายงานแยก 5 เคส: อ้างอิง-vs-ต้นฉบับ, อ้างอิง-vs-หลัง RVC, Transcript-ต้นฉบับ-vs-หลัง RVC (เวลาอ้างอิงไฟล์หลัง RVC), คุณภาพสัญญาณ (เงียบ/clipping/ความยาว), และข้อจำกัด — ไม่มีคะแนนรวมคะแนนเดียว ไม่แตะการตั้งค่า RVC ไม่ลบไฟล์ cover ที่สร้างแล้ว ถ้าไม่ให้เนื้อเพลงอ้างอิง เคสเทียบจะเป็นแค่การเทียบ Transcript ไม่ใช่การยืนยันเนื้อเพลง
 
+### ✏️ ตรวจทานเนื้อร้อง (Phase 4, optional)
+
+กาง Accordion **ตรวจทานเนื้อร้อง / Lyric Review** เลือกไฟล์เสียง + วางเนื้อเพลงอ้างอิง แล้วกดเริ่มตรวจทาน ระบบแยกผลเป็น `MATCH`/`POSSIBLE_MISMATCH`/`MISSING_TEXT`/`EXTRA_TEXT`/`ALIGNMENT_UNRELIABLE` พร้อมเหตุผลรายจุด (ไม่ใช่สาเหตุที่ยืนยันแล้ว) เลือกรายการ พิมพ์ข้อความแก้ไข กด Preview ดูผลก่อน แล้วกดยืนยันหรือย้อนกลับได้ — **ต้นฉบับ ASR ไม่ถูกแตะต้อง** ทุกการแก้บันทึกผู้ทำ (`user`) ลงประวัติ บันทึก session เป็น JSON ข้างไฟล์เสียง (`<audio>.review.json`) ได้โดยสมัครใจ
+
+> ⚠️ **ข้อจำกัด:** Pipeline สร้าง cover รองรับเฉพาะทั้งเพลง (`song_cover_pipeline`/`process_song`/`voice_change` ไม่มีพารามิเตอร์ช่วงเวลา) จึง**ไม่มีการประมวลผลเสียงเฉพาะ segment** ในรอบนี้ — Phase 4 ส่งมอบเฉพาะ workflow ตรวจทาน/แก้ไขข้อความ ไม่มีการตัดต่อหรือสร้างเสียงใหม่ และไม่รับประกันว่ารัน RVC ซ้ำจะทำให้คำร้องถูกต้องขึ้น
+
 ---
 
 ## 💻 หน้าต่าง Terminal Carbon Console | Live Telemetry
@@ -334,12 +341,12 @@ AICoverGen/
 ├── 🛡️ launcher_process.py          # Windows Job Object & Kernel Process Guard
 ├── 🪟 start_webui.ps1              # สคริปต์รันบน PowerShell พร้อมระบบตรวจเช็ค
 ├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube
-├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E + Lyrics Checker)
+├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E + Lyrics Checker/Post-RVC/Review)
 ├── 📁 src/
 │   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Carbon Audio Player)
 │   ├── ⚙️ main.py                  # Core Engine & Audio Processing Pipeline
 │   ├── 🏷️ song_metadata.py         # Deep Module: SongMetadata Domain & Multi-language Normalizer
-│   ├── 🔍 lyrics/                   # Optional Lyrics Checker + Post-RVC (asr/compare/align/report/postrvc, fail-safe)
+│   ├── 🔍 lyrics/                   # Optional Lyrics Checker + Post-RVC + Review (asr/compare/align/report/postrvc/review, fail-safe)
 │   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX Fast Mode)
 │   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion v2)
 ├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง RVC (.pth, .index)

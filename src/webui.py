@@ -824,6 +824,216 @@ if __name__ == '__main__':
                                   inputs=[postrvc_src, postrvc_conv, postrvc_enable, postrvc_ref, postrvc_lang, postrvc_model, postrvc_device, postrvc_timestamp],
                                   outputs=[postrvc_report])
 
+            with gr.Accordion('ตรวจทานเนื้อร้อง / Lyric Review (optional)', open=False):
+                gr.Markdown('ตรวจทานและแก้ไขเนื้อร้องทีละจุดจากผล ASR — ต้นฉบับ ASR ไม่ถูกแตะ การแก้ต้องกดยืนยันทุกครั้ง ปิดไว้โดยปริยาย / Review and correct lyrics item by item. Original ASR transcript is immutable; every edit needs explicit confirm. Off by default.')
+                review_enable = gr.Checkbox(False, label='เปิดใช้ Lyric Review / Enable', info='ต้องติดตั้ง faster-whisper ก่อน (optional) / Requires faster-whisper (optional dep)')
+                with gr.Row():
+                    review_audio = gr.File(label='ไฟล์เสียง / Audio file', interactive=True, type="filepath", file_types=audio_extensions, height=130)
+                    review_ref = gr.Textbox(label='เนื้อเพลงอ้างอิง / Reference lyrics', placeholder='วางเนื้อร้องที่นี่... / Paste expected lyrics here', lines=3)
+                with gr.Row():
+                    with gr.Column():
+                        review_lang = gr.Dropdown(['auto', 'th', 'en'], value='auto', label='ภาษา / Language', info='auto = ตรวจอัตโนมัติ (อาจผิดสำหรับเพลงร้อง) / Auto-detect may err on singing')
+                        review_model = gr.Dropdown(['tiny', 'base', 'small'], value='base', label='ขนาดโมเดล ASR / ASR model', info='base+CPU ปลอดภัยกับ VRAM 4GB / Safe default for 4GB VRAM')
+                    with gr.Column():
+                        review_device = gr.Dropdown(['cpu', 'cuda'], value='cpu', label='อุปกรณ์ / Device', info='ใช้ cpu เพื่อไม่แย่ง VRAM กับ RVC / cpu avoids VRAM contention')
+                        review_timestamp = gr.Dropdown(['word', 'segment', 'none'], value='word', label='เวลา / Timestamps', info='word=เวลาระดับคำ segment=เวลาระดับช่วง none=ไม่แสดงเวลา')
+                review_start = gr.Button('เริ่มตรวจทาน / Start review 🔍', variant='secondary')
+                review_state = gr.State(None)
+                review_status = gr.HTML('<div style="color:#8d8d8d;">ติ๊กเปิดใช้ เลือกไฟล์ แล้วกดเริ่มตรวจทาน / Enable, pick a file, press Start.</div>')
+                review_items = gr.HTML('')
+                with gr.Row():
+                    review_picker = gr.Dropdown([], label='เลือกรายการ / Pick item', info='รายการที่ต้องตรวจทาน / Items to review')
+                    review_edit = gr.Textbox(label='ข้อความแก้ไข / Corrected text', placeholder='พิมพ์ข้อความที่ถูกต้อง หรือเว้นไว้แล้วกดยืนยันหากต้นฉบับถูกแล้ว')
+                with gr.Row():
+                    review_apply = gr.Button('บันทึกการแก้ / Apply edit')
+                    review_confirm = gr.Button('ยืนยันต้นฉบับถูกแล้ว / Confirm original')
+                    review_revert = gr.Button('ย้อนกลับ / Revert')
+                with gr.Row():
+                    review_preview_btn = gr.Button('ดู Preview + ตรวจซ้ำ / Preview & recheck')
+                    review_save = gr.Button('บันทึก JSON / Save')
+                    review_discard = gr.Button('ทิ้ง / Discard', variant='stop')
+                review_detail = gr.HTML('')
+                review_preview_box = gr.HTML('')
+
+                def _review_items_html(state):
+                    import html as _h
+                    if not state:
+                        return ''
+                    rows = []
+                    for it in state.get('items', []):
+                        mark = '✅' if it.get('reviewed') else '🔍'
+                        t = (f"{it['start_time']:.1f}s–{it['end_time']:.1f}s"
+                             if it.get('start_time') is not None and it.get('end_time') is not None else '—')
+                        corr = f" → <b>{_h.escape(it['corrected_text'])}</b>" if it.get('corrected_text') is not None else ''
+                        rows.append(
+                            f"<div>{mark} <b>{_h.escape(it['id'])}</b> [{_h.escape(it['status'])}] "
+                            f"<span>{_h.escape(t)}</span><br>อ้างอิง: {_h.escape(it.get('ref_text') or '—')} → "
+                            f"ฟังได้: {_h.escape(it.get('hyp_text') or '—')}{corr}</div>")
+                    if not rows:
+                        return '<div>✅ ไม่พบจุดที่ต้องตรวจทาน / Nothing to review.</div>'
+                    return '<div>' + ''.join(rows) + '</div>'
+
+                def run_review_start(audio_file, enabled, ref, lang, model, device, timestamp_mode):
+                    if not enabled:
+                        return None, '<div>☑️ Lyric Review ปิดอยู่ — เปิดสวิตช์ก่อน / Review is disabled.</div>', '', gr.Dropdown(choices=[]), ''
+                    if not audio_file:
+                        return None, '<div style="color:#fa4d56;">❌ กรุณาเลือกไฟล์เสียงก่อน / Please select an audio file first.</div>', '', gr.Dropdown(choices=[]), ''
+                    try:
+                        from lyrics import analyze_vocals
+                        from lyrics.review import build_review, session_to_dict, validate_item_audio
+                    except ImportError as e:
+                        return None, f'<div style="color:#fa4d56;">❌ โมดูล review โหลดไม่ได้: {e}</div>', '', gr.Dropdown(choices=[]), ''
+                    rep = analyze_vocals(audio_file, ref or '', lang, model, device, timestamp_mode=timestamp_mode or 'word')
+                    if rep.error:
+                        import html as _h
+                        from lyrics.review import build_review as _br
+                        sess = _br(rep, audio_file)
+                        return session_to_dict(sess), f'<div>❌ ASR_FAILED: {_h.escape(rep.error)}</div>', '', gr.Dropdown(choices=[]), ''
+                    sess = build_review(rep, audio_file)
+                    issues = []
+                    for it in sess.items:
+                        issues.extend(f"{it.id}: {x}" for x in validate_item_audio(sess, it.id))
+                    extra = ('<div>⚠️ ' + '<br>'.join(issues) + '</div>') if issues else ''
+                    if sess.status == 'MATCH':
+                        return session_to_dict(sess), '<div>✅ ตรงกันทั้งหมด / All match.</div>', '', gr.Dropdown(choices=[]), ''
+                    if sess.status == 'NO_REFERENCE':
+                        return session_to_dict(sess), '<div>⚠️ ไม่มีเนื้อเพลงอ้างอิง — ตรวจทานไม่ได้ / No reference.</div>', '', gr.Dropdown(choices=[]), ''
+                    choices = [it.id for it in sess.items]
+                    return (session_to_dict(sess),
+                            f'<div>🔍 พบ {len(choices)} จุดให้ตรวจทาน / {len(choices)} items to review.</div>' + extra,
+                            _review_items_html(session_to_dict(sess)),
+                            gr.Dropdown(choices=choices, value=choices[0] if choices else None),
+                            '')
+
+                def run_review_detail(state, item_id):
+                    if not state or not item_id:
+                        return '', ''
+                    import html as _h
+                    for it in state.get('items', []):
+                        if it['id'] == item_id:
+                            prefill = it['corrected_text'] if it.get('corrected_text') is not None else it.get('hyp_text', '')
+                            return (f"<div><b>{_h.escape(it['id'])}</b> [{_h.escape(it['status'])}]<br>"
+                                    f"อ้างอิง: {_h.escape(it.get('ref_text') or '—')}<br>"
+                                    f"ฟังได้ (ต้นฉบับ ASR): {_h.escape(it.get('hyp_text') or '—')}<br>"
+                                    f"เหตุผล: {_h.escape(it.get('reason') or '')}</div>"), prefill
+                    return '<div>❌ ไม่พบรายการ / Item not found.</div>', ''
+
+                def _refresh_ui(state):
+                    import html as _h
+                    done = sum(1 for it in state.get('items', []) if it.get('reviewed'))
+                    total = len(state.get('items', []))
+                    return (state, _review_items_html(state),
+                            f'<div>ตรวจแล้ว {done}/{total} / Reviewed {done}/{total}.</div>')
+
+                def run_review_apply(state, item_id, text):
+                    if not state:
+                        return None, '', '<div>❌ เริ่มตรวจทานก่อน / Start a review first.</div>'
+                    if not item_id:
+                        return state, _review_items_html(state), '<div>❌ เลือกรายการก่อน / Pick an item first.</div>'
+                    try:
+                        from lyrics.review import apply_correction, session_from_dict, session_to_dict as _to
+                    except ImportError as e:
+                        return state, '', f'<div>❌ {e}</div>'
+                    sess = session_from_dict(state)
+                    try:
+                        apply_correction(sess, item_id, text or '', actor='user')
+                    except ValueError as e:
+                        return state, _review_items_html(state), f'<div>❌ {e}</div>'
+                    import html as _h
+                    return _refresh_ui(_to(sess))[:2] + (f'<div>✏️ บันทึกการแก้ { _h.escape(item_id)} แล้ว — กดยืนยันเพื่อปิดรายการ / Edit saved, press Confirm to close.</div>',)
+
+                def run_review_confirm(state, item_id):
+                    if not state or not item_id:
+                        return (state or None), '', '<div>❌ เลือกรายการก่อน / Pick an item first.</div>'
+                    try:
+                        from lyrics.review import confirm_correction, session_from_dict, session_to_dict as _to
+                    except ImportError as e:
+                        return state, '', f'<div>❌ {e}</div>'
+                    sess = session_from_dict(state)
+                    try:
+                        confirm_correction(sess, item_id, actor='user')
+                    except ValueError as e:
+                        return state, _review_items_html(state), f'<div>❌ {e}</div>'
+                    return _refresh_ui(_to(sess))[:2] + ('<div>✅ ยืนยันแล้ว / Confirmed.</div>',)
+
+                def run_review_revert(state, item_id):
+                    if not state or not item_id:
+                        return (state or None), '', '<div>❌ เลือกรายการก่อน / Pick an item first.</div>'
+                    try:
+                        from lyrics.review import revert_correction, session_from_dict, session_to_dict as _to
+                    except ImportError as e:
+                        return state, '', f'<div>❌ {e}</div>'
+                    sess = session_from_dict(state)
+                    try:
+                        revert_correction(sess, item_id, actor='user')
+                    except ValueError as e:
+                        return state, _review_items_html(state), f'<div>❌ {e}</div>'
+                    return _refresh_ui(_to(sess))[:2] + ('<div>↩️ ย้อนกลับแล้ว / Reverted.</div>',)
+
+                def run_review_preview(state):
+                    if not state:
+                        return '<div>❌ เริ่มตรวจทานก่อน / Start a review first.</div>'
+                    try:
+                        from lyrics.review import preview_corrected_text, recheck_reviewed, session_from_dict
+                    except ImportError as e:
+                        return f'<div>❌ {e}</div>'
+                    import html as _h
+                    sess = session_from_dict(state)
+                    prev = preview_corrected_text(sess)
+                    try:
+                        out = recheck_reviewed(sess, sess.language)
+                        recheck = f'ตรวจซ้ำ: เหลือ {len(out.mismatches)} จุด / Remaining: {len(out.mismatches)}.'
+                    except ValueError as e:
+                        recheck = f'ตรวจซ้ำไม่ได้: {e}'
+                    return (f'<div><b>Preview (ไม่แตะต้นฉบับ ASR):</b><br>{_h.escape(prev[:2000])}'
+                            f'{"…" if len(prev) > 2000 else ""}</div><div>{_h.escape(recheck)}</div>')
+
+                def run_review_save(state):
+                    if not state:
+                        return '<div>❌ ไม่มี session ให้บันทึก / Nothing to save.</div>'
+                    try:
+                        from lyrics.review import save_session, session_from_dict
+                    except ImportError as e:
+                        return f'<div>❌ {e}</div>'
+                    import html as _h
+                    sess = session_from_dict(state)
+                    if not sess.audio_path:
+                        return '<div>❌ ไม่พบ path ไฟล์เสียง / No audio path.</div>'
+                    path = sess.audio_path + '.review.json'
+                    try:
+                        save_session(sess, path)
+                    except OSError as e:
+                        return f'<div>❌ บันทึกไม่ได้: {_h.escape(str(e))}</div>'
+                    return f'<div>💾 บันทึกแล้ว: {_h.escape(path)} / Saved.</div>'
+
+                def run_review_discard():
+                    return None, '<div>🗑️ ทิ้ง session แล้ว / Discarded. ต้นฉบับ ASR ไม่ถูกแตะต้อง</div>', '', gr.Dropdown(choices=[]), ''
+
+                review_start.click(run_review_start,
+                                   inputs=[review_audio, review_enable, review_ref, review_lang, review_model, review_device, review_timestamp],
+                                   outputs=[review_state, review_status, review_items, review_picker, review_detail])
+                review_picker.change(run_review_detail,
+                                     inputs=[review_state, review_picker],
+                                     outputs=[review_detail, review_edit])
+                review_apply.click(run_review_apply,
+                                   inputs=[review_state, review_picker, review_edit],
+                                   outputs=[review_state, review_items, review_status])
+                review_confirm.click(run_review_confirm,
+                                     inputs=[review_state, review_picker],
+                                     outputs=[review_state, review_items, review_status])
+                review_revert.click(run_review_revert,
+                                    inputs=[review_state, review_picker],
+                                    outputs=[review_state, review_items, review_status])
+                review_preview_btn.click(run_review_preview,
+                                         inputs=[review_state],
+                                         outputs=[review_preview_box])
+                review_save.click(run_review_save,
+                                  inputs=[review_state],
+                                  outputs=[review_status])
+                review_discard.click(run_review_discard,
+                                     inputs=[],
+                                     outputs=[review_state, review_status, review_items, review_picker, review_detail])
+
             with gr.Row():
                 clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input, fast_mode])
                 generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')
