@@ -87,9 +87,18 @@ def get_model(model_size: str = DEFAULT_MODEL_SIZE, device: str = "cpu"):
     return model
 
 
-def unload_models() -> None:
-    """Free cached ASR models (e.g. before RVC needs VRAM)."""
-    _MODEL_CACHE.clear()
+def unload_models(device: str | None = None) -> None:
+    """Free cached ASR models (e.g. before RVC needs VRAM).
+
+    device=None clears everything (legacy behavior); device="cuda" frees
+    only GPU-cached models so CPU models stay warm for repeated checks.
+    """
+    if device is None:
+        _MODEL_CACHE.clear()
+        return
+    dev = (device or "").strip().lower()
+    for key in [k for k in _MODEL_CACHE if k[1] == dev]:
+        del _MODEL_CACHE[key]
 
 
 def transcribe(

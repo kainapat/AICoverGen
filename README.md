@@ -67,6 +67,7 @@ license: mit
 | 🔬 **Post-RVC Analysis (Optional)** | เทียบเสียงร้องต้นฉบับกับเสียงหลัง RVC ด้วย ASR ค่าเดียวกันทั้งสองฝั่ง รายงานแยก 5 เคส (อ้างอิง-vs-ต้นฉบับ/อ้างอิง-vs-หลัง RVC/Transcript-เทียบกัน/คุณภาพสัญญาณ/ข้อจำกัด) พร้อมเวลาอ้างอิงไฟล์หลัง RVC อ่านอย่างเดียว ไม่แตะ RVC settings ไม่ลบไฟล์ cover | Optional pre/post-RVC vocal comparison with same ASR settings on both sides. Read-only; never retunes RVC or deletes outputs. |
 | ✏️ **Lyric Review (Optional)** | ตรวจทานและแก้ไขเนื้อร้องทีละจุด (`MATCH`/`POSSIBLE_MISMATCH`/`MISSING_TEXT`/`EXTRA_TEXT`/`ALIGNMENT_UNRELIABLE`) พร้อม Preview/ยืนยัน/ย้อนกลับ ต้นฉบับ ASR ไม่ถูกแตะ ทุกการแก้มีประวัติ บันทึก JSON sidecar ได้ ปิดไว้โดยปริยาย | Optional item-by-item lyric review with preview/confirm/revert. Immutable ASR original with audit trail. Off by default. |
 | 📊 **Audio Quality Eval (Optional)** | วัดคุณภาพสัญญาณที่นิยามชัด (peak/rms/เงียบ/clipping/ความยาว) + สัดส่วนเวลาที่เชื่อถือได้ (`timed_ratio`) + เวลารัน/VRAM แยกตัวเลขระดับสัญญาณออกจากการประเมินความไพเราะของเสียง | Measurable signal metrics and alignment coverage with explicit definitions. Levels only, never naturalness claims. |
+| 🧹 **VRAM Auto-Cleanup + UI Wiring Locks** | ก่อนสร้าง cover ระบบคืน VRAM จากโมเดล ASR ที่ค้างบน CUDA อัตโนมัติ (CPU cache ยังอุ่นอยู่) พร้อม tests ล็อก wiring ของปุ่ม UI ทุกปุ่มว่า arity ตรง backend — ป้องกันปุ่มที่กดแล้วเงียบ | Auto-frees CUDA-cached ASR models before cover generation; AST tests lock every button's input/output arity. |
 
 ---
 
@@ -346,7 +347,7 @@ AICoverGen/
 ├── 🛡️ launcher_process.py          # Windows Job Object & Kernel Process Guard
 ├── 🪟 start_webui.ps1              # สคริปต์รันบน PowerShell พร้อมระบบตรวจเช็ค
 ├── 📁 downloads/                    # โฟลเดอร์เก็บไฟล์เสียงต้นฉบับที่ดาวน์โหลดจาก YouTube
-├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E + Lyrics Checker/Post-RVC/Review/Eval) — วิธีรันดู `tests/README.md`
+├── 🧪 tests/                        # ชุดทดสอบอัตโนมัติ (Process Lifecycle & Shutdown E2E + Lyrics Checker/Post-RVC/Review/Eval/UI-wiring) — วิธีรันดู `tests/README.md`
 ├── 📁 src/
 │   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Carbon Audio Player)
 │   ├── ⚙️ main.py                  # Core Engine & Audio Processing Pipeline

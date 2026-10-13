@@ -79,6 +79,21 @@ def update_models_list():
     return gr.update(choices=models_l)
 
 
+def free_lyrics_models():
+    """Best-effort cleanup of GPU-cached ASR models before cover generation.
+
+    Lyrics checking defaults to CPU, but a user may run it on CUDA; the cached
+    ctranslate2 model would then contend with RVC for VRAM. This frees only
+    CUDA entries (CPU models stay warm) and never raises, so cover generation
+    cannot break because of cleanup.
+    """
+    try:
+        from lyrics.asr import unload_models
+        unload_models(device="cuda")
+    except Exception:
+        pass
+
+
 def load_public_models():
     models_table = []
     for model in public_models['voice_models']:
@@ -873,43 +888,9 @@ if __name__ == '__main__':
                         return '<div>✅ ไม่พบจุดที่ต้องตรวจทาน / Nothing to review.</div>'
                     return '<div>' + ''.join(rows) + '</div>'
 
-                def run_review_start(audio_file, enabled, ref, lang, model, device, timestamp_mode):
-                    if not enabled:
-                        return None, '<div>☑️ Lyric Review ปิดอยู่ — เปิดสวิตช์ก่อน / Review is disabled.</div>', '', gr.Dropdown(choices=[]), ''
-                    if not audio_file:
-                        return None, '<div style="color:#fa4d56;">❌ กรุณาเลือกไฟล์เสียงก่อน / Please select an audio file first.</div>', '', gr.Dropdown(choices=[]), ''
-                    try:
-                        from lyrics import analyze_vocals
-                        from lyrics.review import build_review, session_to_dict, validate_item_audio
-                    except ImportError as e:
-                        return None, f'<div style="color:#fa4d56;">❌ โมดูล review โหลดไม่ได้: {e}</div>', '', gr.Dropdown(choices=[]), ''
-                    rep = analyze_vocals(audio_file, ref or '', lang, model, device, timestamp_mode=timestamp_mode or 'word')
-                    if rep.error:
-                        import html as _h
-                        from lyrics.review import build_review as _br
-                        sess = _br(rep, audio_file)
-                        return session_to_dict(sess), f'<div>❌ ASR_FAILED: {_h.escape(rep.error)}</div>', '', gr.Dropdown(choices=[]), ''
-                    sess = build_review(rep, audio_file)
-                    issues = []
-                    for it in sess.items:
-                        issues.extend(f"{it.id}: {x}" for x in validate_item_audio(sess, it.id))
-                    extra = ('<div>⚠️ ' + '<br>'.join(issues) + '</div>') if issues else ''
-                    if sess.status == 'MATCH':
-                        return session_to_dict(sess), '<div>✅ ตรงกันทั้งหมด / All match.</div>', '', gr.Dropdown(choices=[]), ''
-                    if sess.status == 'NO_REFERENCE':
-                        return session_to_dict(sess), '<div>⚠️ ไม่มีเนื้อเพลงอ้างอิง — ตรวจทานไม่ได้ / No reference.</div>', '', gr.Dropdown(choices=[]), ''
-                    choices = [it.id for it in sess.items]
-                    return (session_to_dict(sess),
-                            f'<div>🔍 พบ {len(choices)} จุดให้ตรวจทาน / {len(choices)} items to review.</div>' + extra,
-                            _review_items_html(session_to_dict(sess)),
-                            gr.Dropdown(choices=choices, value=choices[0] if choices else None),
-                            '')
-
-                def run_review_detail(state, item_id):
-                    if not state or not item_id:
-                        return '', ''
+                def _detail_for(state, item_id):
                     import html as _h
-                    for it in state.get('items', []):
+                    for it in (state or {}).get('items', []):
                         if it['id'] == item_id:
                             prefill = it['corrected_text'] if it.get('corrected_text') is not None else it.get('hyp_text', '')
                             return (f"<div><b>{_h.escape(it['id'])}</b> [{_h.escape(it['status'])}]<br>"
@@ -917,6 +898,45 @@ if __name__ == '__main__':
                                     f"ฟังได้ (ต้นฉบับ ASR): {_h.escape(it.get('hyp_text') or '—')}<br>"
                                     f"เหตุผล: {_h.escape(it.get('reason') or '')}</div>"), prefill
                     return '<div>❌ ไม่พบรายการ / Item not found.</div>', ''
+
+                def run_review_start(audio_file, enabled, ref, lang, model, device, timestamp_mode):
+                    if not enabled:
+                        return None, '<div>☑️ Lyric Review ปิดอยู่ — เปิดสวิตช์ก่อน / Review is disabled.</div>', '', gr.Dropdown(choices=[]), '', ''
+                    if not audio_file:
+                        return None, '<div style="color:#fa4d56;">❌ กรุณาเลือกไฟล์เสียงก่อน / Please select an audio file first.</div>', '', gr.Dropdown(choices=[]), '', ''
+                    try:
+                        from lyrics import analyze_vocals
+                        from lyrics.review import build_review, session_to_dict, validate_item_audio
+                    except ImportError as e:
+                        return None, f'<div style="color:#fa4d56;">❌ โมดูล review โหลดไม่ได้: {e}</div>', '', gr.Dropdown(choices=[]), '', ''
+                    rep = analyze_vocals(audio_file, ref or '', lang, model, device, timestamp_mode=timestamp_mode or 'word')
+                    if rep.error:
+                        import html as _h
+                        from lyrics.review import build_review as _br
+                        sess = _br(rep, audio_file)
+                        return session_to_dict(sess), f'<div>❌ ASR_FAILED: {_h.escape(rep.error)}</div>', '', gr.Dropdown(choices=[]), '', ''
+                    sess = build_review(rep, audio_file)
+                    issues = []
+                    for it in sess.items:
+                        issues.extend(f"{it.id}: {x}" for x in validate_item_audio(sess, it.id))
+                    extra = ('<div>⚠️ ' + '<br>'.join(issues) + '</div>') if issues else ''
+                    if sess.status == 'MATCH':
+                        return session_to_dict(sess), '<div>✅ ตรงกันทั้งหมด / All match.</div>', '', gr.Dropdown(choices=[]), '', ''
+                    if sess.status == 'NO_REFERENCE':
+                        return session_to_dict(sess), '<div>⚠️ ไม่มีเนื้อเพลงอ้างอิง — ตรวจทานไม่ได้ / No reference.</div>', '', gr.Dropdown(choices=[]), '', ''
+                    choices = [it.id for it in sess.items]
+                    state_dict = session_to_dict(sess)
+                    first_detail, first_prefill = _detail_for(state_dict, choices[0] if choices else '')
+                    return (state_dict,
+                            f'<div>🔍 พบ {len(choices)} จุดให้ตรวจทาน / {len(choices)} items to review.</div>' + extra,
+                            _review_items_html(state_dict),
+                            gr.Dropdown(choices=choices, value=choices[0] if choices else None),
+                            first_detail, first_prefill)
+
+                def run_review_detail(state, item_id):
+                    if not state or not item_id:
+                        return '', ''
+                    return _detail_for(state, item_id)
 
                 def _refresh_ui(state):
                     import html as _h
@@ -940,7 +960,8 @@ if __name__ == '__main__':
                     except ValueError as e:
                         return state, _review_items_html(state), f'<div>❌ {e}</div>'
                     import html as _h
-                    return _refresh_ui(_to(sess))[:2] + (f'<div>✏️ บันทึกการแก้ { _h.escape(item_id)} แล้ว — กดยืนยันเพื่อปิดรายการ / Edit saved, press Confirm to close.</div>',)
+                    new_state, items_html, _progress = _refresh_ui(_to(sess))
+                    return new_state, items_html, (f'<div>✏️ บันทึกการแก้ {_h.escape(item_id)} แล้ว — กดยืนยันเพื่อปิดรายการ / Edit saved, press Confirm to close.</div>')
 
                 def run_review_confirm(state, item_id):
                     if not state or not item_id:
@@ -954,7 +975,8 @@ if __name__ == '__main__':
                         confirm_correction(sess, item_id, actor='user')
                     except ValueError as e:
                         return state, _review_items_html(state), f'<div>❌ {e}</div>'
-                    return _refresh_ui(_to(sess))[:2] + ('<div>✅ ยืนยันแล้ว / Confirmed.</div>',)
+                    new_state, items_html, _progress = _refresh_ui(_to(sess))
+                    return new_state, items_html, '<div>✅ ยืนยันแล้ว / Confirmed.</div>'
 
                 def run_review_revert(state, item_id):
                     if not state or not item_id:
@@ -968,7 +990,8 @@ if __name__ == '__main__':
                         revert_correction(sess, item_id, actor='user')
                     except ValueError as e:
                         return state, _review_items_html(state), f'<div>❌ {e}</div>'
-                    return _refresh_ui(_to(sess))[:2] + ('<div>↩️ ย้อนกลับแล้ว / Reverted.</div>',)
+                    new_state, items_html, _progress = _refresh_ui(_to(sess))
+                    return new_state, items_html, '<div>↩️ ย้อนกลับแล้ว / Reverted.</div>'
 
                 def run_review_preview(state):
                     if not state:
@@ -1004,14 +1027,17 @@ if __name__ == '__main__':
                         save_session(sess, path)
                     except OSError as e:
                         return f'<div>❌ บันทึกไม่ได้: {_h.escape(str(e))}</div>'
-                    return f'<div>💾 บันทึกแล้ว: {_h.escape(path)} / Saved.</div>'
+                    done = sum(1 for it in sess.items if it.reviewed)
+                    total = len(sess.items)
+                    return (f'<div>💾 บันทึกแล้ว: {_h.escape(path)} / Saved. '
+                            f'(ตรวจแล้ว {done}/{total} / Reviewed {done}/{total}.)</div>')
 
                 def run_review_discard():
-                    return None, '<div>🗑️ ทิ้ง session แล้ว / Discarded. ต้นฉบับ ASR ไม่ถูกแตะต้อง</div>', '', gr.Dropdown(choices=[]), ''
+                    return None, '<div>🗑️ ทิ้ง session แล้ว / Discarded. ต้นฉบับ ASR ไม่ถูกแตะต้อง</div>', '', gr.Dropdown(choices=[]), '', ''
 
                 review_start.click(run_review_start,
                                    inputs=[review_audio, review_enable, review_ref, review_lang, review_model, review_device, review_timestamp],
-                                   outputs=[review_state, review_status, review_items, review_picker, review_detail])
+                                   outputs=[review_state, review_status, review_items, review_picker, review_detail, review_edit])
                 review_picker.change(run_review_detail,
                                      inputs=[review_state, review_picker],
                                      outputs=[review_detail, review_edit])
@@ -1032,7 +1058,7 @@ if __name__ == '__main__':
                                   outputs=[review_status])
                 review_discard.click(run_review_discard,
                                      inputs=[],
-                                     outputs=[review_state, review_status, review_items, review_picker, review_detail])
+                                     outputs=[review_state, review_status, review_items, review_picker, review_detail, review_edit])
 
             with gr.Row():
                 clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input, fast_mode])
@@ -1047,6 +1073,7 @@ if __name__ == '__main__':
             is_webui = gr.Number(value=1, visible=False)
 
             def run_cover_webui(*args):
+                free_lyrics_models()
                 cover_path = song_cover_pipeline(*args)
                 return render_player_card(cover_path)
 

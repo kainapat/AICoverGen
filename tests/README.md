@@ -3,8 +3,10 @@
 ## 1. Unit Tests (system Python — ไม่ต้องใช้ GPU/โมเดล)
 
 ```powershell
-python -m pytest tests/test_lyrics.py tests/test_lyrics_phase2.py tests/test_lyrics_alignment_guard.py tests/test_review.py tests/test_eval.py
+python -m pytest tests/test_lyrics.py tests/test_lyrics_phase2.py tests/test_lyrics_alignment_guard.py tests/test_review.py tests/test_eval.py tests/test_webui_wiring.py
 ```
+
+`test_webui_wiring.py` ตรวจโครง UI ผ่าน AST (ไม่ต้อง import gradio/torch): handler ทุกปุ่มต้องมีตัวตน, arity ของ inputs/outputs ต้องตรง, `run_cover_webui` ต้องคืน VRAM (`free_lyrics_models`) ก่อนเรียก pipeline
 
 `test_e2e_lyrics.py` จะ skip เคสที่ต้องใช้ไฟล์เสียงจริง/soundfile บน system Python โดยอัตโนมัติ
 
