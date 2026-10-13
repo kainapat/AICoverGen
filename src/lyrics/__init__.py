@@ -11,7 +11,13 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from .align import attach_timestamps, build_words_from_segments
+from .align import (
+    SegmentInfo,
+    attach_timestamps,
+    attach_timestamps_with_granularity,
+    build_segments_from_raw,
+    build_words_from_segments,
+)
 from .asr import (
     ASRError,
     DEFAULT_MODEL_SIZE,
@@ -49,13 +55,19 @@ __all__ = [
     "TranscriptionResult",
     "CompareResult",
     "Mismatch",
+    "SegmentInfo",
     "SUPPORTED_LANGUAGES",
     "SUPPORTED_MODEL_SIZES",
     "SUPPORTED_AUDIO_EXTS",
     "DEFAULT_MODEL_SIZE",
+    "TIMESTAMP_MODES",
     "ASRError",
     "AudioValidationError",
     "ModelLoadError",
+    "attach_timestamps",
+    "attach_timestamps_with_granularity",
+    "build_words_from_segments",
+    "build_segments_from_raw",
 ]
 
 
@@ -72,6 +84,9 @@ def compare_texts(
     return build_report(reference, recognized, result, language=language)
 
 
+TIMESTAMP_MODES = ("word", "segment", "none")
+
+
 def analyze_vocals(
     audio_path: str,
     reference_lyrics: str = "",
@@ -80,6 +95,7 @@ def analyze_vocals(
     device: str = "cpu",
     word_timestamps: bool = True,
     vad_filter: bool = False,
+    timestamp_mode: str = "word",
 ) -> LyricsReport:
     """Transcribe vocals and compare with reference. Never raises on ASR failure."""
     warnings: List[str] = []
@@ -110,17 +126,34 @@ def analyze_vocals(
             recognized = tx.text
         except Exception as e:
             return error_report(str(e))
+    mode = (timestamp_mode or "word").strip().lower()
+    if mode not in TIMESTAMP_MODES:
+        warnings.append(f"โหมดเวลา '{timestamp_mode}' ไม่รองรับ — ใช้ 'word' แทน")
+        mode = "word"
+    if not word_timestamps:
+        mode = "none"
     reliable = False
-    if word_timestamps and result.mismatches:
+    granularity = "none"
+    if mode != "none" and result.mismatches:
         try:
-            words = build_words_from_segments(tx.segments)
-            reliable = attach_timestamps(result.mismatches, words)
-            if not reliable:
+            words = build_words_from_segments(tx.segments) if mode == "word" else []
+            segments = build_segments_from_raw(tx.segments)
+            if mode == "segment":
+                words = []
+            reliable, granularity = attach_timestamps_with_granularity(
+                result.mismatches, words, segments
+            )
+            if granularity == "segment":
                 warnings.append(
-                    "เวลาระดับคำไม่น่าเชื่อถือ — ใช้เป็นแนวคร่าวๆ / Word timestamps unreliable"
+                    "ใช้เวลาระดับช่วง (segment) — หยาบกว่าระดับคำ ให้ตรวจด้วยหู"
+                )
+            elif not reliable:
+                warnings.append(
+                    "ไม่มีเวลาที่เชื่อถือได้ (—) — ใช้เป็นแนวคร่าวๆ / Timestamps unreliable"
                 )
         except Exception:
             warnings.append("แนบ timestamp ไม่สำเร็จ — แสดงผลแบบไม่มีเวลา")
+            reliable, granularity = False, "none"
     if tx.language and language == AUTO_LANGUAGE:
         warnings.append(f"ตรวจภาษาอัตโนมัติได้: {tx.language} (อาจผิดสำหรับเพลงร้อง)")
     return build_report(
@@ -131,6 +164,7 @@ def analyze_vocals(
         detected_language=tx.language,
         language_probability=tx.language_probability,
         timestamp_reliable=reliable,
+        timestamp_granularity=granularity,
         warnings=warnings,
         audio_path=audio_path,
         model_size=model_size,

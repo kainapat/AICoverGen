@@ -60,6 +60,7 @@ class LyricsReport:
     mismatches: List[Mismatch] = field(default_factory=list)
     similarity: float = 1.0
     timestamp_reliable: bool = False
+    timestamp_granularity: str = "none"
     warnings: List[str] = field(default_factory=list)
     error: Optional[str] = None
     audio_hash: str = ""
@@ -93,6 +94,7 @@ class LyricsReport:
             "language_probability": self.language_probability,
             "similarity": self.similarity,
             "timestamp_reliable": self.timestamp_reliable,
+            "timestamp_granularity": self.timestamp_granularity,
             "mismatch_count": self.mismatch_count,
             "mismatches": [
                 {
@@ -110,6 +112,12 @@ class LyricsReport:
             "device": self.device,
         }
 
+    def _granularity_label(self) -> str:
+        return {
+            "word": "เวลาระดับคำ / word-level",
+            "segment": "เวลาระดับช่วง / segment-level",
+        }.get(self.timestamp_granularity, "ไม่มีเวลาที่เชื่อถือได้ (—)")
+
     def to_markdown(self) -> str:
         lines = ["## ผลตรวจเนื้อร้อง / Lyrics Check"]
         if self.error:
@@ -122,7 +130,7 @@ class LyricsReport:
             shown = self.mismatches[:MAX_RENDERED_MISMATCHES]
             extra = len(self.mismatches) - len(shown)
             lines.append(
-                f"🔍 **พบจุดที่อาจต่าง {self.mismatch_count} จุด** "
+                f"🔍 **พบความต่างที่น่าสงสัย {self.mismatch_count} จุด** "
                 f"(similarity {self.similarity:.2f}) / Possible differences below:"
             )
             for i, m in enumerate(shown, 1):
@@ -132,14 +140,15 @@ class LyricsReport:
                     t = "—"
                 ref = (m.ref_text[:200] + "…") if len(m.ref_text) > 200 else (m.ref_text or "—")
                 hyp = (m.hyp_text[:200] + "…") if len(m.hyp_text) > 200 else (m.hyp_text or "—")
-                lines.append(f"{i}. [{m.category}] `{t}` อ้างอิง: {ref} → ฟังได้: {hyp}")
+                lines.append(f"{i}. [{m.category}] `{t}` เนื้อเพลงอ้างอิง: {ref} → ข้อความที่รู้จำได้: {hyp}")
             if extra > 0:
                 lines.append(f"…และอีก {extra} จุด / …and {extra} more")
+            lines.append(f"⏱️ {self._granularity_label()}")
             if not self.timestamp_reliable:
-                lines.append("⏱️ เวลาระดับคำไม่น่าเชื่อถือ/ไม่มี — ใช้เป็นแนวคร่าวๆ เท่านั้น")
-        if self.detected_language:
+                lines.append("⏱️ เวลาเป็นแนวคร่าวๆ ให้ตรวจด้วยหู — ใช้เป็นแนวคร่าวๆ เท่านั้น")
+        if self.detected_language or self.language:
             prob = f" ({self.language_probability:.2f})" if self.language_probability else ""
-            lines.append(f"\n🌐 ภาษาที่ตรวจได้ / Detected: {self.detected_language}{prob}")
+            lines.append(f"\n🌐 ภาษาที่เลือก: {self.language or 'auto'} | ภาษาที่ตรวจพบ: {self.detected_language or '—'}{prob}")
         lines.extend(f"\n- ⚠️ {w}" for w in self.warnings)
         lines.append(f"\n> {DISCLAIMER_TH}")
         lines.append(f"> {DISCLAIMER_EN}")
@@ -181,7 +190,7 @@ class LyricsReport:
                 if m.start_time is not None and m.end_time is not None:
                     t = f"{m.start_time:.1f}s – {m.end_time:.1f}s"
                 else:
-                    t = "เวลาไม่แน่นอน"
+                    t = "ไม่มีเวลาที่เชื่อถือได้ (—)"
                 parts.append(
                     '<div style="border:1px solid rgba(255,255,255,.12);border-radius:6px;'
                     'padding:10px 12px;margin-bottom:8px;">'
@@ -189,18 +198,20 @@ class LyricsReport:
                     f'<span style="display:inline-block;padding:1px 8px;border-radius:4px;font-size:.75rem;'
                     f'background:{color}22;border:1px solid {color};color:{color};">{esc(m.category)}</span> '
                     f'<span style="color:#c6c6c6;font-size:.8rem;">⏱️ {esc(t)}</span></div>'
-                    f"{self._html_text_block('อ้างอิง / Ref', m.ref_text)}"
-                    f"{self._html_text_block('ฟังได้ / Heard', m.hyp_text)}"
+                    f"{self._html_text_block('เนื้อเพลงอ้างอิง / Ref', m.ref_text)}"
+                    f"{self._html_text_block('ข้อความที่รู้จำได้ / Heard', m.hyp_text)}"
                     "</div>"
                 )
             if extra > 0:
                 parts.append(f"<div>…และอีก {extra} จุด (…and {extra} more)</div>")
+            parts.append(f"<div>⏱️ {esc(self._granularity_label())}</div>")
             if not self.timestamp_reliable:
-                parts.append("<div>⏱️ เวลาระดับคำไม่น่าเชื่อถือ/ไม่มี — ใช้เป็นแนวคร่าวๆ เท่านั้น</div>")
-        if self.detected_language:
+                parts.append("<div>⏱️ เวลาเป็นแนวคร่าวๆ ให้ตรวจด้วยหู — ใช้เป็นแนวคร่าวๆ เท่านั้น</div>")
+        if self.detected_language or self.language:
             prob = f" ({self.language_probability:.2f})" if self.language_probability else ""
             parts.append(
-                f"<div>🌐 ภาษาที่ตรวจได้ / Detected: {esc(self.detected_language)}{esc(prob)}</div>"
+                f"<div>🌐 ภาษาที่เลือก: {esc(self.language or 'auto')} | "
+                f"ภาษาที่ตรวจพบ: {esc(self.detected_language or '—')}{esc(prob)}</div>"
             )
         for w in self.warnings:
             parts.append(f'<div style="color:#c6c6c6;">⚠️ {esc(w)}</div>')
@@ -237,11 +248,15 @@ def build_report(
     detected_language: str = "",
     language_probability: Optional[float] = None,
     timestamp_reliable: bool = False,
+    timestamp_granularity: str = "none",
     warnings: Optional[List[str]] = None,
     audio_path: str = "",
     model_size: str = "",
     device: str = "",
 ) -> LyricsReport:
+    gran = (timestamp_granularity or "none").strip().lower()
+    if gran not in ("word", "segment", "none"):
+        gran = "none"
     return LyricsReport(
         reference_raw=reference_raw or "",
         recognized_raw=recognized_raw or "",
@@ -253,6 +268,7 @@ def build_report(
         mismatches=list(result.mismatches),
         similarity=result.similarity,
         timestamp_reliable=timestamp_reliable,
+        timestamp_granularity=gran,
         warnings=list(warnings or []),
         audio_hash=file_hash(audio_path) if audio_path and os.path.isfile(audio_path) else "",
         ref_hash=text_hash(reference_raw or ""),

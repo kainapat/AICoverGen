@@ -14,9 +14,44 @@ SUPPORTED_LANGUAGES = {
     "th": "Thai",
     "en": "English",
 }
-# Extensible without touching core logic: add e.g. {"ja": "Japanese"} here.
+# Extensible without touching core logic: use register_language(),
+# e.g. register_language("ja", "Japanese"). Direct dict edits still work.
 EXTRA_LANGUAGES: dict = {}
 AUTO_LANGUAGE = "auto"
+
+# Per-language text rules. Each entry may define:
+#   "normalizer": Callable[[str], str]  (NFKC/zero-width already handled by caller
+#                only when using normalize_text(); custom normalizers receive raw text)
+#   "tokenizer": Callable[[str], List[str]]
+#   "spaceless": bool — True when the script does not separate every word with
+#                spaces (Thai). Comparisons stay chunk-based and mismatches must
+#                be reported as suspicions, never as certain word errors.
+_LANGUAGE_RULES: dict = {}
+
+
+def register_language(code: str, name: str, normalizer=None, tokenizer=None, spaceless: bool = False) -> None:
+    """Register an extra language without touching core comparison logic."""
+    c = (code or "").strip().lower()
+    if not c or c == AUTO_LANGUAGE:
+        raise ValueError("Language code must be a non-empty string other than 'auto'.")
+    EXTRA_LANGUAGES[c] = name or c
+    if normalizer is not None or tokenizer is not None or spaceless:
+        _LANGUAGE_RULES[c] = {
+            "normalizer": normalizer,
+            "tokenizer": tokenizer,
+            "spaceless": bool(spaceless),
+        }
+
+
+def is_spaceless_language(language: str) -> bool:
+    lang = (language or "").strip().lower()
+    if lang == "th":
+        return True
+    return bool(_LANGUAGE_RULES.get(lang, {}).get("spaceless", False))
+
+
+def get_language_rules(language: str) -> dict:
+    return dict(_LANGUAGE_RULES.get((language or "").strip().lower(), {}))
 
 
 class UnsupportedLanguageError(ValueError):
@@ -85,14 +120,7 @@ def chunk_long_tokens(tokens: List[str], max_chars: int = MAX_CHUNK_CHARS) -> Li
     return out
 
 
-def normalize_text(text: str, language: str = "auto") -> str:
-    """NFKC + strip zero-width + drop punctuation + collapse whitespace.
-
-    Punctuation differences never produce mismatches by themselves.
-    """
-    if not isinstance(text, str):
-        raise ValueError("Lyrics must be a string.")
-    validate_language(language)
+def _normalize_generic_core(text: str) -> str:
     t = unicodedata.normalize("NFKC", text)
     t = _ZW_RE.sub("", t)
     t = t.lower()
@@ -103,8 +131,68 @@ def normalize_text(text: str, language: str = "auto") -> str:
     return t
 
 
+def _normalize_th(text: str) -> str:
+    """Thai: NFKC + zero-width strip + lowercase (no-op for Thai) + punct drop.
+
+    Keeps single spaces as-is; does NOT try to re-segment words. Spaceless
+    Thai therefore diffs on chunks (see tokenize_for_language) and every
+    mismatch is only a suspicion, never a certain word error.
+    """
+    return _normalize_generic_core(text)
+
+
+def _normalize_en(text: str) -> str:
+    """English: case-insensitive, punctuation-insensitive."""
+    return _normalize_generic_core(text)
+
+
+def normalize_text(text: str, language: str = "auto") -> str:
+    """NFKC + strip zero-width + drop punctuation + collapse whitespace.
+
+    Punctuation differences never produce mismatches by themselves.
+    Dispatches to a per-language normalizer when registered; th/en fall back
+    to rules that are identical today but remain independently overridable.
+    """
+    if not isinstance(text, str):
+        raise ValueError("Lyrics must be a string.")
+    validate_language(language)
+    lang = (language or "").strip().lower()
+    rules = _LANGUAGE_RULES.get(lang, {})
+    fn = rules.get("normalizer")
+    if callable(fn):
+        return fn(text)
+    if lang == "th":
+        return _normalize_th(text)
+    if lang == "en":
+        return _normalize_en(text)
+    return _normalize_generic_core(text)
+
+
 def tokenize(normalized: str) -> List[str]:
     return normalized.split() if normalized else []
+
+
+def tokenize_for_language(normalized: str, language: str = "auto") -> List[str]:
+    """Split normalized text into diff tokens for the given language.
+
+    Thai (spaceless) keeps whitespace splits then chunks long tokens so a
+    whole song never becomes one unreadable row. No new dependency; word
+    boundaries in spaceless text remain approximate — see THAI_LIMITATION.
+    """
+    validate_language(language)
+    lang = (language or "").strip().lower()
+    rules = _LANGUAGE_RULES.get(lang, {})
+    fn = rules.get("tokenizer")
+    if callable(fn):
+        return chunk_long_tokens(list(fn(normalized) or []))
+    return chunk_long_tokens(tokenize(normalized))
+
+
+THAI_LIMITATION = (
+    "ภาษาไทยไม่เว้นวรรคทุกคำ การเปรียบเทียบจึงทำบนชิ้นข้อความ (chunk) "
+    "ไม่ใช่คำที่ตัดถูกต้องเสมอไป ห้ามตัดสินว่าคำไทยหาย/ผิดจากการ split() "
+    "เพียงอย่างเดียว ความต่างทุกจุดคือข้อสงสัยให้ตรวจด้วยหู"
+)
 
 
 def compare_lyrics(
@@ -124,8 +212,8 @@ def compare_lyrics(
     norm_hyp = normalize_text(recognized, language)
     if not norm_ref and not norm_hyp:
         raise ValueError("Both reference and recognized lyrics are empty.")
-    ref_tokens = chunk_long_tokens(tokenize(norm_ref))
-    hyp_tokens = chunk_long_tokens(tokenize(norm_hyp))
+    ref_tokens = tokenize_for_language(norm_ref, language)
+    hyp_tokens = tokenize_for_language(norm_hyp, language)
     matcher = SequenceMatcher(a=ref_tokens, b=hyp_tokens, autojunk=False)
     similarity = float(matcher.ratio())
     mismatches: List[Mismatch] = []

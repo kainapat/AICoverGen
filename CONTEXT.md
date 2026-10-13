@@ -73,6 +73,13 @@
 | **Recognized Lyrics** | Text produced by ASR listening to the (sung) vocals — imperfect by nature. |
 | **Mismatch** | Classified difference between reference and recognized lyrics: `substitution`, `omission`, `insertion`, or `uncertain`. A mismatch is a suspicion, not proof the lyrics were changed. |
 | **Timestamp Reliability** | Whether word-level times are trustworthy. Unreliable/missing times are shown as "—" with an explicit warning. |
+| **เนื้อเพลงอ้างอิง** | คำเดียวกับ Reference Lyrics ใช้ใน UI รายงาน และเอกสารภาษาไทยอย่างสม่ำเสมอ |
+| **ข้อความที่รู้จำได้** | คำเดียวกับ Recognized Lyrics ใช้ใน UI รายงาน และเอกสารภาษาไทยอย่างสม่ำเสมอ |
+| **ความต่างที่น่าสงสัย** | คำเดียวกับ Mismatch ย้ำว่าไม่ใช่คำผิดแน่นอน ต้องตรวจด้วยหูโดยเฉพาะเมื่อความเชื่อมั่นต่ำ |
+| **เวลาระดับคำ** | Timestamp จาก ASR word-level (`timestamp_granularity="word"`) เชื่อถือได้สูงสุด |
+| **เวลาระดับช่วง** | Timestamp fallback จาก segment จริง (`timestamp_granularity="segment"`) หยาบกว่าระดับคำ |
+| **ไม่มีเวลาที่เชื่อถือได้ (—)** | ไม่มีเวลาที่ไว้ใจได้ (`timestamp_granularity="none"`) ห้ามสร้างเวลาปลอมด้วยการหารเฉลี่ย |
+| **ภาษาที่เลือก vs ภาษาที่ตรวจพบ** | ภาษาที่ผู้ใช้เลือก (`auto/th/en`) แยกจากภาษาที่ ASR ตรวจพบพร้อม probability ซึ่งอาจผิดสำหรับเพลงร้อง |
 
 ## Pipeline Flow
 

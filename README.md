@@ -63,7 +63,7 @@ license: mit
 | 💻 **Carbon Console Launcher** | หน้าต่าง Terminal จัดเต็มด้วย ANSI IBM Carbon Palette (`#4589ff` + `#525252`), กรอบมุมมนอ่านสบายตา, จัดระเบียบขั้นตอนประมวลผลชัดเจน, ซ่อน Warning กวนใจ, พร้อม Live GPU/VRAM Telemetry | Sleek IBM Carbon themed console launcher with high-contrast typography, border boxes, stream progress indicators, and deprecation notice suppression. |
 | 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Carbon error diagnostic card with WinError 10054 noise filtering, full traceback buffer drainer, and crash pause guard. |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English across all tabs. |
-| 🔍 **Lyrics Checker (Optional)** | ฟังเสียงร้องด้วย ASR (faster-whisper) แล้วเทียบกับเนื้อร้องที่วางไว้ รายงานคำที่อาจผิด/ขาด/เกินพร้อม timestamp ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก รองรับไทย-อังกฤษ | Optional ASR-based lyric verification against pasted reference lyrics with timestamped mismatch reports. Off by default; never blocks cover generation. Supports Thai & English. |
+| 🔍 **Lyrics Checker (Optional)** | ฟังเสียงร้องด้วย ASR (faster-whisper) แล้วเทียบกับเนื้อเพลงอ้างอิง รายงานความต่างที่น่าสงสัย (`substitution`/`omission`/`insertion`/`uncertain`) พร้อมเวลาระดับคำ/ระดับช่วง ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก รองรับไทย-อังกฤษ + ขยายภาษาได้โดยไม่แตะ core | Optional ASR-based lyric verification with word/segment-level timestamps and extensible multilingual rules. Off by default; never blocks cover generation. Supports Thai & English. |
 
 ---
 
@@ -206,11 +206,15 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
    > .\.venv\Scripts\pip install "onnxruntime-gpu==1.22.0" "numpy==1.23.5" "sympy==1.13.1"
    > ```
 2. **เปิดใช้งาน:** แท็บสร้างเพลง → กาง Accordion **ตรวจสอบเนื้อร้อง / Lyrics Checker** → ติ๊กเปิดใช้
-3. **วางเนื้อร้องอ้างอิงทั้งเพลงตามลำดับท่อน** (ถ้าวางแค่ท่อนฮุก ท่อนอื่นจะโดนรายงานว่าขาด)
-4. **เลือกภาษา** (`th`/`en` หรือ `auto`) และ**ขนาดโมเดล** (ค่าเริ่มต้น `base` + `cpu` ปลอดภัยกับ VRAM 4GB) แล้วกด **ตรวจสอบเนื้อร้อง / Check lyrics**
-5. **อ่านรายงาน:** การ์ดคำที่อาจผิด/ขาด/เกิน (`substitution`/`omission`/`insertion`/`uncertain`) พร้อมเวลาระดับคำเมื่อเชื่อถือได้ — ข้อความยาวพับไว้กดดูเพิ่มได้ แสดงสูงสุด 50 จุด
+3. **วางเนื้อเพลงอ้างอิงทั้งเพลงตามลำดับท่อน** (ถ้าวางแค่ท่อนฮุก ท่อนอื่นจะโดนรายงานว่าขาด)
+4. **เลือกภาษา** (`th`/`en` หรือ `auto`) **ขนาดโมเดล** (ค่าเริ่มต้น `base` + `cpu` ปลอดภัยกับ VRAM 4GB) และ**โหมดเวลา** (`word` = เวลาระดับคำ / `segment` = เวลาระดับช่วง / `none` = ไม่แสดงเวลา) แล้วกด **ตรวจสอบเนื้อร้อง / Check lyrics**
+5. **อ่านรายงาน:** การ์ดความต่างที่น่าสงสัย (`substitution`/`omission`/`insertion`/`uncertain`) ผูกกับช่วงเวลาจริง — ข้อความยาวพับไว้กดดูเพิ่มได้ แสดงสูงสุด 50 จุด รายงานแยก **ภาษาที่เลือก vs ภาษาที่ตรวจพบ** (พร้อม probability ซึ่งอาจผิดสำหรับเพลงร้อง) เสมอ
 
-> 💡 **ข้อควรรู้:** ASR ฟังเสียงร้องเพลงได้ไม่สมบูรณ์ ผลต่างอาจมาจากเทคนิคการร้อง เสียงดนตรีปน หรือ ASR เอง — **ไม่ใช่หลักฐานว่า RVC เปลี่ยนเนื้อร้อง** ควรฟังเสียงต้นฉบับตรง timestamp นั้นเทียบก่อนเสมอ | Singing ASR is imperfect; mismatches are suspicions, not proof of changed lyrics.  
+> 💡 **ข้อควรรู้:** ASR ฟังเสียงร้องเพลงได้ไม่สมบูรณ์ ผลต่างอาจมาจากเทคนิคการร้อง เสียงดนตรีปน หรือ ASR เอง — **ไม่ใช่หลักฐานว่า RVC เปลี่ยนเนื้อร้อง** ควรฟังเสียงต้นฉบับตรง timestamp นั้นเทียบก่อนเสมอ | Singing ASR is imperfect; mismatches are suspicions, not proof of changed lyrics.
+>
+> ⏱️ **ระดับเวลา (Phase 2):** `word` = เวลาระดับคำจาก ASR (เชื่อถือได้สูงสุด) · `segment` = เวลาระดับช่วงจาก segment จริง (หยาบกว่า ใช้เมื่อ word-level ไม่น่าเชื่อถือ) · `none`/`—` = ไม่มีเวลาที่เชื่อถือได้ ระบบ**ไม่สร้างเวลาปลอม**ด้วยการหารเฉลี่ยความยาวเพลงเด็ดขาด
+>
+> 🌐 **หลายภาษา (Phase 2):** ไทย-อังกฤษมี normalizer/tokenizer แยกกัน ภาษาไทยไร้ช่องว่างจึงเทียบแบบ chunk — ทุกจุดต่างคือข้อสงสัยให้ตรวจด้วยหู ไม่ใช่คำผิดแน่นอน ภาษาเพิ่มขยายได้ด้วย `register_language()` โดยไม่ต้องเขียนระบบเทียบใหม่ (เช่น `register_language("ja", "Japanese")`)  
 
 ---
 
