@@ -3,12 +3,25 @@
 from __future__ import annotations
 
 import hashlib
+import html as _html
 import os
 import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .compare import CompareResult, Mismatch
+
+# Max mismatches rendered in HTML; the rest collapse into a "+N more" note.
+MAX_RENDERED_MISMATCHES = 50
+# Long texts collapse behind <details> beyond this length.
+COLLAPSE_AFTER = 240
+
+_CATEGORY_COLOR = {
+    "substitution": "#f1c21b",
+    "omission": "#fa4d56",
+    "insertion": "#42be65",
+    "uncertain": "#8d8d8d",
+}
 
 DISCLAIMER_TH = (
     "หมายเหตุ: ASR ฟังเสียงร้องเพลงได้ไม่สมบูรณ์ ความต่างอาจมาจากเสียงร้อง "
@@ -106,23 +119,23 @@ class LyricsReport:
         if not self.mismatches:
             lines.append("✅ **ตรงกัน / Match** — ไม่พบคำที่ต่างอย่างมีนัยสำคัญ")
         else:
+            shown = self.mismatches[:MAX_RENDERED_MISMATCHES]
+            extra = len(self.mismatches) - len(shown)
             lines.append(
                 f"🔍 **พบจุดที่อาจต่าง {self.mismatch_count} จุด** "
                 f"(similarity {self.similarity:.2f}) / Possible differences below:"
             )
-            lines.append("")
-            lines.append("| # | ประเภท / Type | อ้างอิง / Ref | ฟังได้ / Heard | เวลา / Time |")
-            lines.append("|---|---|---|---|---|")
-            for i, m in enumerate(self.mismatches, 1):
+            for i, m in enumerate(shown, 1):
                 if m.start_time is not None and m.end_time is not None:
                     t = f"{m.start_time:.1f}s–{m.end_time:.1f}s"
                 else:
-                    t = "—" if not self.timestamp_reliable else "n/a"
-                lines.append(
-                    f"| {i} | {m.category} | {m.ref_text or '—'} | {m.hyp_text or '—'} | {t} |"
-                )
+                    t = "—"
+                ref = (m.ref_text[:200] + "…") if len(m.ref_text) > 200 else (m.ref_text or "—")
+                hyp = (m.hyp_text[:200] + "…") if len(m.hyp_text) > 200 else (m.hyp_text or "—")
+                lines.append(f"{i}. [{m.category}] `{t}` อ้างอิง: {ref} → ฟังได้: {hyp}")
+            if extra > 0:
+                lines.append(f"…และอีก {extra} จุด / …and {extra} more")
             if not self.timestamp_reliable:
-                lines.append("")
                 lines.append("⏱️ เวลาระดับคำไม่น่าเชื่อถือ/ไม่มี — ใช้เป็นแนวคร่าวๆ เท่านั้น")
         if self.detected_language:
             prob = f" ({self.language_probability:.2f})" if self.language_probability else ""
@@ -131,6 +144,88 @@ class LyricsReport:
         lines.append(f"\n> {DISCLAIMER_TH}")
         lines.append(f"> {DISCLAIMER_EN}")
         return "\n".join(lines)
+
+    def to_html(self) -> str:
+        """Readable card-style report for Gradio (wraps long Thai text, collapses)."""
+        esc = _html.escape
+        parts = [
+            '<div style="border:1px solid var(--border-color-primary,#393939);border-radius:8px;'
+            'padding:16px 18px;background:var(--block-background-fill,#161616);margin-top:8px;'
+            'font-family:var(--font,system-ui,sans-serif);">',
+            '<div style="font-size:1.05rem;font-weight:600;margin-bottom:10px;">'
+            '🔍 ผลตรวจเนื้อร้อง / Lyrics Check</div>',
+        ]
+        if self.error:
+            parts.append(f'<div style="color:#fa4d56;">❌ <b>ผิดพลาด / Error:</b> {esc(self.error)}</div>')
+            for w in self.warnings:
+                parts.append(f'<div style="color:#c6c6c6;">⚠️ {esc(w)}</div>')
+            parts.append("</div>")
+            return "".join(parts)
+        if not self.mismatches:
+            parts.append('<div style="color:#42be65;">✅ <b>ตรงกัน / Match</b> — ไม่พบคำที่ต่างอย่างมีนัยสำคัญ</div>')
+        else:
+            shown = self.mismatches[:MAX_RENDERED_MISMATCHES]
+            extra = len(self.mismatches) - len(shown)
+            pct = int(self.similarity * 100)
+            parts.append(
+                f'<div style="margin-bottom:10px;">🔍 พบจุดที่อาจต่าง '
+                f"<b>{self.mismatch_count} จุด</b> "
+                f'(similarity {self.similarity:.2f}) '
+                f'<span style="display:inline-block;width:120px;height:8px;border-radius:4px;'
+                f'background:rgba(255,255,255,.15);vertical-align:middle;">'
+                f'<span style="display:inline-block;height:8px;width:{pct}%;border-radius:4px;'
+                f'background:#0f62fe;"></span></span></div>'
+            )
+            for i, m in enumerate(shown, 1):
+                color = _CATEGORY_COLOR.get(m.category, "#8d8d8d")
+                if m.start_time is not None and m.end_time is not None:
+                    t = f"{m.start_time:.1f}s – {m.end_time:.1f}s"
+                else:
+                    t = "เวลาไม่แน่นอน"
+                parts.append(
+                    '<div style="border:1px solid rgba(255,255,255,.12);border-radius:6px;'
+                    'padding:10px 12px;margin-bottom:8px;">'
+                    f'<div style="margin-bottom:6px;"><b>#{i}</b> '
+                    f'<span style="display:inline-block;padding:1px 8px;border-radius:4px;font-size:.75rem;'
+                    f'background:{color}22;border:1px solid {color};color:{color};">{esc(m.category)}</span> '
+                    f'<span style="color:#c6c6c6;font-size:.8rem;">⏱️ {esc(t)}</span></div>'
+                    f"{self._html_text_block('อ้างอิง / Ref', m.ref_text)}"
+                    f"{self._html_text_block('ฟังได้ / Heard', m.hyp_text)}"
+                    "</div>"
+                )
+            if extra > 0:
+                parts.append(f"<div>…และอีก {extra} จุด (…and {extra} more)</div>")
+            if not self.timestamp_reliable:
+                parts.append("<div>⏱️ เวลาระดับคำไม่น่าเชื่อถือ/ไม่มี — ใช้เป็นแนวคร่าวๆ เท่านั้น</div>")
+        if self.detected_language:
+            prob = f" ({self.language_probability:.2f})" if self.language_probability else ""
+            parts.append(
+                f"<div>🌐 ภาษาที่ตรวจได้ / Detected: {esc(self.detected_language)}{esc(prob)}</div>"
+            )
+        for w in self.warnings:
+            parts.append(f'<div style="color:#c6c6c6;">⚠️ {esc(w)}</div>')
+        parts.append(
+            f'<div style="margin-top:10px;color:#8d8d8d;font-size:.8rem;">{esc(DISCLAIMER_TH)}<br>'
+            f"{esc(DISCLAIMER_EN)}</div></div>"
+        )
+        return "".join(parts)
+
+    @staticmethod
+    def _html_text_block(label: str, text: str) -> str:
+        esc = _html.escape
+        body = text or "—"
+        if len(body) > COLLAPSE_AFTER:
+            head = esc(body[:COLLAPSE_AFTER]) + "…"
+            return (
+                f'<div style="margin:4px 0;"><span style="color:#8d8d8d;font-size:.78rem;">{esc(label)}:</span> '
+                f'<div style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">{head} '
+                f"<details style=\"display:inline;\"><summary style=\"display:inline;cursor:pointer;"
+                f"color:#4589ff;\">ดูทั้งหมด / more</summary>{esc(body)}</details></div></div>"
+            )
+        return (
+            f'<div style="margin:4px 0;"><span style="color:#8d8d8d;font-size:.78rem;">{esc(label)}:</span> '
+            f'<div style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">{esc(body)}</div></div>'
+        )
 
 
 def build_report(

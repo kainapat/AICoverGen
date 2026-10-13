@@ -773,19 +773,19 @@ if __name__ == '__main__':
                         lyrics_model = gr.Dropdown(['tiny', 'base', 'small'], value='base', label='ขนาดโมเดล ASR / ASR model', info='base+CPU ปลอดภัยกับ VRAM 4GB / Safe default for 4GB VRAM')
                         lyrics_device = gr.Dropdown(['cpu', 'cuda'], value='cpu', label='อุปกรณ์ / Device', info='ใช้ cpu เพื่อไม่แย่ง VRAM กับ RVC / cpu avoids VRAM contention')
                 lyrics_btn = gr.Button('ตรวจสอบเนื้อร้อง / Check lyrics 🔍', variant='secondary')
-                lyrics_report = gr.Markdown('ติ๊กเปิดใช้แล้วกดปุ่มตรวจสอบ / Enable and press Check.')
+                lyrics_report = gr.HTML('<div style="color:#8d8d8d;">ติ๊กเปิดใช้แล้วกดปุ่มตรวจสอบ / Enable and press Check.</div>')
 
                 def run_lyrics_check(audio_file, enabled, ref, lang, model, device):
                     if not enabled:
-                        return '☑️ Lyrics Checker ปิดอยู่ — เปิดสวิตช์ก่อน / Checker is disabled.'
+                        return '<div>☑️ Lyrics Checker ปิดอยู่ — เปิดสวิตช์ก่อน / Checker is disabled.</div>'
                     if not audio_file:
-                        return '❌ กรุณาเลือกไฟล์เสียงก่อน / Please select an audio file first.'
+                        return '<div style="color:#fa4d56;">❌ กรุณาเลือกไฟล์เสียงก่อน / Please select an audio file first.</div>'
                     try:
                         from lyrics import analyze_vocals
                     except ImportError as e:
-                        return f'❌ โมดูล lyrics โหลดไม่ได้: {e}'
+                        return f'<div style="color:#fa4d56;">❌ โมดูล lyrics โหลดไม่ได้: {e}</div>'
                     rep = analyze_vocals(audio_file, ref or '', lang, model, device)
-                    return rep.to_markdown()
+                    return rep.to_html()
 
                 lyrics_btn.click(run_lyrics_check,
                                  inputs=[local_file, lyrics_enable, lyrics_ref, lyrics_lang, lyrics_model, lyrics_device],

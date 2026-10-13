@@ -67,6 +67,23 @@ _PUNCT_RE = re.compile(r"[^\w\s\u0E00-\u0E7F]", re.UNICODE)
 _WS_RE = re.compile(r"\s+", re.UNICODE)
 _ZW_RE = re.compile(r"[\u200b-\u200d\ufeff]")
 
+# Thai (and other spaceless scripts) can produce a whole song as ONE token,
+# which renders as a single unreadable row. Split long tokens into chunks…
+MAX_CHUNK_CHARS = 60
+# …and split a single replace/delete/insert spanning more than this many
+# chunks into several mismatches, so no report row ever holds half a song.
+PER_MISMATCH_CHUNKS = 4
+
+
+def chunk_long_tokens(tokens: List[str], max_chars: int = MAX_CHUNK_CHARS) -> List[str]:
+    out: List[str] = []
+    for tok in tokens:
+        if len(tok) <= max_chars:
+            out.append(tok)
+        else:
+            out.extend(tok[i : i + max_chars] for i in range(0, len(tok), max_chars))
+    return out
+
 
 def normalize_text(text: str, language: str = "auto") -> str:
     """NFKC + strip zero-width + drop punctuation + collapse whitespace.
@@ -107,11 +124,32 @@ def compare_lyrics(
     norm_hyp = normalize_text(recognized, language)
     if not norm_ref and not norm_hyp:
         raise ValueError("Both reference and recognized lyrics are empty.")
-    ref_tokens = tokenize(norm_ref)
-    hyp_tokens = tokenize(norm_hyp)
+    ref_tokens = chunk_long_tokens(tokenize(norm_ref))
+    hyp_tokens = chunk_long_tokens(tokenize(norm_hyp))
     matcher = SequenceMatcher(a=ref_tokens, b=hyp_tokens, autojunk=False)
     similarity = float(matcher.ratio())
     mismatches: List[Mismatch] = []
+
+    def emit(
+        cat: MismatchCategory,
+        ri1: int,
+        ri2: int,
+        hj1: int,
+        hj2: int,
+    ) -> None:
+        mismatches.append(
+            Mismatch(
+                category=cat,
+                ref_text=" ".join(ref_tokens[ri1:ri2]),
+                hyp_text=" ".join(hyp_tokens[hj1:hj2]),
+                ref_start=ri1,
+                ref_end=ri2,
+                hyp_start=hj1,
+                hyp_end=hj2,
+                confidence=similarity,
+            )
+        )
+
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "equal":
             continue
@@ -119,44 +157,17 @@ def compare_lyrics(
             cat: MismatchCategory = (
                 "uncertain" if similarity < uncertain_threshold and (i2 - i1) > 3 else "substitution"
             )
-            mismatches.append(
-                Mismatch(
-                    category=cat,
-                    ref_text=" ".join(ref_tokens[i1:i2]),
-                    hyp_text=" ".join(hyp_tokens[j1:j2]),
-                    ref_start=i1,
-                    ref_end=i2,
-                    hyp_start=j1,
-                    hyp_end=j2,
-                    confidence=similarity,
-                )
-            )
         elif tag == "delete":
-            mismatches.append(
-                Mismatch(
-                    category="omission",
-                    ref_text=" ".join(ref_tokens[i1:i2]),
-                    hyp_text="",
-                    ref_start=i1,
-                    ref_end=i2,
-                    hyp_start=j1,
-                    hyp_end=j2,
-                    confidence=similarity,
-                )
-            )
-        elif tag == "insert":
-            mismatches.append(
-                Mismatch(
-                    category="insertion",
-                    ref_text="",
-                    hyp_text=" ".join(hyp_tokens[j1:j2]),
-                    ref_start=i1,
-                    ref_end=i2,
-                    hyp_start=j1,
-                    hyp_end=j2,
-                    confidence=similarity,
-                )
-            )
+            cat = "omission"
+        else:
+            cat = "insertion"
+        # Split wide spans so each mismatch stays a small readable row.
+        ri, hj = i1, j1
+        while ri < i2 or hj < j2:
+            ri2 = min(ri + PER_MISMATCH_CHUNKS, i2) if ri < i2 else ri
+            hj2 = min(hj + PER_MISMATCH_CHUNKS, j2) if hj < j2 else hj
+            emit(cat, ri, ri2, hj, hj2)
+            ri, hj = ri2, hj2
     return CompareResult(
         mismatches=mismatches,
         similarity=similarity,

@@ -10,6 +10,7 @@ from lyrics.asr import AudioValidationError, transcribe
 from lyrics.compare import (
     Mismatch,
     UnsupportedLanguageError,
+    chunk_long_tokens,
     compare_lyrics,
     normalize_text,
 )
@@ -132,6 +133,55 @@ class TestPostRVC(unittest.TestCase):
         self.assertIn("source_vs_ref", out)
         self.assertEqual(out["source_vs_ref"].mismatch_count, 0)
         self.assertEqual(out["converted_vs_ref"].mismatch_count, 1)
+
+
+class TestChunking(unittest.TestCase):
+    def test_long_thai_token_splits(self):
+        chunks = chunk_long_tokens(["ก" * 200])
+        self.assertTrue(len(chunks) > 1)
+        self.assertTrue(all(len(c) <= 60 for c in chunks))
+
+    def test_short_tokens_untouched(self):
+        self.assertEqual(chunk_long_tokens(["hello", "world"]), ["hello", "world"])
+
+    def test_whole_song_not_one_giant_mismatch(self):
+        ref = "ช่วยเดินไปบอกเขาเลยว่าฉันไม่ให้ไป" * 10  # spaceless Thai
+        hyp = "ช่วยเดินไปบอกเขาว่าฉันไม่ไป" * 10
+        r = compare_lyrics(ref, hyp, "th")
+        self.assertTrue(len(r.mismatches) > 1)
+        for m in r.mismatches:
+            self.assertLessEqual(len(m.ref_text), 400)
+            self.assertLessEqual(len(m.hyp_text), 400)
+
+
+class TestHtmlReport(unittest.TestCase):
+    def test_html_escapes_and_wraps(self):
+        rep = compare_texts("สวัสดี <b>โลก</b>", "สวัสดีชาวโลก")
+        out = rep.to_html()
+        self.assertNotIn("<b>โลก</b>", out)
+        self.assertIn("break-word", out)
+        self.assertIn("substitution", out)
+
+    def test_html_collapses_long_text(self):
+        rep = compare_texts("ก" * 500, "ข" * 500, "th")
+        out = rep.to_html()
+        self.assertIn("<details", out)
+
+    def test_html_caps_mismatch_count(self):
+        from lyrics.report import LyricsReport
+
+        rep = LyricsReport(
+            mismatches=[Mismatch("substitution", "a", "b")] * 120,
+            similarity=0.01,
+        )
+        out = rep.to_html()
+        self.assertIn("120", out)
+        self.assertIn("more", out)
+
+    def test_html_error_path(self):
+        rep = compare_texts("hi", None)
+        out = rep.to_html()
+        self.assertIn("Error", out)
 
 
 if __name__ == "__main__":
