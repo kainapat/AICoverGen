@@ -78,7 +78,12 @@ class LyricsReport:
         return len(self.mismatches)
 
     def is_stale(self, audio_path: str = "", reference: str = "") -> bool:
-        """True if this report no longer matches the given audio/reference."""
+        """True if this report no longer matches the given audio/reference.
+
+        F.6 note: kept as public API for callers that cache reports.
+        analyze_vocals() itself does NOT cache results — every call
+        re-transcribes (only model weights are cached via get_model()).
+        """
         if audio_path and self.audio_hash != file_hash(audio_path):
             return True
         if reference is not None and self.ref_hash != text_hash(reference or ""):

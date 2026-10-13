@@ -792,6 +792,38 @@ if __name__ == '__main__':
                                  inputs=[local_file, lyrics_enable, lyrics_ref, lyrics_lang, lyrics_model, lyrics_device, lyrics_timestamp],
                                  outputs=[lyrics_report])
 
+            with gr.Accordion('ตรวจสอบหลัง RVC / Post-RVC Analysis (optional)', open=False):
+                gr.Markdown('เทียบเสียงร้องต้นฉบับกับเสียงหลัง RVC ด้วย ASR verse-by-verse — ปิดไว้โดยปริยาย ไม่แตะการตั้งค่า RVC และไม่ลบไฟล์ cover / Compares pre/post-RVC vocals. Off by default; never retunes RVC or deletes outputs.')
+                postrvc_enable = gr.Checkbox(False, label='เปิดใช้ Post-RVC Analysis / Enable', info='ต้องติดตั้ง faster-whisper ก่อน (optional) / Requires faster-whisper (optional dep)')
+                with gr.Row():
+                    postrvc_src = gr.File(label='เสียงต้นฉบับ / Source vocal (เช่น *_Vocals_Main_DeReverb.wav)', interactive=True, type="filepath", file_types=audio_extensions, height=130)
+                    postrvc_conv = gr.File(label='เสียงหลัง RVC / Converted vocal (เช่น *_rmvpe_s1.wav)', interactive=True, type="filepath", file_types=audio_extensions, height=130)
+                with gr.Row():
+                    postrvc_ref = gr.Textbox(label='เนื้อเพลงอ้างอิง / Reference lyrics (optional)', placeholder='ไม่บังคับ — ถ้าเว้นว่างจะเทียบ Transcript สองไฟล์กันเอง / Optional: without it, compares the two transcripts', lines=3)
+                    with gr.Column():
+                        postrvc_lang = gr.Dropdown(['auto', 'th', 'en'], value='auto', label='ภาษา / Language', info='ใช้ค่าเดียวกันทั้งสองฝั่งเพื่อให้เทียบกันได้ / Same setting on both sides')
+                        postrvc_model = gr.Dropdown(['tiny', 'base', 'small'], value='base', label='ขนาดโมเดล ASR / ASR model', info='base+CPU ปลอดภัยกับ VRAM 4GB / Safe default for 4GB VRAM')
+                        postrvc_device = gr.Dropdown(['cpu', 'cuda'], value='cpu', label='อุปกรณ์ / Device', info='รันหลัง RVC เท่านั้น ไม่แย่ง VRAM ตอนแปลงเสียง / Runs after RVC only')
+                        postrvc_timestamp = gr.Dropdown(['word', 'segment', 'none'], value='word', label='เวลา / Timestamps', info='เวลาของเคสเทียบอ้างอิงไฟล์หลัง RVC / Cross-case times reference the converted file')
+                postrvc_btn = gr.Button('ตรวจสอบหลัง RVC / Check post-RVC 🔍', variant='secondary')
+                postrvc_report = gr.HTML('<div style="color:#8d8d8d;">ติ๊กเปิดใช้ เลือกไฟล์ทั้งสองฝั่ง แล้วกดปุ่มตรวจสอบ / Enable, pick both files, press Check.</div>')
+
+                def run_postrvc_check(src_file, conv_file, enabled, ref, lang, model, device, timestamp_mode):
+                    if not enabled:
+                        return '<div>☑️ Post-RVC Analysis ปิดอยู่ — เปิดสวิตช์ก่อน / Analyzer is disabled.</div>'
+                    if not src_file or not conv_file:
+                        return '<div style="color:#fa4d56;">❌ กรุณาเลือกไฟล์เสียงทั้งต้นฉบับและหลัง RVC / Please select both vocal files.</div>'
+                    try:
+                        from lyrics.postrvc import analyze_post_rvc
+                    except ImportError as e:
+                        return f'<div style="color:#fa4d56;">❌ โมดูล postrvc โหลดไม่ได้: {e}</div>'
+                    rep = analyze_post_rvc(src_file, conv_file, ref or '', lang, model, device, timestamp_mode=timestamp_mode or 'word')
+                    return rep.to_html()
+
+                postrvc_btn.click(run_postrvc_check,
+                                  inputs=[postrvc_src, postrvc_conv, postrvc_enable, postrvc_ref, postrvc_lang, postrvc_model, postrvc_device, postrvc_timestamp],
+                                  outputs=[postrvc_report])
+
             with gr.Row():
                 clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input, fast_mode])
                 generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')

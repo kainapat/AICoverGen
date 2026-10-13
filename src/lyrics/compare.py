@@ -83,6 +83,8 @@ class Mismatch:
     ref_end: int = 0
     hyp_start: int = 0
     hyp_end: int = 0
+    # Mean ASR word probability over the verified span, or None when unknown.
+    # Never the global similarity (see CompareResult.similarity instead).
     confidence: Optional[float] = None
     start_time: Optional[float] = None
     end_time: Optional[float] = None
@@ -225,6 +227,10 @@ def compare_lyrics(
         hj1: int,
         hj2: int,
     ) -> None:
+        # F.3: confidence stays None here. The global similarity is NOT a
+        # per-word confidence; ASR word probabilities are attached later by
+        # attach_timestamps_with_granularity() only for verified word spans.
+        # The aggregate stays available as CompareResult.similarity.
         mismatches.append(
             Mismatch(
                 category=cat,
@@ -234,7 +240,7 @@ def compare_lyrics(
                 ref_end=ri2,
                 hyp_start=hj1,
                 hyp_end=hj2,
-                confidence=similarity,
+                confidence=None,
             )
         )
 

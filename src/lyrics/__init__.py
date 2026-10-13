@@ -3,7 +3,9 @@
 Public API:
   analyze_vocals(...)       transcribe vocals + compare against reference lyrics
   compare_texts(...)        pure comparison of two lyric strings (no ASR)
-  compare_source_converted(...)  post-RVC: source vs converted recognizability
+  compare_source_converted(...)  pure-text source/converted comparison utility.
+    F.2 note: this helper is NOT wired into the RVC pipeline or WebUI; it is
+    a tested utility for future/manual post-RVC analysis (Phase 3 scope).
 Nothing here may break the RVC pipeline: ASR failures become error reports.
 """
 
@@ -37,12 +39,14 @@ from .compare import (
     CompareResult,
     Mismatch,
     compare_lyrics,
+    normalize_text,
     supported_languages,
 )
 from .report import LyricsReport, build_report, error_report
 
 __all__ = [
     "analyze_vocals",
+    "analyze_transcript",
     "compare_texts",
     "compare_source_converted",
     "compare_lyrics",
@@ -87,38 +91,30 @@ def compare_texts(
 TIMESTAMP_MODES = ("word", "segment", "none")
 
 
-def analyze_vocals(
-    audio_path: str,
+def analyze_transcript(
+    tx: TranscriptionResult,
+    audio_path: str = "",
     reference_lyrics: str = "",
     language: str = "auto",
     model_size: str = DEFAULT_MODEL_SIZE,
     device: str = "cpu",
-    word_timestamps: bool = True,
-    vad_filter: bool = False,
     timestamp_mode: str = "word",
 ) -> LyricsReport:
-    """Transcribe vocals and compare with reference. Never raises on ASR failure."""
+    """Compare an existing transcription (no ASR inside). Never raises.
+
+    Single source of truth shared by analyze_vocals() and Phase 3 post-RVC
+    analysis so both sides of a comparison use identical logic.
+    """
     warnings: List[str] = []
-    try:
-        tx = transcribe(
-            audio_path,
-            language=language,
-            model_size=model_size,
-            device=device,
-            word_timestamps=word_timestamps,
-            vad_filter=vad_filter,
-        )
-    except Exception as e:
-        return error_report(
-            f"Lyrics analysis failed but RVC pipeline is unaffected: {e}",
-            warnings=[
-                "การวิเคราะห์เนื้อร้องล้มเหลว — pipeline หลักยังทำงานต่อได้",
-                "ASR ฟังเสียงร้องเพลงได้ไม่สมบูรณ์ ผลอาจคลาดเคลื่อน",
-            ],
-        )
     if not (reference_lyrics or "").strip():
         warnings.append("ไม่มีเนื้อร้องอ้างอิง — แสดงเฉพาะผลถอดเสียง / No reference, showing transcription only")
-        result = CompareResult(norm_ref="", norm_hyp=tx.text, similarity=1.0)
+        # F.6: norm_hyp means *normalized* text — derive it through the same
+        # language-aware normalization; raw text stays in recognized_raw.
+        try:
+            norm_hyp = normalize_text(tx.text, language)
+        except Exception:
+            norm_hyp = tx.text
+        result = CompareResult(norm_ref="", norm_hyp=norm_hyp, similarity=1.0)
         recognized = tx.text
     else:
         try:
@@ -130,8 +126,6 @@ def analyze_vocals(
     if mode not in TIMESTAMP_MODES:
         warnings.append(f"โหมดเวลา '{timestamp_mode}' ไม่รองรับ — ใช้ 'word' แทน")
         mode = "word"
-    if not word_timestamps:
-        mode = "none"
     reliable = False
     granularity = "none"
     if mode != "none" and result.mismatches:
@@ -172,15 +166,62 @@ def analyze_vocals(
     )
 
 
+def analyze_vocals(
+    audio_path: str,
+    reference_lyrics: str = "",
+    language: str = "auto",
+    model_size: str = DEFAULT_MODEL_SIZE,
+    device: str = "cpu",
+    word_timestamps: bool = True,
+    vad_filter: bool = False,
+    timestamp_mode: str = "word",
+) -> LyricsReport:
+    """Transcribe vocals and compare with reference. Never raises on ASR failure."""
+    warnings: List[str] = []
+    try:
+        tx = transcribe(
+            audio_path,
+            language=language,
+            model_size=model_size,
+            device=device,
+            word_timestamps=word_timestamps,
+            vad_filter=vad_filter,
+        )
+    except Exception as e:
+        return error_report(
+            f"Lyrics analysis failed but RVC pipeline is unaffected: {e}",
+            warnings=[
+                "การวิเคราะห์เนื้อร้องล้มเหลว — pipeline หลักยังทำงานต่อได้",
+                "ASR ฟังเสียงร้องเพลงได้ไม่สมบูรณ์ ผลอาจคลาดเคลื่อน",
+            ],
+        )
+    mode = timestamp_mode if word_timestamps else "none"
+    rep = analyze_transcript(
+        tx,
+        audio_path=audio_path,
+        reference_lyrics=reference_lyrics,
+        language=language,
+        model_size=model_size,
+        device=device,
+        timestamp_mode=mode,
+    )
+    if not word_timestamps:
+        rep.warnings.insert(
+            0, "ปิด word timestamps — รายงานนี้ไม่มีเวลาระดับคำ"
+        )
+    return rep
+
+
 def compare_source_converted(
     source_text: str,
     converted_text: str,
     reference_lyrics: str = "",
     language: str = "auto",
 ) -> dict:
-    """Post-RVC check: is the converted vocal still recognizable vs source?
+    """Post-RVC comparison utility: is converted vocal still recognizable?
 
     Pure-text function (no ASR inside) so results stay deterministic.
+    NOT called by the RVC pipeline or WebUI — manual/future use only.
     Differences may come from voice timbre, singing style, bleed, or ASR
     errors — never auto-tune RVC settings from this output.
     """

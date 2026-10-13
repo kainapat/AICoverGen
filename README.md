@@ -64,6 +64,7 @@ license: mit
 | 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Carbon error diagnostic card with WinError 10054 noise filtering, full traceback buffer drainer, and crash pause guard. |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English across all tabs. |
 | 🔍 **Lyrics Checker (Optional)** | ฟังเสียงร้องด้วย ASR (faster-whisper) แล้วเทียบกับเนื้อเพลงอ้างอิง รายงานความต่างที่น่าสงสัย (`substitution`/`omission`/`insertion`/`uncertain`) พร้อมเวลาระดับคำ/ระดับช่วง ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก รองรับไทย-อังกฤษ + ขยายภาษาได้โดยไม่แตะ core | Optional ASR-based lyric verification with word/segment-level timestamps and extensible multilingual rules. Off by default; never blocks cover generation. Supports Thai & English. |
+| 🔬 **Post-RVC Analysis (Optional)** | เทียบเสียงร้องต้นฉบับกับเสียงหลัง RVC ด้วย ASR ค่าเดียวกันทั้งสองฝั่ง รายงานแยก 5 เคส (อ้างอิง-vs-ต้นฉบับ/อ้างอิง-vs-หลัง RVC/Transcript-เทียบกัน/คุณภาพสัญญาณ/ข้อจำกัด) พร้อมเวลาอ้างอิงไฟล์หลัง RVC อ่านอย่างเดียว ไม่แตะ RVC settings ไม่ลบไฟล์ cover | Optional pre/post-RVC vocal comparison with same ASR settings on both sides. Read-only; never retunes RVC or deletes outputs. |
 
 ---
 
@@ -214,7 +215,15 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
 >
 > ⏱️ **ระดับเวลา (Phase 2):** `word` = เวลาระดับคำจาก ASR (เชื่อถือได้สูงสุด) · `segment` = เวลาระดับช่วงจาก segment จริง (หยาบกว่า ใช้เมื่อ word-level ไม่น่าเชื่อถือ) · `none`/`—` = ไม่มีเวลาที่เชื่อถือได้ ระบบ**ไม่สร้างเวลาปลอม**ด้วยการหารเฉลี่ยความยาวเพลงเด็ดขาด
 >
-> 🌐 **หลายภาษา (Phase 2):** ไทย-อังกฤษมี normalizer/tokenizer แยกกัน ภาษาไทยไร้ช่องว่างจึงเทียบแบบ chunk — ทุกจุดต่างคือข้อสงสัยให้ตรวจด้วยหู ไม่ใช่คำผิดแน่นอน ภาษาเพิ่มขยายได้ด้วย `register_language()` โดยไม่ต้องเขียนระบบเทียบใหม่ (เช่น `register_language("ja", "Japanese")`)  
+> 🌐 **หลายภาษา (Phase 2):** มีจุดต่อ normalizer/tokenizer แยกตามภาษา (ปัจจุบัน `th`/`en` ใช้กฎพื้นฐานชุดเดียวกัน ยังไม่มีกฎเฉพาะภาษา) ภาษาไทยไร้ช่องว่างจึงเทียบแบบ chunk — ทุกจุดต่างคือข้อสงสัยให้ตรวจด้วยหู ไม่ใช่คำผิดแน่นอน ภาษาเพิ่มขยายได้ด้วย `register_language()` โดยไม่ต้องเขียนระบบเทียบใหม่ (เช่น `register_language("ja", "Japanese")`)
+>
+> 🔒 **เวลาระดับคำ (F.1 guard):** ระบบแปะเวลาระดับคำเฉพาะเมื่อตัวอักษรของช่วงคำ ASR ตรงกับข้อความที่น่าสงสัยจริง (ตรวจเนื้อหา ไม่นับจำนวน) ถ้าพิสูจน์ไม่ได้จะตกไปใช้เวลาระดับช่วงหรือ `—` แทน
+>
+> 🎲 **ASR ไม่คงที่ 100%:** โมเดลใช้ temperature fallback (0.0→1.0) เพื่อฟังท่อนร้องยากๆ ได้ ผลถอดเสียงอาจต่างกันเล็กน้อยระหว่างรอบ ควรยึด timestamp ที่ตรวจสอบด้วยหูแล้วเป็นหลัก 
+
+### 🔍 ตรวจสอบหลัง RVC (Phase 3, optional)
+
+กาง Accordion **ตรวจสอบหลัง RVC / Post-RVC Analysis** แล้วเลือกไฟล์เสียงร้องต้นฉบับ (`*_Vocals_Main_DeReverb.wav`) กับเสียงหลัง RVC (`*_<voice>_..._.wav`) ระบบถอดเสียงทั้งสองฝั่งด้วย ASR ค่าเดียวกัน แล้วรายงานแยก 5 เคส: อ้างอิง-vs-ต้นฉบับ, อ้างอิง-vs-หลัง RVC, Transcript-ต้นฉบับ-vs-หลัง RVC (เวลาอ้างอิงไฟล์หลัง RVC), คุณภาพสัญญาณ (เงียบ/clipping/ความยาว), และข้อจำกัด — ไม่มีคะแนนรวมคะแนนเดียว ไม่แตะการตั้งค่า RVC ไม่ลบไฟล์ cover ที่สร้างแล้ว ถ้าไม่ให้เนื้อเพลงอ้างอิง เคสเทียบจะเป็นแค่การเทียบ Transcript ไม่ใช่การยืนยันเนื้อเพลง
 
 ---
 
@@ -330,7 +339,7 @@ AICoverGen/
 │   ├── 🖥️ webui.py                 # หน้าเว็บ Gradio WebUI (Bilingual + Carbon Audio Player)
 │   ├── ⚙️ main.py                  # Core Engine & Audio Processing Pipeline
 │   ├── 🏷️ song_metadata.py         # Deep Module: SongMetadata Domain & Multi-language Normalizer
-│   ├── 🔍 lyrics/                   # Optional Lyrics Checker (asr/compare/align/report, fail-safe)
+│   ├── 🔍 lyrics/                   # Optional Lyrics Checker + Post-RVC (asr/compare/align/report/postrvc, fail-safe)
 │   ├── 🎤 mdx.py                   # โมดูลแยกเสียงร้อง/ดนตรี (MDX-Net ONNX Fast Mode)
 │   └── 🗣️ rvc.py                   # โมดูลแปลงเสียง AI (Retrieval-based Voice Conversion v2)
 ├── 🎙️ rvc_models/                  # ที่เก็บโมเดลเสียง RVC (.pth, .index)

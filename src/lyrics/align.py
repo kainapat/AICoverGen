@@ -1,7 +1,9 @@
 """Word-timestamp helpers with explicit fallback when alignment is unreliable.
 
-Granularity contract (Phase 2):
-  "word"    — every timestamped mismatch has real word-level times.
+Granularity contract (Phase 2, hardened for F.1):
+  "word"    — every timestamped mismatch has real word-level times AND the
+              ASR word span provably covers the same characters as the
+              mismatch (index-space mapping verified, not just counted).
   "segment" — at least one mismatch falls back to real segment times.
   "none"    — no trustworthy times; callers must render "—".
 Never invent times by uniformly dividing song length by word count.
@@ -9,8 +11,46 @@ Never invent times by uniformly dividing song length by word count.
 
 from __future__ import annotations
 
+import string
+import unicodedata
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
+
+# Zero-width characters stripped before span-text verification.
+_ZW_CHARS = "\u200b\u200c\u200d\ufeff"
+_PUNCT_TABLE = str.maketrans("", "", string.punctuation)
+
+
+def _span_key(text: str) -> str:
+    """Normalize for span-text verification: NFKC + lower + drop zero-width,
+    ASCII punctuation and ALL whitespace. Thai vowels/tone marks are kept
+    (no \\w-class stripping), so different Thai words never collapse."""
+    t = unicodedata.normalize("NFKC", text or "")
+    t = t.lower()
+    for ch in _ZW_CHARS:
+        t = t.replace(ch, "")
+    t = t.translate(_PUNCT_TABLE)
+    return "".join(t.split())
+
+
+def _span_texts_match(span_words: Sequence[WordSegment], hyp_text: str) -> bool:
+    """True only if the ASR word span covers exactly the mismatch characters.
+
+    Segmentation-insensitive (Thai chunks vs whisper words may split
+    differently) but content-sensitive: same length with different text fails.
+    """
+    if not span_words or not (hyp_text or "").strip():
+        return False
+    raw = "".join(w.word or "" for w in span_words)
+    key_raw, key_hyp = _span_key(raw), _span_key(hyp_text)
+    return bool(key_raw) and key_raw == key_hyp
+
+
+def _mean_probability(span_words: Sequence[WordSegment]) -> Optional[float]:
+    probs = [w.probability for w in span_words]
+    if not probs or not all(isinstance(p, (int, float)) for p in probs):
+        return None
+    return sum(probs) / len(probs)
 
 
 @dataclass
@@ -95,7 +135,12 @@ def attach_timestamps_with_granularity(
     granularity is "word" | "segment" | "none". Word-level is tried first;
     mismatches without valid word times fall back to real segment times via
     text search. Times are never synthesized by uniform division.
-    Mutates mismatches in place.
+
+    F.1 guard: hyp_start/hyp_end index compare's hyp_tokens while `words`
+    comes from ASR — different tokenizations. A span is accepted as
+    word-level ONLY when its characters provably match the mismatch text
+    (_span_texts_match). Equal counts alone prove nothing.
+    Mutates mismatches in place (times + per-span ASR confidence).
     """
     words = list(words or [])
     segs: List[SegmentInfo] = []
@@ -114,11 +159,17 @@ def attach_timestamps_with_granularity(
         if span:
             starts = [w.start for w in span if isinstance(w.start, (int, float))]
             ends = [w.end for w in span if isinstance(w.end, (int, float))]
-            if len(starts) == len(span) and len(ends) == len(span):
+            if (
+                len(starts) == len(span)
+                and len(ends) == len(span)
+                and _span_texts_match(span, m.hyp_text or "")
+            ):
                 m.start_time = min(starts)
                 m.end_time = max(ends)
+                m.confidence = _mean_probability(span)
                 continue
-        # Word-level missing/partial → try real segment times.
+        # Word-level missing/partial/unverifiable → real segment times.
+        m.confidence = None
         if m.hyp_end > m.hyp_start and (m.hyp_text or "").strip() and segs:
             s, e = _find_segment_span(m.hyp_text, segs)
             if s is not None and e is not None:

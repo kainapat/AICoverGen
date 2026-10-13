@@ -109,6 +109,11 @@ def transcribe(
     lang = validate_language(language)
     lang_arg: Optional[str] = None if lang == AUTO_LANGUAGE else lang
     model = get_model(model_size, device)
+    # F.5 note: decoding uses faster-whisper defaults deliberately (beam_size=5
+    # with temperature fallback 0.0→1.0). The fallback keeps sung, low-confidence
+    # passages transcribable; as a trade-off, transcripts may differ slightly
+    # between runs — never claim 100% repeatability. Do not disable the fallback
+    # or pin temperature without re-evaluating singing quality.
     try:
         segments_iter, info = model.transcribe(
             path,
