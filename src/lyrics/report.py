@@ -163,9 +163,9 @@ class LyricsReport:
         """Readable card-style report for Gradio (wraps long Thai text, collapses)."""
         esc = _html.escape
         parts = [
-            '<div style="border:1px solid var(--border-color-primary,#393939);border-radius:8px;'
+            '<div class="lrc-report cyber-arrive" style="border:1px solid var(--border-color-primary,#393939);border-radius:12px;'
             'padding:16px 18px;background:var(--block-background-fill,#161616);margin-top:8px;'
-            'font-family:var(--font,system-ui,sans-serif);">',
+            'font-family:var(--font,"IBM Plex Sans","Segoe UI Variable","Segoe UI",system-ui,sans-serif);">',
             '<div style="font-size:1.05rem;font-weight:600;margin-bottom:10px;">'
             '🔍 ผลตรวจเนื้อร้อง / Lyrics Check</div>',
         ]
@@ -196,8 +196,10 @@ class LyricsReport:
                     t = f"{m.start_time:.1f}s – {m.end_time:.1f}s"
                 else:
                     t = "ไม่มีเวลาที่เชื่อถือได้ (—)"
+                delay_ms = min(i * 40, 240)
                 parts.append(
-                    '<div style="border:1px solid rgba(255,255,255,.12);border-radius:6px;'
+                    f'<div class="lrc-item" style="animation-delay:{delay_ms}ms;'
+                    'background:rgba(255,255,255,.025);border-radius:8px;'
                     'padding:10px 12px;margin-bottom:8px;">'
                     f'<div style="margin-bottom:6px;"><b>#{i}</b> '
                     f'<span style="display:inline-block;padding:1px 8px;border-radius:4px;font-size:.75rem;'

@@ -292,11 +292,12 @@ CYBER_PLAYER_HEAD = """
 .cyber-player-card {
     border: 1px solid var(--border-color-primary, #393939);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    border-radius: var(--block-radius, 8px);
+    border-radius: 12px;
     padding: 18px 22px;
     background: var(--block-background-fill, #161616);
+    background-image: radial-gradient(640px 130px at 18% -10%, rgba(15, 98, 254, 0.13), transparent 70%);
     margin-top: 8px;
-    font-family: var(--font, system-ui, -apple-system, "IBM Plex Sans", BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-family: var(--font, "IBM Plex Sans", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif);
 }
 .cyber-controller-bar {
     display: flex;
@@ -324,7 +325,7 @@ CYBER_PLAYER_HEAD = """
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 8px rgba(15, 98, 254, 0.35);
-    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s cubic-bezier(0.32,0.72,0,1), background-color 0.15s cubic-bezier(0.32,0.72,0,1), box-shadow 0.15s cubic-bezier(0.32,0.72,0,1);
     user-select: none;
 }
 .cyber-play-btn:hover {
@@ -338,6 +339,7 @@ CYBER_PLAYER_HEAD = """
 }
 .cyber-time-display {
     font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+    font-variant-numeric: tabular-nums;
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--body-text-color-subdued, #c6c6c6);
@@ -356,7 +358,7 @@ CYBER_PLAYER_HEAD = """
     appearance: none;
     width: 100%;
     height: 6px;
-    border-radius: 3px;
+    border-radius: 999px;
     outline: none;
     background: linear-gradient(to right, #0f62fe 0%, #0f62fe 0%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.15) 100%);
     cursor: pointer;
@@ -365,7 +367,7 @@ CYBER_PLAYER_HEAD = """
 }
 .cyber-seek-slider::-webkit-slider-runnable-track {
     height: 6px;
-    border-radius: 3px;
+    border-radius: 999px;
     background: transparent;
 }
 .cyber-seek-slider::-webkit-slider-thumb {
@@ -379,7 +381,7 @@ CYBER_PLAYER_HEAD = """
     border: 2px solid #ffffff;
     cursor: pointer;
     margin-top: -4px;
-    transition: transform 0.12s ease, background-color 0.12s ease;
+    transition: transform 0.12s cubic-bezier(0.32,0.72,0,1), background-color 0.12s cubic-bezier(0.32,0.72,0,1);
 }
 .cyber-seek-slider:hover::-webkit-slider-thumb {
     transform: scale(1.2);
@@ -387,7 +389,7 @@ CYBER_PLAYER_HEAD = """
 }
 .cyber-seek-slider::-moz-range-track {
     height: 6px;
-    border-radius: 3px;
+    border-radius: 999px;
     background: transparent;
 }
 .cyber-seek-slider::-moz-range-thumb {
@@ -415,7 +417,7 @@ CYBER_PLAYER_HEAD = """
     align-items: center;
     justify-content: center;
     opacity: 0.85;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity 0.15s cubic-bezier(0.32,0.72,0,1), transform 0.15s cubic-bezier(0.32,0.72,0,1);
 }
 .cyber-vol-btn:hover {
     opacity: 1;
@@ -448,6 +450,187 @@ CYBER_PLAYER_HEAD = """
     background: var(--primary-500, #4589ff);
     box-shadow: 0 0 4px rgba(15, 98, 254, 0.5);
     cursor: pointer;
+}
+/* ---- Motion refinement: one authored arrival, honest feedback ---- */
+@keyframes cyber-arrive {
+    from { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.cyber-arrive {
+    animation: cyber-arrive 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes cyber-pulse-glow {
+    0%, 100% { box-shadow: 0 2px 8px rgba(15, 98, 254, 0.35); }
+    50% { box-shadow: 0 2px 18px rgba(15, 98, 254, 0.65); }
+}
+.cyber-player-card.playing .cyber-play-btn {
+    animation: cyber-pulse-glow 2.2s cubic-bezier(0.32,0.72,0,1) infinite;
+}
+.lrc-report .lrc-item {
+    animation: cyber-arrive 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Gradio buttons: press physics matching the player */
+button.gr-button-primary, button.gr-button-secondary {
+    transition: transform 0.12s cubic-bezier(0.32,0.72,0,1), filter 0.15s cubic-bezier(0.32,0.72,0,1), box-shadow 0.15s cubic-bezier(0.32,0.72,0,1);
+}
+button.gr-button-primary:active, button.gr-button-secondary:active {
+    transform: scale(0.97);
+}
+button.gr-button-primary:hover, button.gr-button-secondary:hover {
+    filter: brightness(1.08);
+}
+/* Browser surfaces: focus, selection, scrollbar carry the Carbon palette */
+.cyber-player-card :focus-visible,
+button.gr-button-primary:focus-visible,
+button.gr-button-secondary:focus-visible {
+    outline: 2px solid var(--primary-500, #4589ff);
+    outline-offset: 2px;
+}
+::selection {
+    background: rgba(15, 98, 254, 0.45);
+    color: #ffffff;
+}
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #525252;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #6f6f6f;
+    background-clip: content-box;
+    border: 2px solid transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+    .cyber-arrive, .lrc-report .lrc-item, .aig-acc {
+        animation: none;
+    }
+    .cyber-player-card.playing .cyber-play-btn,
+    .cyb-eq i, #aig-hero::before {
+        animation: none;
+    }
+    .cyber-play-btn, .cyber-seek-slider::-webkit-slider-thumb,
+    button.gr-button-primary, button.gr-button-secondary {
+        transition: none;
+    }
+}
+/* ---- Visible reskin: hero band, shells, island CTA, accent controls ----
+   Gradio-official hooks only (#aig-hero, .aig-acc, .aig-cta); no guessed
+   internal selectors. Single accent (#0f62fe), spring physics only. */
+#aig-hero {
+    text-align: center;
+    padding: 30px 20px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    background-color: var(--block-background-fill, #161616);
+    background-image: radial-gradient(700px 160px at 50% -20%, rgba(15, 98, 254, 0.16), transparent 70%);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+.aig-acc {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+.aig-cta button {
+    border-radius: 999px;
+    background-color: #0f62fe;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 55%);
+    box-shadow: 0 4px 16px rgba(15, 98, 254, 0.4);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    transition: transform 0.12s cubic-bezier(0.32,0.72,0,1), filter 0.15s cubic-bezier(0.32,0.72,0,1), box-shadow 0.15s cubic-bezier(0.32,0.72,0,1);
+}
+.aig-cta button:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 6px 24px rgba(15, 98, 254, 0.55);
+}
+.aig-cta button:active {
+    transform: scale(0.98);
+}
+input[type="range"] {
+    accent-color: #0f62fe;
+}
+/* ---- Interactive high-end: spotlight, EQ, drift, entrances ----
+   Transform/opacity only. Pointer-driven (no loops). Respects
+   prefers-reduced-motion (see media block below). */
+.cyber-player-card, .lrc-report {
+    position: relative;
+}
+.cyber-player-card::before, .lrc-report::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.32,0.72,0,1);
+    pointer-events: none;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(69, 137, 255, 0.14), transparent 70%);
+}
+.cyber-player-card:hover::before, .lrc-report:hover::before {
+    opacity: 1;
+}
+@keyframes eq-bounce {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+}
+.cyb-eq {
+    display: none;
+    align-items: flex-end;
+    gap: 2px;
+    height: 14px;
+    margin-left: 2px;
+}
+.cyber-player-card.playing .cyb-eq {
+    display: inline-flex;
+}
+.cyb-eq i {
+    width: 3px;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--primary-500, #4589ff);
+    transform-origin: bottom;
+    animation: eq-bounce 0.9s cubic-bezier(0.32,0.72,0,1) infinite;
+    animation-play-state: paused;
+}
+.cyber-player-card.playing .cyb-eq i {
+    animation-play-state: running;
+}
+.cyb-eq i:nth-child(2) { animation-duration: 0.7s; animation-delay: 0.1s; }
+.cyb-eq i:nth-child(3) { animation-duration: 1.1s; animation-delay: 0.25s; }
+.cyb-eq i:nth-child(4) { animation-duration: 0.8s; animation-delay: 0.05s; }
+.cyb-eq i:nth-child(5) { animation-duration: 1s; animation-delay: 0.3s; }
+#aig-hero {
+    position: relative;
+    overflow: hidden;
+}
+#aig-hero::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    pointer-events: none;
+    background: radial-gradient(closest-side, rgba(15, 98, 254, 0.12), transparent 70%);
+    animation: hero-drift 14s cubic-bezier(0.32,0.72,0,1) infinite alternate;
+}
+@keyframes hero-drift {
+    from { transform: translate3d(-6%, -4%, 0); }
+    to { transform: translate3d(6%, 5%, 0); }
+}
+.aig-acc {
+    animation: cyber-arrive 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @media (max-width: 640px) {
     .cyber-controller-bar {
@@ -495,15 +678,25 @@ CYBER_PLAYER_HEAD = """
             a.pause();
         }
     };
+    function setCyberPlaying(cid, on) {
+        var card = document.getElementById('card_' + cid);
+        if (card) {
+            if (on) { card.classList.add('playing'); }
+            else { card.classList.remove('playing'); }
+        }
+    }
     window.onCyberPlay = function(cid) {
         var b = document.getElementById('play_' + cid);
         if (b) { b.innerHTML = '⏸'; b.title = 'Pause'; }
+        setCyberPlaying(cid, true);
     };
     window.onCyberPause = function(cid) {
         var b = document.getElementById('play_' + cid);
         if (b) { b.innerHTML = '▶'; b.title = 'Play'; }
+        setCyberPlaying(cid, false);
     };
     window.onCyberEnded = function(cid) {
+        setCyberPlaying(cid, false);
         var b = document.getElementById('play_' + cid);
         var s = document.getElementById('seek_' + cid);
         var a = document.getElementById('audio_' + cid);
@@ -567,6 +760,27 @@ CYBER_PLAYER_HEAD = """
             if (vs) vs.value = a.volume || 1;
         }
     };
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.addEventListener('mousemove', function(e) {
+        var card = e.target && e.target.closest ? e.target.closest('.cyber-player-card, .lrc-report') : null;
+        if (!card) return;
+        var r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(2) + '%');
+        card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(2) + '%');
+    }, { passive: true });
+    if (!reduceMotion) {
+        document.querySelectorAll('.aig-cta button').forEach(function(btn) {
+            btn.addEventListener('mousemove', function(e) {
+                var r = btn.getBoundingClientRect();
+                var dx = (e.clientX - (r.left + r.width / 2)) / r.width;
+                var dy = (e.clientY - (r.top + r.height / 2)) / r.height;
+                btn.style.transform = 'translate(' + (dx * 4).toFixed(2) + 'px,' + (dy * 4).toFixed(2) + 'px)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                btn.style.transform = '';
+            });
+        });
+    }
 })();
 </script>
 """
@@ -575,7 +789,7 @@ CYBER_PLAYER_HEAD = """
 def render_player_card(cover_path=None):
     if not cover_path or not os.path.exists(cover_path):
         return """
-        <div style="
+        <div class="cyber-arrive" style="
             border: 1px dashed var(--border-color-primary, #393939);
             border-radius: var(--block-radius, 8px);
             padding: 24px 20px;
@@ -606,12 +820,12 @@ def render_player_card(cover_path=None):
 
         return f"""
         {CYBER_PLAYER_HEAD}
-        <div class="cyber-player-card">
+        <div id="card_{cid}" class="cyber-player-card cyber-arrive">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                 <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
                     <span style="font-size: 1.6rem;">🎧</span>
                     <div style="overflow: hidden;">
-                        <div style="font-weight: 600; font-size: 1.05rem; color: var(--body-text-color, #f4f4f4); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        <div style="font-weight: 700; font-size: 1.25rem; letter-spacing: -0.01em; line-height: 1.25; color: var(--body-text-color, #f4f4f4); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                             {escaped_name}
                         </div>
                         <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 2px 8px; border-radius: 4px; background: rgba(15, 98, 254, 0.12); border: 1px solid rgba(15, 98, 254, 0.25); font-size: 0.75rem; color: var(--primary-400, #4589ff); font-weight: 500;">
@@ -639,6 +853,7 @@ def render_player_card(cover_path=None):
 
             <div class="cyber-controller-bar">
                 <button id="play_{cid}" class="cyber-play-btn" type="button" onclick="window.toggleCyberPlay('{cid}')" title="Play">▶</button>
+                <span class="cyb-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
                 <span id="time_{cid}" class="cyber-time-display">0:00 / --:--</span>
                 <div class="cyber-seek-container">
                     <input id="seek_{cid}" class="cyber-seek-slider" type="range" min="0" max="100" value="0" step="0.1"
@@ -665,7 +880,7 @@ def render_player_card(cover_path=None):
                     border-radius: var(--button-large-radius, 6px);
                     text-decoration: none;
                     box-shadow: 0 2px 8px rgba(15, 98, 254, 0.3);
-                    transition: background-color 0.15s ease, transform 0.15s ease;
+                    transition: background-color 0.15s cubic-bezier(0.32,0.72,0,1), transform 0.15s cubic-bezier(0.32,0.72,0,1);
                 ">
                     <span>💾</span> ดาวน์โหลดเพลง (.mp3)
                 </a>
@@ -693,7 +908,7 @@ if __name__ == '__main__':
 
     with gr.Blocks(title='AICoverGenWebUI', theme=args.theme, fill_width=True, fill_height=False, head=CYBER_PLAYER_HEAD) as app:
 
-        gr.Label(f'AICoverGen WebUI {"ZeroGPU mode" if IS_ZERO_GPU else ""} created with ❤️', show_label=False)
+        gr.Label(f'AICoverGen WebUI {"ZeroGPU mode" if IS_ZERO_GPU else ""} created with ❤️', show_label=False, elem_id="aig-hero")
         if IS_ZERO_GPU:
             gr.Markdown(
                 """
@@ -710,7 +925,7 @@ if __name__ == '__main__':
         # main tab
         with gr.Tab("สร้างเพลง / Generate"):
 
-            with gr.Accordion('ตัวเลือกหลัก / Main Options'):
+            with gr.Accordion('ตัวเลือกหลัก / Main Options', elem_classes=["aig-acc"]):
                 with gr.Row():
                     with gr.Column():
                         rvc_model = gr.Dropdown(voice_models, label='โมเดลเสียง / Voice Models', info='โฟลเดอร์โมเดล "AICoverGen --> rvc_models" หลังเพิ่มโมเดลใหม่ให้กดปุ่มรีเฟรช / After adding new models, click refresh')
@@ -744,7 +959,7 @@ if __name__ == '__main__':
                     show_file_upload_button.click(swap_visibility, outputs=[file_upload_col, yt_link_col, song_input, local_file])
                     show_yt_link_button.click(swap_visibility, outputs=[yt_link_col, file_upload_col, song_input, local_file])
 
-            with gr.Accordion('ตัวเลือกแปลงเสียง / Voice conversion', open=False):
+            with gr.Accordion('ตัวเลือกแปลงเสียง / Voice conversion', open=False, elem_classes=["aig-acc"]):
                 with gr.Row():
                     index_rate = gr.Slider(0, 1, value=0.5, label='อัตรา Index / Index Rate', info="ควบคุมว่าให้เก็บสำเนียงของเสียง AI ไว้มากแค่ไหน / How much of the AI voice's accent to keep")
                     filter_radius = gr.Slider(0, 7, value=3, step=1, label='รัศมีฟิลเตอร์ / Filter radius', info='ถ้า >=3: ใช้ median filtering กับผล pitch ช่วยลดเสียงลมหายใจ / If >=3: median filtering on pitch, reduces breathiness')
@@ -761,7 +976,7 @@ if __name__ == '__main__':
                         extra_denoise = gr.Checkbox(True, label='ลดนอยส์ / Denoise', info='ลดนอยส์เพิ่มเติมให้เสียงสะอาดขึ้น / Extra noise reduction for cleaner audio.')
                         keep_files = gr.Checkbox((False if IS_ZERO_GPU else True), label='เก็บไฟล์ระหว่างทาง / Keep intermediate files', info='เก็บไฟล์เสียงทั้งหมดใน song_output/id เช่น เสียงร้อง/ดนตรีแยก ไม่ติ๊กเพื่อประหยัดพื้นที่ / Keep all intermediate audio files. Uncheck to save space', interactive=(False if IS_ZERO_GPU else True))
 
-            with gr.Accordion('ตัวเลือกผสมเสียง / Audio mixing', open=False):
+            with gr.Accordion('ตัวเลือกผสมเสียง / Audio mixing', open=False, elem_classes=["aig-acc"]):
                 gr.Markdown('### เปลี่ยนความดัง (เดซิเบล / decibels)')
                 with gr.Row():
                     main_gain = gr.Slider(-20, 20, value=0, step=1, label='เสียงร้องหลัก / Main Vocals')
@@ -778,7 +993,7 @@ if __name__ == '__main__':
                 gr.Markdown('### รูปแบบไฟล์เสียง / Output Format')
                 output_format = gr.Dropdown(['mp3', 'wav'], value='mp3', label='ชนิดไฟล์ / Output file type', info='mp3: ไฟล์เล็ก คุณภาพพอใช้ wav: ไฟล์ใหญ่ คุณภาพดีสุด / mp3: small file, decent quality. wav: large file, best quality')
 
-            with gr.Accordion('ตรวจสอบเนื้อร้อง / Lyrics Checker (optional)', open=False):
+            with gr.Accordion('ตรวจสอบเนื้อร้อง / Lyrics Checker (optional)', open=False, elem_classes=["aig-acc"]):
                 gr.Markdown('ฟังเสียงร้องด้วย ASR แล้วเทียบกับเนื้อร้องที่ให้มา — ปิดไว้โดยปริยาย ไม่กระทบการสร้างเพลงหลัก / Transcribes vocals and compares with your reference lyrics. Off by default; never blocks cover generation.')
                 lyrics_enable = gr.Checkbox(False, label='เปิดใช้ Lyrics Checker / Enable', info='ต้องติดตั้ง faster-whisper ก่อน (optional) / Requires faster-whisper (optional dep)')
                 with gr.Row():
@@ -807,7 +1022,7 @@ if __name__ == '__main__':
                                  inputs=[local_file, lyrics_enable, lyrics_ref, lyrics_lang, lyrics_model, lyrics_device, lyrics_timestamp],
                                  outputs=[lyrics_report])
 
-            with gr.Accordion('ตรวจสอบหลัง RVC / Post-RVC Analysis (optional)', open=False):
+            with gr.Accordion('ตรวจสอบหลัง RVC / Post-RVC Analysis (optional)', open=False, elem_classes=["aig-acc"]):
                 gr.Markdown('เทียบเสียงร้องต้นฉบับกับเสียงหลัง RVC ด้วย ASR verse-by-verse — ปิดไว้โดยปริยาย ไม่แตะการตั้งค่า RVC และไม่ลบไฟล์ cover / Compares pre/post-RVC vocals. Off by default; never retunes RVC or deletes outputs.')
                 postrvc_enable = gr.Checkbox(False, label='เปิดใช้ Post-RVC Analysis / Enable', info='ต้องติดตั้ง faster-whisper ก่อน (optional) / Requires faster-whisper (optional dep)')
                 with gr.Row():
@@ -839,7 +1054,7 @@ if __name__ == '__main__':
                                   inputs=[postrvc_src, postrvc_conv, postrvc_enable, postrvc_ref, postrvc_lang, postrvc_model, postrvc_device, postrvc_timestamp],
                                   outputs=[postrvc_report])
 
-            with gr.Accordion('ตรวจทานเนื้อร้อง / Lyric Review (optional)', open=False):
+            with gr.Accordion('ตรวจทานเนื้อร้อง / Lyric Review (optional)', open=False, elem_classes=["aig-acc"]):
                 gr.Markdown('ตรวจทานและแก้ไขเนื้อร้องทีละจุดจากผล ASR — ต้นฉบับ ASR ไม่ถูกแตะ การแก้ต้องกดยืนยันทุกครั้ง ปิดไว้โดยปริยาย / Review and correct lyrics item by item. Original ASR transcript is immutable; every edit needs explicit confirm. Off by default.')
                 review_enable = gr.Checkbox(False, label='เปิดใช้ Lyric Review / Enable', info='ต้องติดตั้ง faster-whisper ก่อน (optional) / Requires faster-whisper (optional dep)')
                 with gr.Row():
@@ -1062,7 +1277,7 @@ if __name__ == '__main__':
 
             with gr.Row():
                 clear_btn = gr.ClearButton(value='ล้าง / Clear', components=[song_input, rvc_model, keep_files, local_file, song_title_input, fast_mode])
-                generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary')
+                generate_btn = gr.Button("สร้างเพลง / Generate", variant='primary', elem_classes=["aig-cta"])
 
             with gr.Row():
                 ai_cover_player = gr.HTML(render_player_card(None))
