@@ -479,7 +479,8 @@ button.gr-button-primary:active, button.gr-button-secondary:active {
 button.gr-button-primary:hover, button.gr-button-secondary:hover {
     filter: brightness(1.08);
 }
-/* Browser surfaces: focus, selection, scrollbar carry the Carbon palette */
+/* Browser surfaces: focus and selection carry the Carbon palette.
+   Scrollbars intentionally left at browser native per user feedback. */
 .cyber-player-card :focus-visible,
 button.gr-button-primary:focus-visible,
 button.gr-button-secondary:focus-visible {
@@ -489,24 +490,6 @@ button.gr-button-secondary:focus-visible {
 ::selection {
     background: rgba(15, 98, 254, 0.45);
     color: #ffffff;
-}
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: #525252;
-    border-radius: 5px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #6f6f6f;
-    background-clip: content-box;
-    border: 2px solid transparent;
 }
 @media (prefers-reduced-motion: reduce) {
     .cyber-arrive, .lrc-report .lrc-item, .aig-acc {
@@ -564,25 +547,10 @@ button.gr-button-secondary:focus-visible {
 input[type="range"] {
     accent-color: #0f62fe;
 }
-/* ---- Interactive high-end: spotlight, EQ, drift, entrances ----
+/* ---- Interactive high-end: EQ, drift, entrances ----
    Transform/opacity only. Pointer-driven (no loops). Respects
-   prefers-reduced-motion (see media block below). */
-.cyber-player-card, .lrc-report {
-    position: relative;
-}
-.cyber-player-card::before, .lrc-report::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    opacity: 0;
-    transition: opacity 0.3s cubic-bezier(0.32,0.72,0,1);
-    pointer-events: none;
-    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(69, 137, 255, 0.14), transparent 70%);
-}
-.cyber-player-card:hover::before, .lrc-report:hover::before {
-    opacity: 1;
-}
+   prefers-reduced-motion (see media block below).
+   NOTE: cursor spotlight + custom scrollbars removed per user feedback. */
 @keyframes eq-bounce {
     0%, 100% { transform: scaleY(0.3); }
     50% { transform: scaleY(1); }
@@ -761,13 +729,6 @@ input[type="range"] {
         }
     };
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    document.addEventListener('mousemove', function(e) {
-        var card = e.target && e.target.closest ? e.target.closest('.cyber-player-card, .lrc-report') : null;
-        if (!card) return;
-        var r = card.getBoundingClientRect();
-        card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(2) + '%');
-        card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(2) + '%');
-    }, { passive: true });
     if (!reduceMotion) {
         document.querySelectorAll('.aig-cta button').forEach(function(btn) {
             btn.addEventListener('mousemove', function(e) {

@@ -293,12 +293,16 @@ class TestInteractiveHighEnd(unittest.TestCase):
         src = WEBUI.read_text(encoding="utf-8")
         return src[src.index("CYBER_PLAYER_HEAD"):]
 
-    def test_spotlight_hook(self):
+    def test_removed_per_feedback(self):
+        # User feedback: no cursor spotlight, no custom scrollbars.
+        # Locks the removal: spotlight vars/listener and scrollbar
+        # restyling must stay out. Magnetic CTA still uses mousemove.
         head = self._head()
-        self.assertIn("--mx", head)
-        self.assertIn("--my", head)
-        self.assertIn("mousemove", head)
-        self.assertIn(".cyber-player-card, .lrc-report", head)
+        self.assertNotIn("--mx", head)
+        self.assertNotIn("--my", head)
+        self.assertNotIn("::-webkit-scrollbar", head)
+        self.assertNotIn("closest('.cyber-player-card", head)
+        self.assertIn("mousemove", head)  # magnetic CTA only
 
     def test_eq_bars(self):
         import sys as _sys
