@@ -163,6 +163,7 @@ def download_with_auth(url, dest, hf_token=""):
 
 def download_online_model(url, dir_name, hf_token="", progress=gr.Progress()):
     try:
+        print(f"MODEL_DL_START:{dir_name}:{url}", flush=True)
         progress(0, desc=f'[~] Downloading voice model with name {dir_name}...')
         zip_name = url.split('/')[-1].split('?')[0]
         extraction_folder = os.path.join(rvc_models_dir, dir_name)
@@ -185,8 +186,10 @@ def download_online_model(url, dir_name, hf_token="", progress=gr.Progress()):
         else:
             download_with_auth(url, zip_name, hf_token)
 
+            print(f"MODEL_DL_EXTRACT:{dir_name}", flush=True)
             progress(0.5, desc='[~] Extracting zip...')
             extract_zip(extraction_folder, zip_name)
+        print(f"MODEL_DL_COMPLETE:{dir_name}", flush=True)
         return f'[+] {dir_name} Model successfully downloaded!'
 
     except urllib.error.HTTPError as e:

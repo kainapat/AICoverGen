@@ -111,6 +111,18 @@ def yt_download(link):
         gr.Info("You need to provide a download link.")
         return None, None
     os.makedirs(downloads_dir, exist_ok=True)
+
+    def _yt_hook(d):
+        if d.get('status') == 'downloading':
+            total = d.get('total_bytes') or d.get('total_bytes_estimate') or 0
+            downloaded = d.get('downloaded_bytes', 0)
+            speed = d.get('speed') or 0
+            pct = (downloaded / total * 100) if total else 0
+            speed_str = f"{speed / (1024 * 1024):.1f}MB/s" if speed else ""
+            print(f"YT_DL_PROGRESS:{pct:.1f}%:{speed_str}", flush=True)
+        elif d.get('status') == 'finished':
+            print("YT_DL_PROGRESS:100%:done", flush=True)
+
     ydl_opts = {
         'format': 'bestaudio',
         'outtmpl': os.path.join(downloads_dir, '%(id)s'),
@@ -119,6 +131,7 @@ def yt_download(link):
         'no_warnings': True,
         'quiet': True,
         'noprogress': True,
+        'progress_hooks': [_yt_hook],
         'extractaudio': True,
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
     }
@@ -126,6 +139,7 @@ def yt_download(link):
         result = ydl.extract_info(link, download=True)
         raw_path = ydl.prepare_filename(result, outtmpl=os.path.join(downloads_dir, '%(id)s.mp3'))
         song_title = extract_song_and_artist(result)
+        print(f"YT_DL_COMPLETE:{song_title}", flush=True)
 
     # Rename downloaded file directly to the clean song title so UI and file box show the real song title
     target_dir = downloads_dir
@@ -606,6 +620,7 @@ def song_cover_pipeline(song_input, voice_model, pitch_change, keep_files,
         else:
             total_str = f"{secs}s"
         print(f"[+] Total time all process: {total_str} ({pipeline_elapsed:.1f}s)", flush=True)
+        print(f"PIPELINE_COMPLETE:{effective_song_title}:{voice_model}:{ai_cover_path}:{total_str}", flush=True)
 
         return ai_cover_path
 

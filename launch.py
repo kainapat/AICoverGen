@@ -73,21 +73,28 @@ def cprint(text, col="white", bold=False, end="\n"):
 def render_box(lines, border_col="slate", width=64):
     c_b = C.get(border_col, "")
     c_res = C["reset"]
-    out = [f"  {c_b}╭{'─' * width}╮{c_res}"]
+    max_w = width
+    for line in lines:
+        if line != "---":
+            max_w = max(max_w, vis_width(line) + 4)
+    out = [f"  {c_b}╭{'─' * max_w}╮{c_res}"]
     for line in lines:
         if line == "---":
-            out.append(f"  {c_b}├{'─' * width}┤{c_res}")
+            out.append(f"  {c_b}├{'─' * max_w}┤{c_res}")
         else:
             w = vis_width(line)
-            pad = max(0, width - w - 2)
+            pad = max(0, max_w - w - 2)
             out.append(f"  {c_b}│{c_res}  {line}{' ' * pad}{c_b}│{c_res}")
-    out.append(f"  {c_b}╰{'─' * width}╯{c_res}")
+    out.append(f"  {c_b}╰{'─' * max_w}╯{c_res}")
     return "\n".join(out)
 
 
-# ─── Error Diagnostic Card ───
+# ─── Error Diagnostic Card & State ───
 _tb_buffer = []
 _last_exec_time = None
+_last_audio_dur_str = ""
+_last_rvc_speed = ""
+_current_mdx_stage = "Vocals & Instrumental Separation"
 _public_url = None
 _share_error = None
 
@@ -250,7 +257,7 @@ def shutdown_server(proc, job_manager=None):
 
 # ─── Real-time Log Stream Formatter ───
 def format_log_line(line):
-    global _tb_buffer
+    global _tb_buffer, _last_exec_time, _last_audio_dur_str, _last_rvc_speed, _current_mdx_stage
     raw_line = line.rstrip()
     if not raw_line:
         return
@@ -271,8 +278,6 @@ def format_log_line(line):
         _tb_buffer = [raw_line]
         return
 
-    global _last_exec_time
-
     # Suppress raw yt-dlp download chunks and noise lines
     stripped = raw_line.strip()
     if not stripped:
@@ -282,6 +287,46 @@ def format_log_line(line):
 
     # Suppress Python 3.10 deprecation notice and JS runtime notices
     if ("Support for Python version" in raw_line and "deprecated" in raw_line) or "No supported JavaScript runtime" in raw_line:
+        return
+
+    # Live yt-dlp Progress from main.py hook
+    if raw_line.startswith("YT_DL_PROGRESS:"):
+        parts = raw_line.split(":")
+        pct_str = parts[1]
+        speed_str = parts[2] if len(parts) > 2 else ""
+        try:
+            pct_val = float(pct_str.replace("%", ""))
+        except Exception:
+            pct_val = 0.0
+        bar_len = 16
+        filled = int(bar_len * pct_val / 100)
+        bar = "█" * filled + "░" * (bar_len - filled)
+        spd = f" | {speed_str}" if speed_str else ""
+        sys.stdout.write(f"\r     ⬇️  {C['blue']}[Download] [{bar}] {pct_val:5.1f}%{spd}{C['reset']}   ")
+        sys.stdout.flush()
+        return
+
+    if raw_line.startswith("YT_DL_COMPLETE:"):
+        title = raw_line.split("YT_DL_COMPLETE:", 1)[1].strip()
+        sys.stdout.write(f"\r     {C['emerald']}✔   [Download] Complete: {C['white']}{title[:50]}{' ' * 20}{C['reset']}\n")
+        sys.stdout.flush()
+        return
+
+    # Voice Model Download & Extraction Events from webui.py
+    if raw_line.startswith("MODEL_DL_START:"):
+        parts = raw_line.split("MODEL_DL_START:", 1)[1].split(":", 1)
+        m_name = parts[0]
+        cprint(f"  📥  [Model Hub] Downloading Voice Model: {m_name}...", "cyan")
+        return
+
+    if raw_line.startswith("MODEL_DL_EXTRACT:"):
+        m_name = raw_line.split("MODEL_DL_EXTRACT:", 1)[1].strip()
+        cprint(f"     📦  [Model Hub] Extracting weights & index for: {m_name}...", "cyan")
+        return
+
+    if raw_line.startswith("MODEL_DL_COMPLETE:"):
+        m_name = raw_line.split("MODEL_DL_COMPLETE:", 1)[1].strip()
+        cprint(f"     ✔   [Model Hub] Voice model '{m_name}' ready!", "emerald", bold=True)
         return
 
     # Sub-step: Non-ASCII filename detection
@@ -309,14 +354,15 @@ def format_log_line(line):
             dur_m = int(dur // 60)
             dur_s = int(dur % 60)
             dur_str = f"{dur_m}m {dur_s:02d}s" if dur_m > 0 else f"{dur:.1f}s"
+            _last_audio_dur_str = dur_str
             if _last_exec_time and _last_exec_time > 0:
                 speed = dur / _last_exec_time
-                cprint(f"     ⚡  [RVC Speed] Inferred in {_last_exec_time:.1f}s (Audio: {dur_str} | {speed:.1f}x Real-time)", "blue")
+                _last_rvc_speed = f"{speed:.1f}x Real-time"
+                cprint(f"     ⚡  [RVC Speed] Inferred in {_last_exec_time:.1f}s (Audio: {dur_str} | {_last_rvc_speed})", "blue")
             else:
                 cprint(f"     ⚡  [RVC Audio] Processed {dur_str} vocal track", "blue")
         except Exception:
             cprint(f"     ⚡  {raw_line.strip()}", "blue")
-        _last_exec_time = None
         return
 
     # Sub-step: Noise reduction
@@ -339,10 +385,10 @@ def format_log_line(line):
     # Live MDX progress updates
     if "MDX Progress:" in raw_line:
         if "Complete" in raw_line:
-            sys.stdout.write(f"\r  {C['emerald']}✔ [2/6] Vocals & Instrumental Separation Complete!{' ' * 20}{C['reset']}\n")
+            sys.stdout.write(f"\r     {C['emerald']}✔   [{_current_mdx_stage}] Complete!{' ' * 25}{C['reset']}\n")
         else:
             clean = raw_line.replace("MDX Progress:", "").strip()
-            sys.stdout.write(f"\r  {C['blue']}⚡ MDX {clean}{C['reset']}   ")
+            sys.stdout.write(f"\r     {C['blue']}⚡  {clean}{C['reset']}   ")
         sys.stdout.flush()
         return
 
@@ -350,29 +396,77 @@ def format_log_line(line):
     if "Starting AI Cover Generation Pipeline" in raw_line:
         print()
         cprint("  ─────────────────────────────────────────────────────────────", "slate")
-        cprint("  ⚡ [PIPELINE STARTED] Processing audio cover workflow...", "blue", bold=True)
+        cprint("  ⚡ [PIPELINE STARTED] Processing AI Cover Workflow...", "blue", bold=True)
+        return
     elif "Downloading song" in raw_line:
-        cprint("  ⬇️  [1/6] Downloading YouTube audio stream...", "blue")
+        cprint("  ⬇️  [1/5] Downloading YouTube audio stream...", "blue")
+        return
     elif "Separating Vocals from Instrumental" in raw_line:
-        cprint("  🎼  [2/6] Separating Vocals & Instrumental (MDX-Net)...", "blue")
+        _current_mdx_stage = "Vocals & Instrumental Separation"
+        cprint("  🎼  [2/5] Separating Vocals & Instrumental (MDX-Net)...", "blue")
+        return
     elif "Separating Main Vocals from Backup Vocals" in raw_line:
-        cprint("  🔮  [3/6] Isolating Lead Vocals & Removing Backup (UVR-KARA)...", "blue")
+        _current_mdx_stage = "Lead & Backup Vocals Isolation"
+        cprint("     🔮  [Stem Split] Isolating Lead Vocals & Removing Backup (UVR-KARA)...", "blue")
+        return
     elif "Applying DeReverb" in raw_line:
-        cprint("  ✨  [4/6] De-reverberating Vocal Stems (FoxJoy HQ)...", "blue")
+        _current_mdx_stage = "Vocal De-Reverberation"
+        cprint("     ✨  [Acoustics] De-reverberating Vocal Stems (FoxJoy HQ)...", "blue")
+        return
     elif "Converting voice using RVC" in raw_line:
-        cprint("  🎙️  [5/6] Converting Vocal Timbre with RVC v2 Model...", "blue", bold=True)
+        cprint("  🎙️  [3/5] Converting Vocal Timbre with RVC v2 Model...", "blue", bold=True)
+        return
     elif "Applying audio effects" in raw_line:
-        cprint("  🎛️  [6/6] Mastering with Studio Effects & Reverb...", "blue")
+        cprint("  🎛️  [4/5] Mastering with Studio Effects & Reverb...", "blue")
+        return
+    elif "Voiceless" in raw_line or "Inst_HQ" in raw_line:
+        _current_mdx_stage = "Instrumental Fine-Tuning"
+        cprint("     ⚡  [Inst HQ] Extracting Clean Voiceless Instrumental...", "blue")
+        return
+    elif "Applying overall pitch change" in raw_line:
+        cprint("     🎼  [Pitch Shift] Applying overall pitch shift...", "blue")
+        return
     elif "Combining AI Vocals and Instrumentals" in raw_line:
-        cprint("  🎵  [FINAL] Merging Vocals & Instrumental Stems...", "emerald")
-    elif "Total time all process" in raw_line:
-        cprint(f"  🏆  {raw_line.strip()}", "emerald", bold=True)
-        cprint("  ─────────────────────────────────────────────────────────────", "slate")
-        print()
-    elif "Cover generated at" in raw_line:
-        cprint(f"  💾  {raw_line.strip()}", "emerald", bold=True)
+        cprint("  🎵  [5/5] Merging Vocals & Instrumental Stems...", "emerald")
+        return
+    elif "Removing intermediate audio files" in raw_line:
+        cprint("     🧹  [Cleanup] Purging temporary stems...", "gray")
+        return
+    elif "PIPELINE_COMPLETE:" in raw_line:
+        try:
+            parts = raw_line.split("PIPELINE_COMPLETE:", 1)[1].split(":")
+            song_name = parts[0]
+            model_name = parts[1]
+            out_file = parts[2]
+            total_time = parts[3]
+            out_filename = os.path.basename(out_file)
+
+            summary_lines = [
+                f"{C['emerald']}{C['bold']}★ AI COVER PIPELINE COMPLETE",
+                "---",
+                "",
+                f"  {C['white']}Song Title : {C['blue']}{song_name[:48]}",
+                f"  {C['white']}Voice Model: {C['cyan']}{model_name[:48]}",
+                f"  {C['white']}Total Time : {C['emerald']}{total_time}",
+            ]
+            if _last_exec_time and _last_audio_dur_str:
+                summary_lines.append(f"  {C['white']}RVC Infer  : {C['blue']}{_last_exec_time:.1f}s (Audio: {_last_audio_dur_str} | {_last_rvc_speed})")
+            summary_lines.extend([
+                f"  {C['white']}Output File: {C['emerald']}{out_filename[:48]}",
+                "",
+                f"{C['dark']}[Output saved to song_output | Ready for playback or download]",
+            ])
+            print()
+            print(render_box(summary_lines, "emerald", 64))
+            print()
+        except Exception:
+            pass
+        return
+    elif "Total time all process" in raw_line or "Cover generated at" in raw_line:
+        return  # Covered by PIPELINE_COMPLETE summary card
     elif "cuda:0 half>>" in raw_line:
         ok("CUDA device confirmed: FP16 half-precision active")
+        return
     elif "gradio.live" in raw_line or "Running on public URL" in raw_line:
         global _public_url
         m = re.search(r'https://[a-zA-Z0-9-]+\.gradio\.live', raw_line)

@@ -59,8 +59,8 @@ license: mit
 | 🎧 **Carbon Theme Audio Player** | เครื่องเล่นเพลง Custom HTML5 ดีไซน์หรูสอดรับกับ IBM Carbon Theme พร้อมปุ่มควบคุม Carbon Blue (`#0f62fe`), แสดงจุดเลื่อนเพลง (Scrubber Thumb) ถาวร 100%, ป้องกัน IDM ดักดาวน์โหลด, แก้ปัญหาค้าง 0:00, และคงสระภาษาไทยสมบูรณ์ | Theme-adaptive HTML5 player matching IBM Carbon style tokens, featuring permanent scrubber visibility, IDM interception immunity, and lossless UTF-8 Thai diacritics. |
 | 🎙️ **59+ Voice Models & Thai Unicode** | ดาวน์โหลดโมเดลเสียงศิลปิน/ตัวละครดังได้ใน 1 คลิกจาก Public Index และรองรับโฟลเดอร์โมเดลภาษาไทย 100% (เช่น โต ซิลลี่ฟูลส์, จ๋าย ไททศมิตร) ด้วย In-Memory FAISS Index Deserializer ไม่แครช | 1-click model downloads from 59+ public catalog; native support for Thai Unicode model folder names via in-memory FAISS deserialization. |
 | 🎮 **Low-VRAM & Auto-Flush** | ปรับแต่งพิเศษสำหรับ GPU 4GB (RTX 2050 / GTX 1650) ด้วย FP16 Half-Precision + Single-Thread MDX (กิน VRAM จริงเพียง ~1.5 GB) พร้อมระบบ Auto-Flush คืนหน่วยความจำทุกขั้นตอน | Engineered for 4GB GPUs with FP16 precision, single-thread MDX safety, and automatic GPU VRAM cache purges between pipeline stages. |
-| 💻 **Carbon Console Launcher** | หน้าต่าง Terminal จัดเต็มด้วย ANSI IBM Carbon Palette (`#4589ff` + `#525252`), กรอบมุมมนอ่านสบายตา, จัดระเบียบขั้นตอนประมวลผลชัดเจน, ซ่อน Warning กวนใจ, พร้อม Live GPU/VRAM Telemetry | Sleek IBM Carbon themed console launcher with high-contrast typography, border boxes, stream progress indicators, and deprecation notice suppression. |
-| 🛡️ **Diagnostic & Crash Guard** | กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard หน้าต่างไม่ปิดหนีเมื่อเกิดข้อผิดพลาด | Carbon error diagnostic card with WinError 10054 noise filtering, full traceback buffer drainer, and crash pause guard. |
+| 💻 **Carbon Console & Live Flow** | หน้าต่าง Terminal จัดเต็มด้วย ANSI IBM Carbon Palette (`#4589ff` + `#525252`), กรอบมุมมนอ่านสบายตา, **Live Download Stream** (แสดง Progress bar และความเร็ว MB/s ของ YouTube ทันที), **Model Hub Tracking** (บอกสถานะดาวน์โหลดและแตกไฟล์โมเดล), **Smart MDX Stage** (จำแนกสเตจแยกเสียงจริงไม่ขึ้นสเตจซ้ำ), พร้อม **AI Cover Summary Card** สรุปผลงานปิดท้าย | Sleek IBM Carbon themed console with real-time YouTube download progress bars, Model Hub download/extraction telemetry, smart non-redundant MDX stage indicators, and end-of-run AI Cover Summary Card. |
+| 🛡️ **Diagnostic & Crash Guard** | ป้องกันหน้าต่างปิดเองอัตโนมัติใน `.bat`, กล่องสรุป Error แบบ Carbon Diagnostic Card พร้อมตัวกรอง WinError 10054 และ Crash Pause Guard ค้างหน้าต่างไว้เสมอเมื่อมีข้อผิดพลาด | Environment verification guard in `.bat` preventing silent closes, Carbon error diagnostic card with WinError 10054 filtering, and crash pause guard. |
 | 🌐 **Bilingual UI** | หน้าจอใช้งาน 2 ภาษา ไทย 🇹🇭 และ อังกฤษ 🇬🇧 ชัดเจนทุกเมนู | Intuitive bilingual interface in Thai and English across all tabs. |
 
 ---
@@ -192,8 +192,9 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
 
 ## 💻 หน้าต่าง Terminal Carbon Console | Live Telemetry
 
-เมื่อเปิดโปรแกรมผ่าน Launcher หน้าต่างคอนโซลจะแสดงผลแบบ Full IBM Carbon Theme:
+เมื่อเปิดโปรแกรมผ่าน Launcher หน้าต่างคอนโซลจะแสดงผลแบบ Full IBM Carbon Theme ตั้งแต่ขั้นตอนบูตจนถึงการสร้างเพลงเสร็จสมบูรณ์:
 
+### 1️⃣ ตอนเริ่มต้นระบบ (System Boot & Telemetry)
 ```text
   ╭────────────────────────────────────────────────────────────────╮
   │  ▲  AICoverGen  v2.5 [CARBON CONSOLE]                          │
@@ -231,6 +232,40 @@ AICoverGen ติดตั้งระบบควบคุมวงจรชี
   │                                                                │
   │  [Press Ctrl+C in terminal to safely terminate server]         │
   ╰────────────────────────────────────────────────────────────────╯
+```
+
+### 2️⃣ ระหว่างประมวลผล (Live Pipeline & Real-time Flow)
+```text
+     ⬇️  [Download] [████████░░░░░░░░]  52.4% | 4.1MB/s
+     ✔   [Download] Complete: YOASOBI - Racing Into The Night
+
+  ─────────────────────────────────────────────────────────────
+  ⚡ [PIPELINE STARTED] Processing AI Cover Workflow...
+  🎼  [2/5] Separating Vocals & Instrumental (MDX-Net)...
+     ⚡  [████████░░░░░░░░] 50% | 12/24 chunks | ETA: 4s
+     ✔   [Vocals & Instrumental Separation] Complete!
+     🔮  [Stem Split] Isolating Lead Vocals & Removing Backup (UVR-KARA)...
+     ✔   [Lead & Backup Vocals Isolation] Complete!
+     ✨  [Acoustics] De-reverberating Vocal Stems (FoxJoy HQ)...
+     ✔   [Vocal De-Reverberation] Complete!
+  🎙️  [3/5] Converting Vocal Timbre with RVC v2 Model...
+     ⚡  [RVC Speed] Inferred in 14.2s (Audio: 3m 45s | 15.8x Real-time)
+  🎛️  [4/5] Mastering with Studio Effects & Reverb...
+  🎵  [5/5] Merging Vocals & Instrumental Stems...
+     🧹  [Cleanup] Purging temporary stems...
+
+  ╭──────────────────────────────────────────────────────────────────╮
+  │  ★ AI COVER PIPELINE COMPLETE                                    │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │    Song Title : YOASOBI - Racing Into The Night                  │
+  │    Voice Model: Ado                                              │
+  │    Total Time : 1m 15s                                           │
+  │    RVC Infer  : 14.2s (Audio: 3m 45s | 15.8x Real-time)          │
+  │    Output File: YOASOBI - Racing Into The Night (Ado Ver).mp3    │
+  │                                                                  │
+  │  [Output saved to song_output | Ready for playback or download]  │
+  ╰──────────────────────────────────────────────────────────────────╯
 ```
 
 ---

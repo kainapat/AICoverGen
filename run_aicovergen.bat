@@ -7,4 +7,17 @@ set HF_HOME=D:\AI_Cache\huggingface
 set TORCH_HOME=D:\AI_Cache\torch
 set PIP_CACHE_DIR=D:\AI_Cache\pip
 set UV_CACHE_DIR=D:\AI_Cache\uv
-.\.venv\Scripts\python.exe launch.py
+
+if not exist ".\.venv\Scripts\python.exe" (
+    echo [ERROR] Python environment not found at .venv\Scripts\python.exe
+    echo Please make sure your virtual environment is set up.
+    pause
+    exit /b 1
+)
+
+.\.venv\Scripts\python.exe launch.py %*
+if errorlevel 1 (
+    echo.
+    echo [ERROR] AICoverGen terminated with error code %errorlevel%.
+    pause
+)
